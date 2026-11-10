@@ -35,7 +35,7 @@ navigateur ──HTTPS──► Worker (src/index.js) ──► D1 (patients, su
 2. **Créer la base D1** : *Storage & Databases → D1 → Create* · nom `seminaire` · emplacement **Western Europe** (ou juridiction UE).
    Copier son **Database ID** dans `wrangler.toml` (`database_id = "…"`), commit, push.
 3. **Créer les tables** : D1 → `seminaire` → *Console* → coller puis exécuter le contenu de
-   `migrations/0001_init.sql`, puis celui de `migrations/0002_partner_leads.sql`.
+   `migrations/0001_init.sql`, puis `migrations/0002_partner_leads.sql`, puis `migrations/0003_lead_mail.sql`.
 4. **Connecter le dépôt** : *Workers & Pages → Create → Import a repository* → `seminaire`.
    - Nom du Worker : **`seminaire-triage`** (doit correspondre à `name` dans `wrangler.toml`)
    - Build command : `npm run build`
@@ -43,6 +43,7 @@ navigateur ──HTTPS──► Worker (src/index.js) ──► D1 (patients, su
 5. **Secrets** : Worker → *Settings → Variables and Secrets* → type **Secret** :
    - `STAFF_PIN` : **8 caractères minimum** (sinon l'accès staff est refusé, par sécurité)
    - `SESSION_SECRET` : 32+ caractères aléatoires (ex. `openssl rand -base64 48`)
+   - `BREVO_API_KEY` + `MAIL_FROM` : e-mail automatique « check-up couverture » (voir ci-dessous). Sans eux, aucun e-mail n'est envoyé ; les demandes restent enregistrées.
 6. *(Optionnel)* domaine perso : Worker → *Settings → Domains & Routes*, puis activer *SSL/TLS → Edge Certificates → Always Use HTTPS*.
 7. **Vérifier** : `https://<worker>/api/health` → `{"ok":true}` ; inscription test ; `/staff` sur 2 appareils (pastille « Temps réel »).
 
@@ -105,6 +106,13 @@ pied de l'inscription, fin du questionnaire (après les repères), bas de la lis
 
 Demandes de contact : table `partner_leads` isolée (aucune jointure possible avec patients/questionnaires), purge à 180 j.
 Check-up couverture : case facultative (non pré-cochée, distincte du consentement médical) dans le formulaire d’inscription ; cochée = demande de contact (nom/e-mail/téléphone uniquement). Modèle d'e-mail conforme : `docs/modele-email-checkup.md`.
+
+**E-mail automatique** : chaque personne qui a donné son accord reçoit aussitôt l'e-mail « Votre check-up couverture gratuit » (mentions FSMA, désinscription en un clic → suppression immédiate des coordonnées). Personne d'autre ne reçoit d'e-mail.
+Mise en place (≈ 10 min) :
+1. Compte gratuit sur brevo.com (UE, 300 e-mails/jour).
+2. *Senders, Domains* → ajouter **un domaine que tu possèdes** (ex. `checksante.be`) et copier les enregistrements DNS (DKIM/SPF) dans Cloudflare DNS. Une adresse `@gmail.com` ne peut pas servir d'expéditeur (rejetée par Gmail/Brevo) : les réponses arrivent quand même sur `yaoakoe.pro@gmail.com` (Reply-To).
+3. *SMTP & API → API keys* → créer une clé.
+4. Secrets du Worker : `BREVO_API_KEY` = la clé, `MAIL_FROM` = ex. `checkup@checksante.be`.
 
 Export pour le partenaire :
 ```bash

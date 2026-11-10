@@ -3,7 +3,8 @@ import { validateIdentity, validateLead, validatePatch, validateSurvey } from '.
 import { checkPin, clearCookie, requireStaff, sessionCookie } from './auth.js';
 import { HttpError, assertSameOrigin, clientIp, json, rateLimit, readJson } from './http.js';
 import { hub } from './hub.js';
-import { createLead, createPatient, createSurvey, deletePatient, getDetail, listSince, lookup, purge, surveyStats, updatePatient } from './patients.js';
+import { sendCheckupMail } from './mail.js';
+import { createLead, deleteLeadByToken, markMailed, createPatient, createSurvey, deletePatient, getDetail, listSince, lookup, purge, surveyStats, updatePatient } from './patients.js';
 
 export { Hub } from './hub.js';
 
@@ -92,6 +93,16 @@ async function staffRoutes(req, env, ctx, url, path) {
 
 async function route(req, env, ctx, url) {
   const path = url.pathname;
+  // Désinscription : appelée depuis la page /desinscription OU en « un clic » par la messagerie
+  // (RFC 8058, sans en-tête Origin). Protégée par le jeton secret ; réponse identique dans tous les cas.
+  if (path === '/api/partner/unsubscribe' && req.method === 'POST') {
+    await rateLimit(env.RL_REGISTER, `unsub:${clientIp(req)}`);
+    let t = url.searchParams.get('t');
+    if (!t && (req.headers.get('Content-Type') || '').startsWith('application/json')) t = (await readJson(req, 512))?.t;
+    if (typeof t !== 'string' || !/^[A-Za-z0-9_-]{20,40}$/.test(t)) throw new HttpError(400, 'invalid');
+    await deleteLeadByToken(env, t);
+    return json({ ok: true });
+  }
   if (req.method !== 'GET' && req.method !== 'HEAD') assertSameOrigin(req, url);
 
   if (path === '/api/health') {
@@ -118,8 +129,15 @@ async function route(req, env, ctx, url) {
     if (body?.website) throw new HttpError(400, 'invalid');
     const { ok, errors, value } = validateLead(body);
     if (!ok) throw new HttpError(422, 'validation', { errors });
-    const created = await createLead(env, value);
-    return json({ ok: true }, created ? 201 : 200);
+    const lead = await createLead(env, value);
+    if (lead) {
+      ctx.waitUntil(
+        sendCheckupMail(env, lead, url.origin)
+          .then((r) => r === 'sent' && markMailed(env, lead.id))
+          .catch((e) => console.error(JSON.stringify({ evt: 'mail_failed', err: String(e?.message).slice(0, 120) }))),
+      );
+    }
+    return json({ ok: true }, lead ? 201 : 200);
   }
   if (path.startsWith('/api/staff/')) {
     if (path === '/api/staff/ws') assertSameOrigin(req, url); // anti cross-site WebSocket hijacking

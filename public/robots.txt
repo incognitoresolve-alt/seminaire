@@ -2,3 +2,4 @@ User-agent: *
 Allow: /$
 Disallow: /staff
 Disallow: /api/
+Disallow: /desinscription

@@ -1,5 +1,7 @@
 # Modèle d'e-mail — check-up couverture (CheckSanté)
 
+> **Le premier e-mail part désormais automatiquement** (src/mail.js) dès qu'une personne donne son accord. Ce modèle sert à une éventuelle relance manuelle (une seule).
+
 **À n'envoyer qu'aux personnes présentes dans `partner_leads`** (elles ont cliqué « Oui » ou rempli le formulaire partenaire).
 Jamais aux autres inscrits : leur e-mail a été donné pour la consultation, pas pour de la prospection.
 

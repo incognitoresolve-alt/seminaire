@@ -138,13 +138,18 @@ export async function surveyStats(env) {
 }
 
 /* ---------- Partenaire (table isolée) ---------- */
+/** @returns {Promise<object|null>} la demande créée (null si rejeu idempotent) */
 export async function createLead(env, v) {
   const now = Date.now();
-  const res = await env.DB.prepare(
-    `INSERT INTO partner_leads (id,request_id,audience,name,email,phone,interests,message,consent_at,created_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(request_id) DO NOTHING`,
+  return env.DB.prepare(
+    `INSERT INTO partner_leads (id,request_id,audience,name,email,phone,interests,message,consent_at,created_at,unsub_token)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(request_id) DO NOTHING RETURNING id,name,email,consent_at,unsub_token`,
   )
-    .bind(crypto.randomUUID(), v.request_id, v.audience, v.name, v.email, v.phone, v.interests.join(',') || null, v.message, now, now)
-    .run();
-  return res.meta.changes > 0;
+    .bind(crypto.randomUUID(), v.request_id, v.audience, v.name, v.email, v.phone, v.interests.join(',') || null, v.message, now, now, randomToken())
+    .first();
 }
+
+export const markMailed = (env, id) => env.DB.prepare('UPDATE partner_leads SET mailed_at = ? WHERE id = ?').bind(Date.now(), id).run();
+
+/** Désinscription = suppression immédiate des coordonnées. */
+export const deleteLeadByToken = (env, t) => env.DB.prepare('DELETE FROM partner_leads WHERE unsub_token = ?').bind(t).run();
