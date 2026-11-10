@@ -1,34 +1,36 @@
 // Partenaire commercial de l'événement. Mettre enabled:false pour tout masquer (front + API).
-// Mentions obligatoires (FSMA / Code de droit économique) : statut, mandant, n° FSMA, n° BCE.
+// Inscription FSMA : sous-agent d'assurances belges, activités IDD ILP + OLP (ASSURANCE-VIE UNIQUEMENT).
+// => ne JAMAIS annoncer de produits non-vie (auto, habitation, RC, hospitalisation, revenu garanti…)
+//    tant que l'inscription ne couvre pas cette activité.
 export const PARTNER = Object.freeze({
   enabled: true,
-  brand: '[Nom commercial]',
-  person: '[Prénom Nom]',
-  status: 'Sous-agent d’assurances',
-  principal: '[Agent ou courtier mandant]',
-  fsma: '[n° FSMA]',
-  bce: '[n° BCE]',
-  phone: '[+32 4xx xx xx xx]',
-  email: '[contact@exemple.be]',
-  address: '[Adresse professionnelle]',
+  brand: 'Boris Y. AKOE',
+  person: 'Boris Y. AKOE',
+  status: 'Sous-agent d’assurances (assurances-vie)',
+  principal: 'Comopolis',
+  fsma: '0803.683.897',
+  bce: '0803.683.897',
+  phone: '0467 83 49 68',
+  phoneHref: '+32467834968',
+  email: 'yaoakoe.pro@gmail.com',
+  address: '',
 });
 
 export const LEAD_INTERESTS = Object.freeze({
   public: {
-    auto: 'Auto / moto',
-    habitation: 'Habitation',
-    rc_familiale: 'RC vie privée (familiale)',
-    hospitalisation: 'Hospitalisation',
     epargne_pension: 'Épargne-pension',
-    obseques: 'Obsèques',
-    autre: 'Autre',
+    epargne_long_terme: 'Épargne à long terme',
+    placement: 'Assurance-placement (branche 23)',
+    deces: 'Assurance décès / solde restant dû',
+    obseques: 'Assurance obsèques',
+    autre: 'Autre question (assurance-vie)',
   },
   pro: {
-    rc_pro: 'RC professionnelle',
-    revenu_garanti: 'Revenu garanti',
-    plci: 'PLCI / pension complémentaire',
-    hospitalisation: 'Hospitalisation',
-    protection_juridique: 'Protection juridique',
-    autre: 'Autre',
+    plci: 'PLCI (indépendants)',
+    inami: 'Pension INAMI (prestataires conventionnés)',
+    epargne_pension: 'Épargne-pension',
+    deces: 'Couverture décès',
+    placement: 'Assurance-placement (branche 23)',
+    autre: 'Autre question (assurance-vie)',
   },
 });

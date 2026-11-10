@@ -75,7 +75,8 @@ Le pire paramètre l'emporte ; aucune mesure = « À mesurer ». **Seuils indica
 ## Partenaire assurances (publicité)
 
 Configuration unique : `public/js/shared/partner.js` (`enabled: false` masque tout, front et API).
-Remplir **obligatoirement** : nom commercial, mandant, n° FSMA, n° BCE, coordonnées.
+Renseigné : Boris Y. AKOE, sous-agent pour Comopolis, FSMA n° 0803.683.897.
+**Inscription FSMA = assurance-vie uniquement (IDD ILP/OLP)** : ne pas annoncer de produits non-vie tant que l'inscription n'est pas étendue.
 
 Encarts identifiés « Publicité » (pratique commerciale loyale, CDE art. VI.97–VI.100) uniquement :
 pied de l'inscription, fin du questionnaire (après les repères), bas de la liste staff (version « soignants », masquable).

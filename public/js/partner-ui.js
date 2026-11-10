@@ -7,18 +7,18 @@ const HIDE_KEY = 'sem-partner-hidden';
 const COPY = {
   public: {
     title: 'Protéger sa famille, c’est aussi anticiper',
-    text: 'Auto, habitation, RC familiale, hospitalisation, épargne-pension : un bilan gratuit et sans engagement, quand vous le souhaitez.',
+    text: 'Épargne-pension, couverture décès, assurance obsèques : un bilan assurance-vie gratuit et sans engagement, quand vous le souhaitez.',
     cta: 'Demander un bilan',
   },
   pro: {
     title: 'Soignants : votre propre protection compte aussi',
-    text: 'RC professionnelle, revenu garanti, PLCI, hospitalisation : un bilan gratuit pour les professionnels de santé.',
+    text: 'PLCI, pension INAMI des conventionnés, couverture décès : préparez votre pension d’indépendant avec un bilan gratuit.',
     cta: 'En savoir plus',
   },
 };
 
 export const partnerLegal = () =>
-  `${esc(PARTNER.brand)} · ${esc(PARTNER.status)} pour le compte de ${esc(PARTNER.principal)} · FSMA n° ${esc(PARTNER.fsma)} · BCE ${esc(PARTNER.bce)}`;
+  `${esc(PARTNER.brand)} · ${esc(PARTNER.status)} pour ${esc(PARTNER.principal)} · FSMA n° ${esc(PARTNER.fsma)}${PARTNER.bce && PARTNER.bce !== PARTNER.fsma ? ` · BCE ${esc(PARTNER.bce)}` : ''}`;
 
 export function mountPartner(root = document) {
   if (!PARTNER.enabled) return;

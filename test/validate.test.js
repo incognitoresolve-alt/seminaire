@@ -52,10 +52,11 @@ test('questionnaire : taille en m ou cm, choix bornés', () => {
 
 import { validateLead } from '../public/js/shared/validate.js';
 test('lead partenaire : opt-in distinct, contact requis, intérêts whitelistés', () => {
-  const base = { audience: 'pro', name: 'Jean Dupont', email: 'j@d.be', interests: ['rc_pro'], consent: true };
+  const base = { audience: 'pro', name: 'Jean Dupont', email: 'j@d.be', interests: ['plci'], consent: true };
   assert.ok(validateLead(base).ok);
   assert.ok(validateLead({ ...base, consent: undefined }).errors.consent);
   assert.ok(validateLead({ ...base, email: '' }).errors.email);
-  assert.ok(validateLead({ ...base, interests: ['auto'] }).errors.interests); // auto = public uniquement
+  assert.ok(validateLead({ ...base, interests: ['obseques'] }).errors.interests); // obsèques = public uniquement
+  assert.ok(validateLead({ ...base, interests: ['rc_pro'] }).errors.interests); // non-vie : hors inscription FSMA
   assert.ok(validateLead({ ...base, audience: 'x' }).errors.audience);
 });

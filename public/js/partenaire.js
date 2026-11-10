@@ -11,8 +11,8 @@ let requestId = uuid();
 let audience = new URLSearchParams(location.search).get('pour') === 'pro' ? 'pro' : 'public';
 
 const INTRO = {
-  public: 'Auto, habitation, RC familiale, hospitalisation, épargne-pension : comparons vos contrats, gratuitement et sans engagement.',
-  pro: 'Médecins, infirmiers, kinés indépendants : RC professionnelle, revenu garanti, PLCI. Un bilan adapté à votre statut.',
+  public: 'Épargne-pension, épargne à long terme, couverture décès ou obsèques : faisons le point sur votre assurance-vie, gratuitement et sans engagement.',
+  pro: 'Médecins, infirmiers, kinés indépendants : PLCI, pension INAMI des conventionnés, couverture décès. Un bilan adapté à votre statut.',
 };
 
 function render() {
@@ -22,8 +22,15 @@ function render() {
     .map(([k, label]) => `<label class="choice"><input type="checkbox" name="interests" value="${k}"> ${esc(label)}</label>`)
     .join('');
 }
-document.getElementById('legal').innerHTML = `${partnerLegal()}<br>${esc(PARTNER.person)} · ${esc(PARTNER.address)} · ${esc(PARTNER.phone)} · ${esc(PARTNER.email)}`;
-document.getElementById('consent-text').textContent = `J’accepte d’être recontacté(e) par ${PARTNER.brand} (${PARTNER.status}) au sujet de mes besoins en assurances. Ce choix est indépendant de ma consultation de prévention.`;
+document.getElementById('legal').innerHTML = `${partnerLegal()}<br>${[
+  esc(PARTNER.person),
+  PARTNER.address && esc(PARTNER.address),
+  `<a class="underline" href="tel:${esc(PARTNER.phoneHref)}">${esc(PARTNER.phone)}</a>`,
+  `<a class="underline" href="mailto:${esc(PARTNER.email)}">${esc(PARTNER.email)}</a>`,
+]
+  .filter(Boolean)
+  .join(' · ')}`;
+document.getElementById('consent-text').textContent = `J’accepte d’être recontacté(e) par ${PARTNER.brand} (${PARTNER.status}) au sujet de mes besoins en assurance-vie. Ce choix est indépendant de ma consultation de prévention.`;
 for (const r of document.querySelectorAll('[name=aud]')) r.addEventListener('change', (e) => ((audience = e.target.value), render()));
 render();
 
