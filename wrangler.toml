@@ -1,0 +1,51 @@
+name = "seminaire-triage"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+# routes = [{ pattern = "triage.example.fr", custom_domain = true }]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "404-page"
+html_handling = "auto-trailing-slash"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "seminaire"
+database_id = "00000000-0000-0000-0000-000000000000" # remplacer : wrangler d1 create seminaire
+migrations_dir = "migrations"
+
+[[durable_objects.bindings]]
+name = "HUB"
+class_name = "Hub"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Hub"]
+
+# Rate limiting natif (par IP). Attention : un Wi-Fi de séminaire = beaucoup de clients derrière une IP.
+[[ratelimits]]
+name = "RL_REGISTER"
+namespace_id = "1001"
+simple = { limit = 120, period = 60 }
+
+[[ratelimits]]
+name = "RL_LOGIN"
+namespace_id = "1002"
+simple = { limit = 10, period = 60 }
+
+[[ratelimits]]
+name = "RL_API"
+namespace_id = "1003"
+simple = { limit = 1200, period = 60 }
+
+[vars]
+RETENTION_DAYS = "30"
+
+[triggers]
+crons = ["17 3 * * *"]
+
+[observability]
+enabled = true

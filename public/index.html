@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Consultation de prévention – ICC Liège</title>
+  <meta name="description" content="Inscrivez-vous en 20 secondes et obtenez votre Pass Patient pour le dépistage santé du séminaire.">
+  <meta name="theme-color" content="#0369a1">
+  <meta property="og:title" content="Inscription – Dépistage séminaire">
+  <meta property="og:description" content="Obtenez votre Pass Patient en 20 secondes.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="modulepreload" href="/js/register.js">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body class="min-h-dvh">
+  <main class="mx-auto max-w-lg px-4 pt-6 pb-16">
+    <header class="mb-6 text-center">
+      <p class="text-sm font-bold tracking-widest text-sky-800 uppercase">ICC Liège · Semaine de la santé · 11–14 nov. 2026</p>
+      <h1 class="mt-1 text-3xl font-extrabold">Consultation de prévention</h1>
+      <p class="mt-2 text-slate-600">Bénévole et gratuite. Inscrivez-vous, puis présentez votre Pass au soignant.</p>
+    </header>
+
+    <form id="reg" novalidate class="relative space-y-1 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <div id="reg-fields"></div>
+      <p data-form-error class="err text-center" role="alert"></p>
+      <button type="submit" class="btn-primary w-full text-lg">Obtenir mon Pass Patient</button>
+    </form>
+
+    <section id="pass" hidden aria-live="polite" class="space-y-5">
+      <div id="pass-card"></div>
+      <p class="text-center text-slate-700">Gardez cet écran ouvert ou faites une <strong>capture d’écran</strong>.<br>Présentez-le à l’accueil du pôle santé.</p>
+      <a href="/questionnaire" class="btn-primary w-full">Répondre au questionnaire de prévention (anonyme)</a>
+      <button id="new-reg" type="button" class="btn-ghost w-full">Inscrire une autre personne</button>
+    </section>
+
+    <footer class="mt-10 text-center text-sm text-slate-500">
+      <a class="underline" href="/questionnaire">Questionnaire anonyme</a> · <a class="underline" href="/confidentialite">Confidentialité</a> · <a class="underline" href="/cgu">CGU</a>
+    </footer>
+  </main>
+  <script type="module" src="/js/register.js"></script>
+</body>
+</html>

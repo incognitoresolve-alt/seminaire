@@ -1,0 +1,25 @@
+{
+  "name": "seminaire-triage",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Enregistrement éclair et triage temps réel pour séminaire (Cloudflare Workers + D1 + Durable Objects)",
+  "scripts": {
+    "build": "node scripts/vendor.mjs && tailwindcss -i styles/input.css -o public/app.css --minify",
+    "dev": "npm run build && wrangler dev",
+    "db:migrate:local": "wrangler d1 migrations apply seminaire --local",
+    "db:migrate": "wrangler d1 migrations apply seminaire --remote",
+    "deploy": "npm run build && wrangler deploy",
+    "check": "npm run build && wrangler deploy --dry-run --outdir .wrangler/dry",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "jsqr": "1.4.0",
+    "qrcode-generator": "2.0.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.5",
+    "tailwindcss": "4.3.5",
+    "wrangler": "4.159.0"
+  }
+}

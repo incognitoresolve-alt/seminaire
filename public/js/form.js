@@ -1,0 +1,168 @@
+// Formulaire d'identité partagé (auto-inscription & saisie manuelle staff).
+import { validateIdentity } from './shared/validate.js';
+import { esc, uuid } from './api.js';
+
+export function identityFieldsHtml(prefix, { staff = false } = {}) {
+  const f = (name, label, attrs) => `
+    <div>
+      <label class="label" for="${prefix}-${name}">${label}</label>
+      <input class="field" id="${prefix}-${name}" name="${name}" ${attrs} aria-describedby="${prefix}-${name}-err">
+      <p class="err" id="${prefix}-${name}-err" aria-live="polite"></p>
+    </div>`;
+  return `
+    <div class="grid gap-1 sm:grid-cols-2 sm:gap-x-4">
+      ${f('last_name', 'Nom', 'required maxlength="80" autocomplete="family-name" autocapitalize="characters" enterkeyhint="next"')}
+      ${f('first_name', 'Prénom', 'required maxlength="80" autocomplete="given-name" autocapitalize="words" enterkeyhint="next"')}
+    </div>
+    ${f('birth_date', 'Date de naissance', `type="date" required min="1900-01-01" max="${new Date().toISOString().slice(0, 10)}" autocomplete="bday"`)}
+    ${f('email', 'E-mail', 'type="email" required maxlength="254" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" enterkeyhint="next"')}
+    ${f('phone', 'Téléphone <span class="font-normal text-slate-500">(facultatif)</span>', 'type="tel" maxlength="25" autocomplete="tel" inputmode="tel" enterkeyhint="next"')}
+    <div class="absolute -left-[9999px]" aria-hidden="true">
+      <label for="${prefix}-website">Ne pas remplir</label>
+      <input id="${prefix}-website" name="website" tabindex="-1" autocomplete="off">
+    </div>
+
+    <fieldset class="mt-2 rounded-xl border border-slate-300 bg-white p-4">
+      <legend class="px-1 text-sm font-bold text-slate-800">Accord pour la consultation de prévention</legend>
+      <details class="mb-3 text-sm text-slate-600">
+        <summary class="cursor-pointer font-semibold text-sky-800">Lire les explications</summary>
+        <p class="mt-2">Consultation bénévole et gratuite auprès d’un professionnel de santé. Elle vise à faire le point sur votre santé, à recevoir des conseils et, si nécessaire, à être orienté(e) vers un suivi médical. Elle ne remplace pas votre suivi habituel. Vous pouvez refuser ou interrompre la consultation à tout moment.</p>
+      </details>
+      <label class="flex cursor-pointer items-start gap-3">
+        <input type="checkbox" name="consent" required class="mt-1 size-6 shrink-0 accent-sky-700" aria-describedby="${prefix}-consent-err">
+        <span class="text-sm leading-snug text-slate-800">${
+          staff
+            ? 'Le participant accepte librement la consultation et le recueil de ses informations de santé (formulaire papier signé ou accord explicite).'
+            : 'J’accepte librement de bénéficier de cette consultation et que les informations de santé nécessaires soient recueillies par le professionnel qui me reçoit (<a class="font-semibold text-sky-800 underline" href="/confidentialite" target="_blank" rel="noopener">confidentialité</a>).'
+        }</span>
+      </label>
+      <p class="err" id="${prefix}-consent-err" aria-live="polite"></p>
+    </fieldset>
+
+    <fieldset class="mt-2 rounded-xl border border-slate-300 bg-white p-4" aria-describedby="${prefix}-gp_consent-err">
+      <legend class="px-1 text-sm font-bold text-slate-800">Transmission au médecin traitant</legend>
+      <p class="mb-3 text-sm text-slate-600">Si un suivi est nécessaire, j’autorise la transmission des informations utiles (observations, mesures, recommandations) à mon médecin traitant, de façon confidentielle. Un refus ne conditionne pas l’accès à la consultation.</p>
+      <div class="grid grid-cols-2 gap-2">
+        <label class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border border-slate-300 px-3 has-checked:border-sky-700 has-checked:bg-sky-50">
+          <input type="radio" name="gp_consent" value="1" class="size-5 accent-sky-700"> <span class="text-sm font-semibold">J’autorise</span>
+        </label>
+        <label class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border border-slate-300 px-3 has-checked:border-sky-700 has-checked:bg-sky-50">
+          <input type="radio" name="gp_consent" value="0" class="size-5 accent-sky-700"> <span class="text-sm font-semibold">Je n’autorise pas</span>
+        </label>
+      </div>
+      <p class="err" id="${prefix}-gp_consent-err" aria-live="polite"></p>
+      <div data-gp hidden class="space-y-1">
+        <label class="flex cursor-pointer items-center gap-3 py-2">
+          <input type="checkbox" name="no_gp" class="size-5 accent-sky-700"> <span class="text-sm">Je n’ai pas de médecin traitant actuellement</span>
+        </label>
+        <div data-gp-fields class="space-y-1">
+          ${f('gp_name', 'Nom et prénom du médecin traitant', 'maxlength="120" autocomplete="off" enterkeyhint="next"')}
+          ${f('gp_address', 'Cabinet ou adresse <span class="font-normal text-slate-500">(facultatif)</span>', 'maxlength="200" autocomplete="off" enterkeyhint="next"')}
+          ${f('gp_contact', 'Téléphone ou coordonnées <span class="font-normal text-slate-500">(facultatif)</span>', 'maxlength="120" autocomplete="off" enterkeyhint="done"')}
+        </div>
+      </div>
+    </fieldset>`;
+}
+
+/**
+ * @param {HTMLFormElement} form
+ * @param {(payload:object)=>Promise<void>} send  doit lever {status, data} en cas d'échec
+ */
+export function bindIdentityForm(form, send) {
+  const btn = form.querySelector('[type=submit]');
+  const btnHtml = btn.innerHTML;
+  const formErr = form.querySelector('[data-form-error]');
+  let requestId = uuid(); // conservé tant que la soumission n'a pas abouti : idempotence serveur
+
+  const showErrors = (errors) => {
+    for (const name of ['last_name', 'first_name', 'birth_date', 'email', 'phone', 'consent', 'gp_name']) {
+      const input = form.elements[name];
+      const msg = errors[name] || '';
+      input.setAttribute('aria-invalid', msg ? 'true' : 'false');
+      const el = document.getElementById(input.getAttribute('aria-describedby'));
+      if (el) el.textContent = msg;
+    }
+    const gpErr = form.querySelector('[id$="-gp_consent-err"]');
+    gpErr.textContent = errors.gp_consent || '';
+    for (const r of form.querySelectorAll('[name=gp_consent]')) r.setAttribute('aria-invalid', errors.gp_consent ? 'true' : 'false');
+  };
+
+  // Bloc médecin traitant : affiché uniquement si la transmission est autorisée.
+  const syncGp = () => {
+    const allow = form.querySelector('[name=gp_consent]:checked')?.value === '1';
+    form.querySelector('[data-gp]').hidden = !allow;
+    form.querySelector('[data-gp-fields]').hidden = form.elements.no_gp.checked;
+  };
+  form.addEventListener('change', (e) => {
+    if (e.target.name === 'gp_consent' || e.target.name === 'no_gp') syncGp();
+    if (e.target.name === 'gp_consent') form.querySelector('[id$="-gp_consent-err"]').textContent = '';
+    if (e.target.name === 'consent' && e.target.checked) form.querySelector('[id$="-consent-err"]').textContent = '';
+  });
+  form.addEventListener('reset', () => setTimeout(syncGp));
+
+  // Enter = champ suivant (saisie au pouce).
+  form.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.target.type === 'submit' || e.target.type === 'checkbox') return;
+    const fields = [...form.querySelectorAll('input:not([tabindex="-1"]):not([type=radio]):not([type=checkbox])')].filter((i) => i.offsetParent);
+    const next = fields[fields.indexOf(e.target) + 1];
+    if (next) {
+      e.preventDefault();
+      next.focus();
+    }
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (btn.disabled) return; // anti double-clic
+    const fd = new FormData(form);
+    const payload = {
+      last_name: fd.get('last_name'),
+      first_name: fd.get('first_name'),
+      birth_date: fd.get('birth_date'),
+      email: fd.get('email'),
+      phone: fd.get('phone') || undefined,
+      consent: fd.get('consent') === 'on',
+      gp_consent: fd.get('gp_consent') === '1' ? true : fd.get('gp_consent') === '0' ? false : undefined,
+      no_gp: fd.get('no_gp') === 'on',
+      gp_name: fd.get('gp_name') || undefined,
+      gp_address: fd.get('gp_address') || undefined,
+      gp_contact: fd.get('gp_contact') || undefined,
+      website: fd.get('website') || undefined,
+      request_id: requestId,
+    };
+    const { ok, errors } = validateIdentity(payload);
+    showErrors(errors);
+    if (formErr) formErr.textContent = '';
+    if (!ok) {
+      form.querySelector('[aria-invalid="true"]')?.focus();
+      form.querySelector('[aria-invalid="true"]')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      return;
+    }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" aria-hidden="true"></span> Validation…';
+    try {
+      await send(payload);
+      requestId = uuid();
+      form.reset();
+      showErrors({});
+    } catch (err) {
+      if (err.status === 422 && err.data?.errors) showErrors(err.data.errors);
+      else if (formErr) {
+        formErr.textContent =
+          err.status === 429 ? 'Trop de demandes, réessayez dans une minute.' : err.status === 0 ? 'Connexion instable : réessayez (aucun doublon ne sera créé).' : 'Une erreur est survenue, réessayez.';
+      }
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = btnHtml;
+    }
+  });
+}
+
+export const passCardHtml = (pass, qr) => `
+  <div class="mx-auto w-full max-w-sm rounded-3xl border-4 border-sky-700 bg-white p-5 text-center shadow-xl">
+    <p class="text-xs font-bold tracking-[.2em] text-sky-800 uppercase">Pass Patient</p>
+    <p class="mt-1 text-2xl font-extrabold">${esc(pass.first_name)} ${esc(pass.last_name)}</p>
+    <div class="mx-auto my-4 w-64 max-w-full">${qr}</div>
+    <p class="text-sm text-slate-600">Code de secours</p>
+    <p class="font-mono text-3xl font-black tracking-[.3em]">${esc(pass.short_code)}</p>
+  </div>`;
