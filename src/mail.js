@@ -1,6 +1,6 @@
 // E-mail « check-up couverture » envoyé UNIQUEMENT aux personnes ayant donné leur accord (partner_leads).
 // Fournisseur : Brevo (UE). Sans BREVO_API_KEY / MAIL_FROM : aucun envoi (la demande reste enregistrée).
-import { PARTNER } from '../public/js/shared/partner.js';
+import { PARTNER } from '../web/shared/partner.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const dateFr = (ms) => new Date(ms).toLocaleDateString('fr-BE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Brussels' });

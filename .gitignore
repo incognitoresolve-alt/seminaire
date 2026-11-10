@@ -5,3 +5,5 @@ public/app.css
 public/vendor/
 *.log
 .DS_Store
+public/dist/
+public/sw.js

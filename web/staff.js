@@ -1,3 +1,4 @@
+import { registerSW } from './sw-register.js';
 import { ageOf, api, esc } from './api.js';
 import { bindIdentityForm, identityFieldsHtml, passCardHtml } from './form.js';
 import { mountCredit, mountPartner } from './partner-ui.js';
@@ -14,7 +15,10 @@ const MAX_ROWS = 200;
 
 const $ = (id) => document.getElementById(id);
 mountCredit($('gate'));
-const filters = { triage: 'all', doctor: 'all', q: '' };
+const filters = { stage: 'active', triage: 'all', doctor: 'all', q: '' };
+const STAGE = { 0: 'En attente', 1: 'En consultation', 2: 'Terminé' };
+const waitMin = (p) => Math.max(0, Math.round((Date.now() - p.created_at) / 60000));
+const fmtWait = (m) => (m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`);
 
 /* ---------- Utilitaires UI ---------- */
 let toastTimer = 0;
@@ -61,15 +65,23 @@ function rowHtml(p, level) {
     .filter(Boolean)
     .join(' · ')
     .replace(/(\d)\.(\d)/g, '$1,$2');
+  const stage = p.stage ?? 0;
+  const stageBadge =
+    stage === 1
+      ? '<span class="rounded-lg bg-sky-700 px-2 py-0.5 text-xs font-bold text-white">En consultation</span>'
+      : stage === 2
+        ? '<span class="rounded-lg bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-700">Terminé</span>'
+        : `<span class="text-xs font-semibold tabular-nums ${waitMin(p) >= 30 ? 'text-red-700' : 'text-slate-500'}" title="Temps d’attente">⏱ ${fmtWait(waitMin(p))}</span>`;
   const doc = p.doctor ? `<span class="rounded-lg bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-900">${DOCTORS[p.doctor].short}</span>` : '';
   return `<li>
-    <button type="button" data-id="${esc(p.id)}" class="flex w-full items-stretch overflow-hidden rounded-2xl bg-white text-left shadow-sm ring-1 ring-slate-200 hover:ring-slate-400">
+    <button type="button" data-id="${esc(p.id)}" class="flex w-full items-stretch overflow-hidden rounded-2xl bg-white text-left shadow-sm ring-1 ring-slate-200 hover:ring-slate-400 ${stage === 2 ? 'opacity-60' : ''}">
       <span class="t${level} w-2 shrink-0" aria-hidden="true"></span>
       <span class="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
         <span class="min-w-0 flex-1">
           <span class="block truncate text-base font-bold">${esc(p.last_name)} ${esc(p.first_name)}</span>
           <span class="block truncate text-sm text-slate-600">${esc(ageOf(p.birth_date))} · <span class="font-mono">${esc(p.short_code)}</span>${vit ? ` · ${esc(vit)}` : ''}</span>
         </span>
+        ${stageBadge}
         ${doc}
         <span class="tb${level} rounded-lg px-2 py-0.5 text-xs font-bold">${T_LABEL[level]}</span>
         ${store.isPending(p.id) ? '<span class="spinner size-4 text-slate-400" aria-label="Enregistrement"></span>' : ''}
@@ -82,7 +94,20 @@ function renderList() {
   $('status').innerHTML = `<span class="size-2 rounded-full ${dot}" aria-hidden="true"></span>${label}`;
 
   const q = normalize(filters.q);
-  const items = store.all().map((p) => ({ p, level: triage(p).level }));
+  const all = store.all().map((p) => ({ p, level: triage(p).level }));
+  const scount = { 0: 0, 1: 0, 2: 0 };
+  let waitSum = 0;
+  for (const { p } of all) {
+    scount[p.stage ?? 0]++;
+    if (!(p.stage ?? 0)) waitSum += waitMin(p);
+  }
+  $('metrics').textContent = scount[0] ? `${scount[0]} en attente · attente moy. ${fmtWait(Math.round(waitSum / scount[0]))}` : '';
+  // Recherche : ignore le filtre d'étape (retrouver aussi un patient terminé).
+  const items = all.filter(({ p }) => {
+    const st = p.stage ?? 0;
+    if (q || filters.stage === 'all') return true;
+    return filters.stage === 'active' ? st < 2 : String(st) === filters.stage;
+  });
   const counts = { 0: 0, 1: 0, 2: 0, 3: 0 };
   const dcounts = { 1: 0, 2: 0, none: 0 };
   for (const { p, level } of items) {
@@ -90,8 +115,15 @@ function renderList() {
     dcounts[p.doctor || 'none']++;
   }
 
+  $('f-stage').innerHTML = chipsHtml('stage', [
+    ['active', 'À traiter', scount[0] + scount[1]],
+    ['0', 'En attente', scount[0]],
+    ['1', 'En consultation', scount[1]],
+    ['2', 'Terminés', scount[2]],
+    ['all', 'Tous', all.length],
+  ]);
   $('f-triage').innerHTML = chipsHtml('triage', [
-    ['all', 'Tous', items.length],
+    ['all', 'Toutes couleurs', items.length],
     ['3', 'Rouge', counts[3]],
     ['2', 'Orange', counts[2]],
     ['0', 'À mesurer', counts[0]],
@@ -111,16 +143,21 @@ function renderList() {
       if (!q) return true;
       return normalize(`${p.last_name} ${p.first_name}`).includes(q) || normalize(`${p.first_name} ${p.last_name}`).includes(q) || p.short_code.toLowerCase().startsWith(q);
     })
-    .sort((a, b) => T_RANK[a.level] - T_RANK[b.level] || a.p.created_at - b.p.created_at);
+    // En attente d'abord (priorité clinique puis ancienneté), puis en consultation, puis terminés.
+    .sort((a, b) => (a.p.stage ?? 0) - (b.p.stage ?? 0) || T_RANK[a.level] - T_RANK[b.level] || a.p.created_at - b.p.created_at);
+  nextId = visible.find(({ p }) => !(p.stage ?? 0))?.p.id ?? null;
+  $('next').disabled = !nextId;
 
   $('list').innerHTML = visible.slice(0, MAX_ROWS).map(({ p, level }) => rowHtml(p, level)).join('');
   $('list-state').textContent =
-    store.state.status === 'connecting' && !items.length
+    store.state.status === 'connecting' && !all.length
       ? 'Chargement…'
       : !visible.length
         ? q || filters.triage !== 'all' || filters.doctor !== 'all'
           ? 'Aucun résultat'
-          : 'Aucun participant inscrit pour le moment'
+          : all.length
+            ? 'Personne en attente 🎉'
+            : 'Aucun participant inscrit pour le moment'
         : visible.length > MAX_ROWS
           ? `+ ${visible.length - MAX_ROWS} autres : affinez la recherche`
           : '';
@@ -145,6 +182,16 @@ $('list').addEventListener('click', (e) => {
   const b = e.target.closest('[data-id]');
   if (b) openSheet(b.dataset.id);
 });
+
+/* ---------- Patient suivant ---------- */
+let nextId = null;
+$('next').addEventListener('click', () => {
+  if (!nextId) return;
+  const id = nextId;
+  store.patch(id, { stage: 1 }); // « appelé » : visible instantanément par les collègues
+  openSheet(id);
+});
+setInterval(() => document.visibilityState === 'visible' && renderList(), 30000); // temps d'attente à jour
 
 /* ---------- Fiche patient ---------- */
 let sheetId = null;
@@ -173,6 +220,9 @@ function openSheet(id) {
       <button class="btn-ghost min-h-11 px-3" type="button" data-close aria-label="Fermer">✕</button>
     </div>
     <div class="space-y-5 p-4">
+      <div class="grid grid-cols-3 gap-2" id="sheet-stage" role="group" aria-label="Étape du parcours">
+        ${[0, 1, 2].map((st) => `<button type="button" data-stage="${st}" class="btn-ghost min-h-12 px-2 text-sm aria-pressed:border-slate-900 aria-pressed:bg-slate-900 aria-pressed:text-white">${STAGE[st]}</button>`).join('')}
+      </div>
       <div id="sheet-triage" class="rounded-2xl p-4" role="status" aria-live="polite"></div>
       <section aria-labelledby="h-vitals">
         <h3 id="h-vitals" class="mb-2 text-sm font-bold tracking-wide text-slate-500 uppercase">Paramètres vitaux</h3>
@@ -248,6 +298,7 @@ function refreshSheet(force = false) {
     reasons.length ? `<p class="mt-1 text-sm font-semibold">${reasons.map((r) => esc(r.replace(/(\d)\.(\d)/g, '$1,$2'))).join(' · ')}</p>` : ''
   }`;
   for (const b of $('sheet-doctors').children) b.setAttribute('aria-pressed', String(p.doctor === Number(b.dataset.doctor)));
+  for (const b of $('sheet-stage').children) b.setAttribute('aria-pressed', String((p.stage ?? 0) === Number(b.dataset.stage)));
   const pv = previewValues(p);
   const b = bmi(pv.weight, pv.height);
   $('sheet-bmi').textContent = b == null ? '' : `IMC : ${String(b).replace('.', ',')} kg/m² (normal 18,5–24,9)`;
@@ -297,6 +348,15 @@ $('sheet').addEventListener('click', (e) => {
     const d = Number(b.dataset.doctor);
     store.patch(sheetId, { doctor: store.view(sheetId).doctor === d ? null : d });
     navigator.vibrate?.(30);
+  }
+  const st = e.target.closest('[data-stage]');
+  if (st && sheetId) {
+    const stage = Number(st.dataset.stage);
+    store.patch(sheetId, { stage });
+    if (stage === 2) {
+      $('sheet').close(); // terminé : retour direct à la file
+      toast('Patient terminé ✓', 'ok');
+    }
   }
   if (e.target.closest('#sheet-delete') && sheetId) deleteCurrent();
   if (e.target.closest('#gp-withdraw') && sheetId && confirm('Confirmer le retrait de l’autorisation de transmission ?')) {
@@ -517,3 +577,5 @@ async function boot() {
 api('/staff/session')
   .then(boot)
   .catch((e) => (e.status === 401 ? showGate() : boot()));
+
+registerSW();

@@ -1,9 +1,9 @@
-import { bmi, triage } from '../public/js/shared/triage.js';
+import { bmi, triage } from '../web/shared/triage.js';
 import { HttpError } from './http.js';
 
 // Colonnes exposées au staff (sans email ni request_id : minimisation).
 const COLS =
-  'id,token,short_code,last_name,first_name,birth_date,source,gp_consent,no_gp,pulse,temp,weight,height,waist,glucose,sys,dia,notes,triage,doctor,version,created_at,updated_at,deleted_at';
+  'id,token,short_code,last_name,first_name,birth_date,source,gp_consent,no_gp,stage,stage_at,pulse,temp,weight,height,waist,glucose,sys,dia,notes,triage,doctor,version,created_at,updated_at,deleted_at';
 const DETAIL_COLS = `${COLS},email,phone,gp_name,gp_address,gp_contact,consent_at`;
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // sans 0/O/1/I/L
 
@@ -60,8 +60,9 @@ export const lookup = (env, q) =>
   env.DB.prepare(`SELECT ${COLS} FROM patients WHERE (token = ?1 OR short_code = ?2) AND deleted_at IS NULL LIMIT 1`).bind(q, q.toUpperCase()).first();
 
 export async function updatePatient(env, id, patch) {
-  const keys = Object.keys(patch); // whitelist garantie par validatePatch
   const now = Date.now();
+  if ('stage' in patch) patch = { ...patch, stage_at: now }; // horodatage serveur de l'étape
+  const keys = Object.keys(patch); // whitelist garantie par validatePatch
   const row = await env.DB.prepare(
     `UPDATE patients SET ${keys.map((k) => `${k} = ?`).join(', ')}, version = version + 1, updated_at = ?
      WHERE id = ? AND deleted_at IS NULL RETURNING ${COLS}`,
@@ -148,6 +149,10 @@ export async function createLead(env, v) {
     .bind(crypto.randomUUID(), v.request_id, v.audience, v.name, v.email, v.phone, v.interests.join(',') || null, v.message, now, now, randomToken())
     .first();
 }
+
+/** Anti-doublon : un seul e-mail par adresse sur 7 jours (familles inscrites avec le même e-mail). */
+export const alreadyMailed = async (env, email) =>
+  !!(await env.DB.prepare('SELECT 1 FROM partner_leads WHERE email = ? AND mailed_at > ? LIMIT 1').bind(email, Date.now() - 7 * 86400e3).first());
 
 export const markMailed = (env, id) => env.DB.prepare('UPDATE partner_leads SET mailed_at = ? WHERE id = ?').bind(Date.now(), id).run();
 

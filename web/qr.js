@@ -1,4 +1,4 @@
-import qrcode from '/vendor/qrcode.mjs';
+import qrcode from 'qrcode-generator';
 
 /** SVG sans attribut style (compatible CSP stricte). */
 export function qrSvg(text, { label = 'QR code' } = {}) {

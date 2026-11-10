@@ -1,5 +1,6 @@
 @import "tailwindcss";
-@source "../public";
+@source "../public/*.html";
+@source "../web";
 @source inline("t0 t1 t2 t3 tb0 tb1 tb2 tb3");
 
 @theme {

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LEVEL, triage } from '../public/js/shared/triage.js';
+import { LEVEL, triage } from '../web/shared/triage.js';
 
 test('aucune mesure => à mesurer', () => assert.equal(triage({}).level, LEVEL.NONE));
 test('poids seul ne déclenche pas de triage', () => assert.equal(triage({ weight: 80 }).level, LEVEL.NONE));

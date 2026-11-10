@@ -12,7 +12,7 @@
   <meta property="og:description" content="Obtenez votre Pass Patient en 20 secondes.">
   <meta property="og:type" content="website">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="modulepreload" href="/js/register.js">
+  <link rel="modulepreload" href="/dist/register.js">
   <link rel="stylesheet" href="/app.css">
 </head>
 <body class="min-h-dvh">
@@ -28,14 +28,17 @@
       <div id="reg-fields"></div>
       <p data-form-error class="err text-center" role="alert"></p>
       <button type="submit" class="btn-primary w-full text-lg">Obtenir mon Pass Patient</button>
+      <button id="back-passes" type="button" hidden class="mx-auto mt-3 block text-sm font-semibold text-sky-800 underline">← Retour à mes Pass</button>
     </form>
 
-    <section id="pass" hidden aria-live="polite" class="space-y-5">
-      <div id="pass-card"></div>
-      <p class="text-center text-slate-700">Gardez cet écran ouvert ou faites une <strong>capture d’écran</strong>.<br>Présentez-le à l’accueil du pôle santé.</p>
+    <section id="pass" hidden aria-live="polite" class="space-y-4">
+      <p id="pass-count" class="text-center text-sm font-semibold text-slate-600"></p>
+      <div id="pass-card" class="space-y-4"></div>
+      <p class="text-center text-slate-700">Gardez cet écran ouvert ou faites une <strong>capture d’écran</strong>, puis présentez-le au pôle santé.</p>
       <div id="checkup"></div>
-      <a href="/questionnaire" class="btn-primary w-full">Répondre au questionnaire de prévention (anonyme)</a>
-      <button id="new-reg" type="button" class="btn-ghost w-full">Inscrire une autre personne</button>
+      <button id="add-family" type="button" class="btn-primary w-full">+ Inscrire un autre membre de la famille</button>
+      <a href="/questionnaire" class="btn-ghost w-full">Questionnaire de prévention (anonyme, 2 min)</a>
+      <button id="clear-passes" type="button" class="mx-auto block text-sm text-slate-500 underline">Retirer les Pass de cet appareil</button>
     </section>
 
     <div data-partner="public" class="mt-10"></div>
@@ -44,6 +47,6 @@
       <div data-partner-credit class="mt-4 text-center"></div>
     </footer>
   </main>
-  <script type="module" src="/js/register.js"></script>
+  <script type="module" src="/dist/register.js"></script>
 </body>
 </html>

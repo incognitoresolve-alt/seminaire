@@ -17,6 +17,19 @@ Application temps réel pour les consultations de prévention (11–14 nov. 2026
 | `/affiche` · `/affiche?cible=questionnaire` | accueil | Affiche imprimable avec QR d'entrée |
 | `/partenaire?pour=public\|pro` | tous | Page **Publicité** du partenaire assurances + formulaire de recontact (opt-in distinct) |
 
+## Optimisations « file d'attente »
+
+| Point de friction | Solution |
+|---|---|
+| Familles : ressaisie complète, Pass précédent perdu | « + Inscrire un autre membre de la famille » : nom, e-mail, téléphone préremplis ; tous les Pass restent sur le téléphone (même hors ligne) ; consentements toujours individuels |
+| Date de naissance (sélecteur iOS à faire défiler) | Champ JJ/MM/AAAA au clavier numérique, « / » automatiques, remplissage auto accepté |
+| Soignants qui appellent le même patient | Étapes **En attente → En consultation → Terminé** synchronisées en temps réel ; bouton **Patient suivant** = le plus prioritaire en attente (rouge > orange > à mesurer > vert, puis ancienneté), marqué « En consultation » pour tous |
+| File qui ne se vide jamais | Vue « À traiter » par défaut ; « Terminé » ferme la fiche et retire le patient ; recherche toujours globale |
+| Pilotage | Temps d'attente par patient (rouge ≥ 30 min), nombre en attente et attente moyenne en tête |
+| Chargement en cascade sur réseau saturé | 1 seul fichier JS minifié par page (esbuild), préchargé |
+| Coupure Wi-Fi | Service worker : les pages se rechargent hors ligne ; saisies soignants mises en file et renvoyées (outbox) |
+| E-mails en double (famille, même adresse) | 1 seul e-mail check-up par adresse sur 7 jours |
+
 ## Architecture
 
 ```
@@ -27,7 +40,7 @@ navigateur ──HTTPS──► Worker (src/index.js) ──► D1 (patients, su
 - **Optimistic UI** : chaque saisie s'applique localement à l'instant (triage recalculé côté client), part dans une *outbox* persistée (`localStorage`) et est envoyée en PATCH champ par champ (debounce 350 ms). Coupure Wi-Fi ⇒ rejouée au retour réseau.
 - **Synchro** : WebSocket (push) + delta-sync `?since=` (fenêtre de chevauchement 5 s, dédup par `version`) + polling de secours 5 s si WebSocket indisponible.
 - **Concurrence** : last-write-wins par champ ; triage serveur mis à jour conditionnellement à la `version`.
-- **Code partagé** : `public/js/shared/{triage,validate}.js` utilisés par le navigateur ET le Worker (validation client UX + serveur sécurité, mêmes seuils).
+- **Code partagé** : `web/shared/{triage,validate}.js` utilisés par le navigateur ET le Worker (validation client UX + serveur sécurité, mêmes seuils).
 
 ## Déploiement via le dashboard Cloudflare (dépôt GitHub connecté)
 
@@ -35,7 +48,7 @@ navigateur ──HTTPS──► Worker (src/index.js) ──► D1 (patients, su
 2. **Créer la base D1** : *Storage & Databases → D1 → Create* · nom `seminaire` · emplacement **Western Europe** (ou juridiction UE).
    Copier son **Database ID** dans `wrangler.toml` (`database_id = "…"`), commit, push.
 3. **Créer les tables** : D1 → `seminaire` → *Console* → coller puis exécuter le contenu de
-   `migrations/0001_init.sql`, puis `migrations/0002_partner_leads.sql`, puis `migrations/0003_lead_mail.sql`.
+   `migrations/0001_init.sql`, `0002_partner_leads.sql`, `0003_lead_mail.sql`, puis `0004_stage.sql` (dans cet ordre).
 4. **Connecter le dépôt** : *Workers & Pages → Create → Import a repository* → `seminaire`.
    - Nom du Worker : **`seminaire-triage`** (doit correspondre à `name` dans `wrangler.toml`)
    - Build command : `npm run build`
@@ -46,6 +59,16 @@ navigateur ──HTTPS──► Worker (src/index.js) ──► D1 (patients, su
    - `BREVO_API_KEY` + `MAIL_FROM` : e-mail automatique « check-up couverture » (voir ci-dessous). Sans eux, aucun e-mail n'est envoyé ; les demandes restent enregistrées.
 6. *(Optionnel)* domaine perso : Worker → *Settings → Domains & Routes*, puis activer *SSL/TLS → Edge Certificates → Always Use HTTPS*.
 7. **Vérifier** : `https://<worker>/api/health` → `{"ok":true}` ; inscription test ; `/staff` sur 2 appareils (pastille « Temps réel »).
+
+## Structure
+
+```
+src/            Worker (API, D1, Durable Object, e-mail)
+web/            sources front (modules ES) ; web/shared/ = code partagé navigateur + Worker
+public/         fichiers servis (HTML, _headers, logo) ; public/dist + sw.js générés par `npm run build`
+migrations/     schéma D1 (0001 → 0004)
+scripts/build.mjs  bundle esbuild + service worker versionné
+```
 
 ## Installation (ligne de commande)
 
@@ -69,7 +92,7 @@ npm test                 # tests unitaires triage/validation
 
 Domaine perso : décommenter `routes` dans `wrangler.toml`, activer *Always Use HTTPS* dans Cloudflare.
 
-## Seuils de triage (`public/js/shared/triage.js`)
+## Seuils de triage (`web/shared/triage.js`)
 
 | Paramètre | Orange | Rouge |
 |---|---|---|
@@ -96,7 +119,7 @@ Le pire paramètre l'emporte ; aucune mesure = « À mesurer ». **Seuils indica
 
 ## Partenaire assurances (publicité)
 
-Configuration unique : `public/js/shared/partner.js` (`enabled: false` masque tout, front et API).
+Configuration unique : `web/shared/partner.js` (`enabled: false` masque tout, front et API).
 Renseigné : Boris Y. AKOE, sous-agent pour Comopolis, FSMA n° 0803.683.897.
 **Inscription FSMA = assurance-vie uniquement (IDD ILP/OLP)** : ne pas annoncer de produits non-vie tant que l'inscription n'est pas étendue.
 

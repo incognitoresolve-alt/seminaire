@@ -1,10 +1,10 @@
-import { PARTNER } from '../public/js/shared/partner.js';
-import { validateIdentity, validateLead, validatePatch, validateSurvey } from '../public/js/shared/validate.js';
+import { PARTNER } from '../web/shared/partner.js';
+import { validateIdentity, validateLead, validatePatch, validateSurvey } from '../web/shared/validate.js';
 import { checkPin, clearCookie, requireStaff, sessionCookie } from './auth.js';
 import { HttpError, assertSameOrigin, clientIp, json, rateLimit, readJson } from './http.js';
 import { hub } from './hub.js';
 import { sendCheckupMail } from './mail.js';
-import { createLead, deleteLeadByToken, markMailed, createPatient, createSurvey, deletePatient, getDetail, listSince, lookup, purge, surveyStats, updatePatient } from './patients.js';
+import { alreadyMailed, createLead, deleteLeadByToken, markMailed, createPatient, createSurvey, deletePatient, getDetail, listSince, lookup, purge, surveyStats, updatePatient } from './patients.js';
 
 export { Hub } from './hub.js';
 
@@ -132,7 +132,7 @@ async function route(req, env, ctx, url) {
     const lead = await createLead(env, value);
     if (lead) {
       ctx.waitUntil(
-        sendCheckupMail(env, lead, url.origin)
+        (lead.email && (await alreadyMailed(env, lead.email)) ? Promise.resolve('dedup') : sendCheckupMail(env, lead, url.origin))
           .then((r) => r === 'sent' && markMailed(env, lead.id))
           .catch((e) => console.error(JSON.stringify({ evt: 'mail_failed', err: String(e?.message).slice(0, 120) }))),
       );

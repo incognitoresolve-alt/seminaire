@@ -1,3 +1,4 @@
+import { registerSW } from './sw-register.js';
 import { api, esc, uuid } from './api.js';
 import { mountCredit, mountPartner } from './partner-ui.js';
 import { bmi } from './shared/triage.js';
@@ -72,3 +73,5 @@ try {
 } catch {
   /* ignore */
 }
+
+registerSW();

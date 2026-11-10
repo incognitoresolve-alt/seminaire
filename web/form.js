@@ -1,5 +1,5 @@
 // Formulaire d'identité partagé (auto-inscription & saisie manuelle staff).
-import { validateIdentity } from './shared/validate.js';
+import { toIsoDate, validateIdentity } from './shared/validate.js';
 import { esc, uuid } from './api.js';
 import { PARTNER } from './shared/partner.js';
 
@@ -15,7 +15,7 @@ export function identityFieldsHtml(prefix, { staff = false } = {}) {
       ${f('last_name', 'Nom', 'required maxlength="80" autocomplete="family-name" autocapitalize="characters" enterkeyhint="next"')}
       ${f('first_name', 'Prénom', 'required maxlength="80" autocomplete="given-name" autocapitalize="words" enterkeyhint="next"')}
     </div>
-    ${f('birth_date', 'Date de naissance', `type="date" required min="1900-01-01" max="${new Date().toISOString().slice(0, 10)}" autocomplete="bday"`)}
+    ${f('birth_date', 'Date de naissance <span class="font-normal text-slate-500">(JJ/MM/AAAA)</span>', 'required inputmode="numeric" maxlength="10" placeholder="JJ/MM/AAAA" autocomplete="bday" enterkeyhint="next"')}
     ${f('email', 'E-mail', 'type="email" required maxlength="254" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" enterkeyhint="next"')}
     ${f('phone', 'Téléphone <span class="font-normal text-slate-500">(facultatif)</span>', 'type="tel" maxlength="25" autocomplete="tel" inputmode="tel" enterkeyhint="next"')}
     <div class="absolute -left-[9999px]" aria-hidden="true">
@@ -65,7 +65,7 @@ export function identityFieldsHtml(prefix, { staff = false } = {}) {
     </fieldset>${
       !staff && PARTNER.enabled
         ? `
-    <label class="mt-3 flex cursor-pointer items-start gap-2 px-1">
+    <label data-checkup class="mt-3 flex cursor-pointer items-start gap-2 px-1">
       <input type="checkbox" name="checkup" class="mt-0.5 size-4 shrink-0 accent-slate-600">
       <span class="text-xs leading-snug text-slate-500"><span class="font-semibold">Facultatif · Publicité —</span> Oui, je souhaite aussi un check-up gratuit et sans engagement de ma couverture assurance-vie et j’accepte que mes nom, e-mail et téléphone (jamais mes données de santé) soient transmis à cette fin à ${esc(PARTNER.person)}, ${esc(PARTNER.status.charAt(0).toLowerCase() + PARTNER.status.slice(1))} pour ${esc(PARTNER.principal)} (FSMA n° ${esc(PARTNER.fsma)}), partenaire de l’événement, retrait à tout moment via ${esc(PARTNER.email)}.</span>
     </label>`
@@ -77,6 +77,11 @@ export function identityFieldsHtml(prefix, { staff = false } = {}) {
  * @param {HTMLFormElement} form
  * @param {(payload:object)=>Promise<void>} send  doit lever {status, data} en cas d'échec
  */
+/** Préremplit le formulaire (membre d'une même famille). Jamais les consentements : ils sont individuels. */
+export function prefillIdentity(form, data) {
+  for (const k of ['last_name', 'email', 'phone']) if (data?.[k] && form.elements[k]) form.elements[k].value = data[k];
+}
+
 export function bindIdentityForm(form, send) {
   const btn = form.querySelector('[type=submit]');
   const btnHtml = btn.innerHTML;
@@ -109,6 +114,16 @@ export function bindIdentityForm(form, send) {
   });
   form.addEventListener('reset', () => setTimeout(syncGp));
 
+  // Date : clavier numérique, « / » insérés automatiquement (bien plus rapide que le sélecteur iOS).
+  form.addEventListener('input', (e) => {
+    if (e.target.name !== 'birth_date' || e.inputType?.startsWith('delete')) return;
+    const iso = e.target.value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/); // remplissage auto au format ISO
+    if (iso) return void (e.target.value = `${iso[3]}/${iso[2]}/${iso[1]}`);
+    if (/[^\d/ .-]/.test(e.target.value)) return; // saisie inattendue : laissée telle quelle (validée à l'envoi)
+    const d = e.target.value.replace(/\D/g, '').slice(0, 8);
+    e.target.value = d.length > 4 ? `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}` : d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
+  });
+
   // Enter = champ suivant (saisie au pouce).
   form.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' || e.target.type === 'submit' || e.target.type === 'checkbox') return;
@@ -127,7 +142,7 @@ export function bindIdentityForm(form, send) {
     const payload = {
       last_name: fd.get('last_name'),
       first_name: fd.get('first_name'),
-      birth_date: fd.get('birth_date'),
+      birth_date: toIsoDate(fd.get('birth_date')),
       email: fd.get('email'),
       phone: fd.get('phone') || undefined,
       consent: fd.get('consent') === 'on',

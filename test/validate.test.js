@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseVital, validateIdentity, validatePatch, validateSurvey } from '../public/js/shared/validate.js';
+import { parseVital, validateIdentity, validatePatch, validateSurvey } from '../web/shared/validate.js';
 
 const ok = { last_name: 'Dupont-Élise', first_name: "Anne-Marie d'Arc", birth_date: '1980-02-29', email: 'A@b.fr', consent: true, gp_consent: false };
 
@@ -50,7 +50,7 @@ test('questionnaire : taille en m ou cm, choix bornés', () => {
   assert.ok(validateSurvey({}).ok);
 });
 
-import { validateLead } from '../public/js/shared/validate.js';
+import { validateLead } from '../web/shared/validate.js';
 test('lead partenaire : opt-in distinct, contact requis, intérêts whitelistés', () => {
   const base = { audience: 'pro', name: 'Jean Dupont', email: 'j@d.be', interests: ['plci'], consent: true };
   assert.ok(validateLead(base).ok);
@@ -59,4 +59,18 @@ test('lead partenaire : opt-in distinct, contact requis, intérêts whitelistés
   assert.ok(validateLead({ ...base, interests: ['obseques'] }).errors.interests); // obsèques = public uniquement
   assert.ok(validateLead({ ...base, interests: ['rc_pro'] }).errors.interests); // non-vie : hors inscription FSMA
   assert.ok(validateLead({ ...base, audience: 'x' }).errors.audience);
+});
+
+import { toIsoDate } from '../web/shared/validate.js';
+test('date JJ/MM/AAAA → ISO', () => {
+  assert.equal(toIsoDate('05/03/1975'), '1975-03-05');
+  assert.equal(toIsoDate('5/3/1975'), '1975-03-05');
+  assert.equal(toIsoDate('1975-03-05'), '1975-03-05');
+  assert.equal(toIsoDate('31/02/1975'), '1975-02-31'); // rejetée ensuite par validateIdentity
+  assert.ok(validateIdentity({ ...ok, birth_date: toIsoDate('31/02/1975') }).errors.birth_date);
+});
+test('étape du parcours', () => {
+  assert.ok(validatePatch({ stage: 2 }).ok);
+  assert.ok(validatePatch({ stage: 5 }).errors.stage);
+  assert.ok(validatePatch({ stage_at: 1 }).errors.stage_at); // horodatage réservé au serveur
 });

@@ -21,6 +21,14 @@ export function normalize(s) {
   return String(s ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
+/** « JJ/MM/AAAA » (ou ISO) → « AAAA-MM-JJ » ; renvoie la saisie brute si non reconnue (=> erreur de validation). */
+export function toIsoDate(s) {
+  const t = String(s ?? '').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+  const m = t.match(/^(\d{1,2})[/.\- ](\d{1,2})[/.\- ](\d{4})$/);
+  return m ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : t;
+}
+
 const clean = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
 // Texte libre : caractères de contrôle retirés (sauf saut de ligne si multiline), longueur bornée.
 export const freeText = (s, max, multiline = false) => {
@@ -48,11 +56,11 @@ export function validateIdentity(b, now = new Date()) {
   if (!NAME_RE.test(v.last_name)) errors.last_name = 'Nom invalide';
   if (!NAME_RE.test(v.first_name)) errors.first_name = 'Prénom invalide';
   if (!DATE_RE.test(v.birth_date)) {
-    errors.birth_date = 'Date invalide';
+    errors.birth_date = 'Date invalide (JJ/MM/AAAA)';
   } else {
     const d = new Date(`${v.birth_date}T00:00:00Z`);
     const ok = !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v.birth_date;
-    if (!ok || d.getUTCFullYear() < 1900 || d > now) errors.birth_date = 'Date invalide';
+    if (!ok || d.getUTCFullYear() < 1900 || d > now) errors.birth_date = 'Date invalide (JJ/MM/AAAA)';
   }
   if (v.email.length > 254 || !EMAIL_RE.test(v.email)) errors.email = 'E-mail invalide';
   if (v.phone && !PHONE_RE.test(v.phone)) errors.phone = 'Téléphone invalide';
@@ -90,6 +98,9 @@ export function validatePatch(b) {
       if (raw === null || raw === '') value.notes = null;
       else if (typeof raw === 'string' && raw.length <= NOTES_MAX) value.notes = raw;
       else errors.notes = 'Notes trop longues';
+    } else if (k === 'stage') {
+      if (raw === 0 || raw === 1 || raw === 2) value.stage = raw;
+      else errors.stage = 'Étape invalide';
     } else if (k === 'gp_consent') {
       if (raw === 0 || raw === 1) value.gp_consent = raw;
       else errors.gp_consent = 'Valeur invalide';
