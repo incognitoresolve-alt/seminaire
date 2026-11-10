@@ -1,6 +1,7 @@
 // Formulaire d'identité partagé (auto-inscription & saisie manuelle staff).
 import { validateIdentity } from './shared/validate.js';
 import { esc, uuid } from './api.js';
+import { PARTNER } from './shared/partner.js';
 
 export function identityFieldsHtml(prefix, { staff = false } = {}) {
   const f = (name, label, attrs) => `
@@ -61,7 +62,15 @@ export function identityFieldsHtml(prefix, { staff = false } = {}) {
           ${f('gp_contact', 'Téléphone ou coordonnées <span class="font-normal text-slate-500">(facultatif)</span>', 'maxlength="120" autocomplete="off" enterkeyhint="done"')}
         </div>
       </div>
-    </fieldset>`;
+    </fieldset>${
+      !staff && PARTNER.enabled
+        ? `
+    <label class="mt-2 flex cursor-pointer items-start gap-3 rounded-xl border border-dashed border-slate-300 bg-white p-4">
+      <input type="checkbox" name="checkup" class="mt-1 size-6 shrink-0 accent-sky-700">
+      <span class="text-sm leading-snug text-slate-700"><span class="mb-1 block text-[11px] font-bold tracking-widest text-slate-500 uppercase">Facultatif · Publicité</span>Oui, je souhaite aussi un <strong>check-up gratuit et sans engagement de ma couverture assurance-vie</strong> et j’accepte que mes nom, e-mail et téléphone (jamais mes données de santé) soient transmis à cette fin à ${esc(PARTNER.person)}, ${esc(PARTNER.status.charAt(0).toLowerCase() + PARTNER.status.slice(1))} pour ${esc(PARTNER.principal)} (FSMA n° ${esc(PARTNER.fsma)}), partenaire de l’événement, retrait à tout moment via ${esc(PARTNER.email)}.</span>
+    </label>`
+        : ''
+    }`;
 }
 
 /**
@@ -127,6 +136,7 @@ export function bindIdentityForm(form, send) {
       gp_name: fd.get('gp_name') || undefined,
       gp_address: fd.get('gp_address') || undefined,
       gp_contact: fd.get('gp_contact') || undefined,
+      checkup: fd.get('checkup') === 'on', // opt-in partenaire, retiré avant l'appel /register
       website: fd.get('website') || undefined,
       request_id: requestId,
     };

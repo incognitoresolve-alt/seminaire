@@ -104,7 +104,7 @@ pied de l'inscription, fin du questionnaire (après les repères), bas de la lis
 **Jamais** dans une fiche patient, un Pass, un résultat de triage ou les stats. Aucun ciblage selon les données de santé.
 
 Demandes de contact : table `partner_leads` isolée (aucune jointure possible avec patients/questionnaires), purge à 180 j.
-Proposition « check-up couverture » : encart opt-in sur l'écran du Pass (après inscription), un clic = demande de contact (nom/e-mail/téléphone uniquement). Modèle d'e-mail conforme : `docs/modele-email-checkup.md`.
+Check-up couverture : case facultative (non pré-cochée, distincte du consentement médical) dans le formulaire d’inscription ; cochée = demande de contact (nom/e-mail/téléphone uniquement). Modèle d'e-mail conforme : `docs/modele-email-checkup.md`.
 
 Export pour le partenaire :
 ```bash
