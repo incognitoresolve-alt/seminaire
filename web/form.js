@@ -77,11 +77,6 @@ export function identityFieldsHtml(prefix, { staff = false } = {}) {
  * @param {HTMLFormElement} form
  * @param {(payload:object)=>Promise<void>} send  doit lever {status, data} en cas d'échec
  */
-/** Préremplit le formulaire (membre d'une même famille). Jamais les consentements : ils sont individuels. */
-export function prefillIdentity(form, data) {
-  for (const k of ['last_name', 'email', 'phone']) if (data?.[k] && form.elements[k]) form.elements[k].value = data[k];
-}
-
 export function bindIdentityForm(form, send) {
   const btn = form.querySelector('[type=submit]');
   const btnHtml = btn.innerHTML;

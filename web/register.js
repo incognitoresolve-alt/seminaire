@@ -1,13 +1,12 @@
 import { registerSW } from './sw-register.js';
 import { api, uuid } from './api.js';
-import { bindIdentityForm, identityFieldsHtml, passCardHtml, prefillIdentity } from './form.js';
+import { bindIdentityForm, identityFieldsHtml, passCardHtml } from './form.js';
 import { mountPartner } from './partner-ui.js';
 import { passUrl, qrSvg } from './qr.js';
 
 mountPartner();
 
-const PASSES_KEY = 'sem-passes'; // tous les Pass de l'appareil (famille)
-const FAMILY_KEY = 'sem-family'; // nom / e-mail / tél. pour préremplir (session uniquement)
+const PASS_KEY = 'sem-pass'; // inscription individuelle : un seul Pass affiché à la fois
 const CHECKUP_KEY = 'sem-checkup';
 const form = document.getElementById('reg');
 const passEl = document.getElementById('pass');
@@ -31,13 +30,12 @@ const store = {
   },
 };
 
-// Migration de l'ancien format (un seul Pass)
-const legacy = store.get('sem-pass');
-if (legacy?.token) {
-  store.set(PASSES_KEY, [legacy]);
-  store.set('sem-pass', null);
+// Ancien format multi-Pass : on ne garde que le plus récent.
+const legacy = store.get('sem-passes');
+if (Array.isArray(legacy)) {
+  if (legacy[0]?.token) store.set(PASS_KEY, legacy[0]);
+  store.set('sem-passes', null);
 }
-const passes = () => store.get(PASSES_KEY) || [];
 
 /* ---------- Check-up couverture (opt-in séparé, facultatif) ---------- */
 function renderCheckup(state) {
@@ -49,9 +47,6 @@ function renderCheckup(state) {
       : s === 'failed' && contact
         ? '<p class="text-center text-xs text-slate-500">La demande de check-up n’a pas pu partir. <button type="button" data-ck-retry class="font-semibold text-sky-800 underline">Réessayer</button></p>'
         : '';
-  // Déjà accepté sur cet appareil : on ne repose pas la question aux autres membres de la famille.
-  const box = form.querySelector('[data-checkup]');
-  if (box) box.hidden = s === 'yes';
 }
 
 async function sendCheckup() {
@@ -82,29 +77,25 @@ document.getElementById('checkup').addEventListener('click', (e) => {
 });
 
 /* ---------- Pass ---------- */
-function showPasses() {
-  const list = passes();
-  if (!list.length) return showForm();
-  document.getElementById('pass-card').innerHTML = list
-    .map((p) => passCardHtml(p, qrSvg(passUrl(p.token), { label: `QR code du Pass de ${p.first_name}` })))
-    .join('');
-  document.getElementById('pass-count').textContent = list.length > 1 ? `${list.length} Pass sur cet appareil` : '';
+function showPass() {
+  const pass = store.get(PASS_KEY);
+  if (!pass?.token) return showForm();
+  document.getElementById('pass-card').innerHTML = passCardHtml(pass, qrSvg(passUrl(pass.token), { label: 'QR code du Pass Patient' }));
   form.hidden = true;
   passEl.hidden = false;
   renderCheckup();
   scrollTo({ top: 0 });
 }
 
-function showForm(prefill) {
+/** Nouvelle inscription individuelle : formulaire vierge, aucun préremplissage. */
+function showForm() {
   contact = null;
   passEl.hidden = true;
   form.hidden = false;
   form.reset();
-  if (prefill) prefillIdentity(form, prefill);
-  document.getElementById('back-passes').hidden = !passes().length;
   renderCheckup();
   scrollTo({ top: 0 });
-  (prefill ? form.elements.first_name : form.elements.last_name).focus();
+  form.elements.last_name.focus();
 }
 
 document.getElementById('reg-fields').innerHTML = identityFieldsHtml('r');
@@ -112,25 +103,21 @@ bindIdentityForm(form, async (payload) => {
   const { checkup, ...identity } = payload;
   const { pass } = await api('/register', { method: 'POST', body: identity });
   const clean = (v) => (v || '').trim();
-  store.set(PASSES_KEY, [pass, ...passes().filter((p) => p.token !== pass.token)].slice(0, 12));
-  store.set(FAMILY_KEY, { last_name: clean(identity.last_name), email: clean(identity.email), phone: clean(identity.phone) }, sessionStorage);
+  store.set(PASS_KEY, pass);
+  store.set(CHECKUP_KEY, null);
   contact = checkup
     ? { first_name: clean(identity.first_name), last_name: clean(identity.last_name), email: clean(identity.email), phone: clean(identity.phone), request_id: uuid() }
     : null;
-  showPasses();
+  showPass();
   if (contact) sendCheckup();
 });
 
-document.getElementById('back-passes').addEventListener('click', showPasses);
-document.getElementById('add-family').addEventListener('click', () => showForm(store.get(FAMILY_KEY, sessionStorage)));
-document.getElementById('clear-passes').addEventListener('click', () => {
-  if (!confirm('Retirer tous les Pass de cet appareil ? (les inscriptions restent valables)')) return;
-  for (const k of [PASSES_KEY, CHECKUP_KEY]) store.set(k, null);
-  store.set(FAMILY_KEY, null, sessionStorage);
+document.getElementById('new-reg').addEventListener('click', () => {
+  if (!confirm('Inscrire une autre personne ? Ce Pass sera retiré de l’écran (pensez à en faire une capture ; l’inscription reste valable).')) return;
+  store.set(PASS_KEY, null);
+  store.set(CHECKUP_KEY, null);
   showForm();
 });
 
-if (passes().length) showPasses();
+if (store.get(PASS_KEY)?.token) showPass();
 else renderCheckup();
-
-registerSW();

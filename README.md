@@ -19,16 +19,17 @@ Application temps réel pour les consultations de prévention (11–14 nov. 2026
 
 ## Optimisations « file d'attente »
 
+Inscription **strictement individuelle** : un formulaire vierge par personne, un Pass par inscription, aucun préremplissage.
+
 | Point de friction | Solution |
 |---|---|
-| Familles : ressaisie complète, Pass précédent perdu | « + Inscrire un autre membre de la famille » : nom, e-mail, téléphone préremplis ; tous les Pass restent sur le téléphone (même hors ligne) ; consentements toujours individuels |
 | Date de naissance (sélecteur iOS à faire défiler) | Champ JJ/MM/AAAA au clavier numérique, « / » automatiques, remplissage auto accepté |
 | Soignants qui appellent le même patient | Étapes **En attente → En consultation → Terminé** synchronisées en temps réel ; bouton **Patient suivant** = le plus prioritaire en attente (rouge > orange > à mesurer > vert, puis ancienneté), marqué « En consultation » pour tous |
 | File qui ne se vide jamais | Vue « À traiter » par défaut ; « Terminé » ferme la fiche et retire le patient ; recherche toujours globale |
 | Pilotage | Temps d'attente par patient (rouge ≥ 30 min), nombre en attente et attente moyenne en tête |
 | Chargement en cascade sur réseau saturé | 1 seul fichier JS minifié par page (esbuild), préchargé |
 | Coupure Wi-Fi | Service worker : les pages se rechargent hors ligne ; saisies soignants mises en file et renvoyées (outbox) |
-| E-mails en double (famille, même adresse) | 1 seul e-mail check-up par adresse sur 7 jours |
+| E-mails en double (même adresse partagée) | 1 seul e-mail check-up par adresse sur 7 jours |
 
 ## Architecture
 
