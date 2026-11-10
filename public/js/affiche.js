@@ -1,4 +1,7 @@
+import { mountCredit } from './partner-ui.js';
 import { qrSvg } from './qr.js';
+
+mountCredit();
 
 // /affiche → inscription ; /affiche?cible=questionnaire → questionnaire anonyme
 const survey = new URLSearchParams(location.search).get('cible') === 'questionnaire';

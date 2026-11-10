@@ -20,7 +20,22 @@ const COPY = {
 export const partnerLegal = () =>
   `${esc(PARTNER.brand)} · ${esc(PARTNER.status)} pour ${esc(PARTNER.principal)} · FSMA n° ${esc(PARTNER.fsma)}${PARTNER.bce && PARTNER.bce !== PARTNER.fsma ? ` · BCE ${esc(PARTNER.bce)}` : ''}`;
 
+/** Mention « plateforme proposée par » : pied de page de toutes les pages. */
+export function mountCredit(root = document) {
+  if (!PARTNER.enabled) return;
+  for (const el of root.querySelectorAll('[data-partner-credit]')) {
+    el.innerHTML = `
+      <p class="text-xs leading-relaxed text-slate-500">
+        Cette plateforme a été proposée par <a class="font-semibold text-slate-700 underline" href="/partenaire">${esc(PARTNER.person)}</a>,
+        ${esc(PARTNER.status.charAt(0).toLowerCase() + PARTNER.status.slice(1))} pour ${esc(PARTNER.principal)} · FSMA n° ${esc(PARTNER.fsma)}<br>
+        <a class="underline" href="tel:${esc(PARTNER.phoneHref)}">${esc(PARTNER.phone)}</a> ·
+        <a class="underline" href="mailto:${esc(PARTNER.email)}">${esc(PARTNER.email)}</a>
+      </p>`;
+  }
+}
+
 export function mountPartner(root = document) {
+  mountCredit(root);
   if (!PARTNER.enabled) return;
   for (const el of root.querySelectorAll('[data-partner]')) {
     const aud = el.dataset.partner === 'pro' ? 'pro' : 'public';

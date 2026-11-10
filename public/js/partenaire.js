@@ -1,9 +1,10 @@
 import { api, esc, uuid } from './api.js';
-import { partnerLegal } from './partner-ui.js';
+import { mountCredit, partnerLegal } from './partner-ui.js';
 import { LEAD_INTERESTS, PARTNER } from './shared/partner.js';
 import { validateLead } from './shared/validate.js';
 
 if (!PARTNER.enabled) location.replace('/');
+mountCredit();
 
 const form = document.getElementById('lead');
 const btn = form.querySelector('[type=submit]');

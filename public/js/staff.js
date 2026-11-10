@@ -1,6 +1,6 @@
 import { ageOf, api, esc } from './api.js';
 import { bindIdentityForm, identityFieldsHtml, passCardHtml } from './form.js';
-import { mountPartner } from './partner-ui.js';
+import { mountCredit, mountPartner } from './partner-ui.js';
 import { passUrl, qrSvg } from './qr.js';
 import { parsePassCode, startScanner } from './scanner.js';
 import { bmi, triage } from './shared/triage.js';
@@ -13,6 +13,7 @@ const T_RANK = { 3: 0, 2: 1, 0: 2, 1: 3 };
 const MAX_ROWS = 200;
 
 const $ = (id) => document.getElementById(id);
+mountCredit($('gate'));
 const filters = { triage: 'all', doctor: 'all', q: '' };
 
 /* ---------- Utilitaires UI ---------- */

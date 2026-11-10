@@ -6,7 +6,7 @@ export const PARTNER = Object.freeze({
   enabled: true,
   brand: 'Boris Y. AKOE',
   person: 'Boris Y. AKOE',
-  status: 'Sous-agent d’assurances (assurances-vie)',
+  status: 'Sous-agent d’assurances (assurance-vie)',
   principal: 'Comopolis',
   fsma: '0803.683.897',
   bce: '0803.683.897',
