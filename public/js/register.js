@@ -25,9 +25,9 @@ function renderCheckup(state) {
   }
   box.innerHTML =
     s === 'yes'
-      ? '<p class="rounded-2xl bg-emerald-50 p-4 text-center text-sm font-semibold text-emerald-900 ring-1 ring-emerald-200">Check-up couverture : c’est noté, vous serez recontacté(e).</p>'
+      ? '<p class="text-center text-xs text-slate-500">Check-up couverture : c’est noté, vous serez recontacté(e).</p>'
       : s === 'failed' && contact
-        ? '<p class="rounded-2xl bg-amber-50 p-4 text-center text-sm text-amber-900 ring-1 ring-amber-200">Votre demande de check-up n’a pas pu partir. <button type="button" data-ck-retry class="font-bold underline">Réessayer</button></p>'
+        ? '<p class="text-center text-xs text-slate-500">La demande de check-up n’a pas pu partir. <button type="button" data-ck-retry class="font-semibold text-sky-800 underline">Réessayer</button></p>'
         : '';
 }
 
