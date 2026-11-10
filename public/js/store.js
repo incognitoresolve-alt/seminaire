@@ -179,6 +179,19 @@ function connect() {
   };
 }
 
+/** Verrouillage manuel : coupe le temps réel et vide le cache local (tablette partagée). */
+export function lock() {
+  state.status = 'locked';
+  try {
+    ws?.close(1000, 'lock');
+  } catch {
+    /* ignore */
+  }
+  rows.clear();
+  cursor = 0;
+  emit();
+}
+
 /** Relance après (re)connexion staff. */
 export async function resume() {
   state.status = 'connecting';

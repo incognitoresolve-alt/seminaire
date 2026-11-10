@@ -11,12 +11,12 @@ const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/
 
 async function hmacKey(env) {
   // Fail-closed : pas de secret => aucun accès staff.
-  if (!env.STAFF_PIN || !env.SESSION_SECRET || env.SESSION_SECRET.length < 32) throw new HttpError(503, 'not_configured');
+  if (!env.STAFF_PIN || env.STAFF_PIN.length < 8 || !env.SESSION_SECRET || env.SESSION_SECRET.length < 32) throw new HttpError(503, 'not_configured');
   return crypto.subtle.importKey('raw', enc.encode(`${env.SESSION_SECRET}\u0000${env.STAFF_PIN}`), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
 }
 
 export async function checkPin(pin, env) {
-  if (!env.STAFF_PIN) throw new HttpError(503, 'not_configured');
+  if (!env.STAFF_PIN || env.STAFF_PIN.length < 8) throw new HttpError(503, 'not_configured'); // PIN court = refus (fail-closed)
   const [a, b] = await Promise.all([
     crypto.subtle.digest('SHA-256', enc.encode(String(pin ?? ''))),
     crypto.subtle.digest('SHA-256', enc.encode(env.STAFF_PIN)),

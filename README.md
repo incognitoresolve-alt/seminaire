@@ -25,7 +25,24 @@ navigateur ──HTTPS──► Worker (src/index.js) ──► D1 (patients, su
 - **Concurrence** : last-write-wins par champ ; triage serveur mis à jour conditionnellement à la `version`.
 - **Code partagé** : `public/js/shared/{triage,validate}.js` utilisés par le navigateur ET le Worker (validation client UX + serveur sécurité, mêmes seuils).
 
-## Installation
+## Déploiement via le dashboard Cloudflare (dépôt GitHub connecté)
+
+1. **Fusionner la branche de travail dans `main`** (ou choisir cette branche comme branche de production à l'étape 4).
+2. **Créer la base D1** : *Storage & Databases → D1 → Create* · nom `seminaire` · emplacement **Western Europe** (ou juridiction UE).
+   Copier son **Database ID** dans `wrangler.toml` (`database_id = "…"`), commit, push.
+3. **Créer les tables** : D1 → `seminaire` → *Console* → coller puis exécuter le contenu de
+   `migrations/0001_init.sql`, puis celui de `migrations/0002_partner_leads.sql`.
+4. **Connecter le dépôt** : *Workers & Pages → Create → Import a repository* → `seminaire`.
+   - Nom du Worker : **`seminaire-triage`** (doit correspondre à `name` dans `wrangler.toml`)
+   - Build command : `npm run build`
+   - Deploy command : `npx wrangler deploy`
+5. **Secrets** : Worker → *Settings → Variables and Secrets* → type **Secret** :
+   - `STAFF_PIN` : **8 caractères minimum** (sinon l'accès staff est refusé, par sécurité)
+   - `SESSION_SECRET` : 32+ caractères aléatoires (ex. `openssl rand -base64 48`)
+6. *(Optionnel)* domaine perso : Worker → *Settings → Domains & Routes*, puis activer *SSL/TLS → Edge Certificates → Always Use HTTPS*.
+7. **Vérifier** : `https://<worker>/api/health` → `{"ok":true}` ; inscription test ; `/staff` sur 2 appareils (pastille « Temps réel »).
+
+## Installation (ligne de commande)
 
 ```bash
 npm ci
@@ -41,7 +58,7 @@ Dev local :
 ```bash
 cp .dev.vars.example .dev.vars
 npm run db:migrate:local
-npm run dev              # http://localhost:8787  (staff : /staff, PIN 246810)
+npm run dev              # http://localhost:8787  (staff : /staff, PIN 24681357)
 npm test                 # tests unitaires triage/validation
 ```
 

@@ -29,6 +29,7 @@ async function staffRoutes(req, env, ctx, url, path) {
 
   if (path === '/login' && method === 'POST') {
     await rateLimit(env.RL_LOGIN, clientIp(req));
+    await rateLimit(env.RL_LOGIN_GLOBAL, 'global'); // plafond global : brute force distribué (multi-IP)
     const { pin } = await readJson(req, 512);
     if (!(await checkPin(pin, env))) throw new HttpError(401, 'bad_pin');
     return json({ ok: true }, 200, { 'Set-Cookie': await sessionCookie(env) });
@@ -98,11 +99,11 @@ async function route(req, env, ctx, url) {
     return json({ ok: true });
   }
   if (path === '/api/register' && req.method === 'POST') {
-    await rateLimit(env.RL_REGISTER, clientIp(req));
+    await rateLimit(env.RL_REGISTER, `reg:${clientIp(req)}`);
     return register(req, env, ctx, 'self');
   }
   if (path === '/api/survey' && req.method === 'POST') {
-    await rateLimit(env.RL_REGISTER, clientIp(req));
+    await rateLimit(env.RL_REGISTER, `survey:${clientIp(req)}`);
     const body = await readJson(req, 16384);
     if (body?.website) throw new HttpError(400, 'invalid');
     const { ok, errors, value } = validateSurvey(body);
@@ -112,7 +113,7 @@ async function route(req, env, ctx, url) {
     return json({ ok: true }, created ? 201 : 200);
   }
   if (path === '/api/partner/lead' && req.method === 'POST' && PARTNER.enabled) {
-    await rateLimit(env.RL_REGISTER, clientIp(req));
+    await rateLimit(env.RL_REGISTER, `lead:${clientIp(req)}`);
     const body = await readJson(req, 4096);
     if (body?.website) throw new HttpError(400, 'invalid');
     const { ok, errors, value } = validateLead(body);

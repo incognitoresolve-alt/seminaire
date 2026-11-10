@@ -477,10 +477,22 @@ $('gate-form').addEventListener('submit', async (e) => {
     boot();
   } catch (err) {
     $('gate-err').textContent =
-      err.status === 401 ? 'Code incorrect' : err.status === 429 ? 'Trop d’essais, patientez une minute' : err.status === 503 ? 'Service non configuré' : 'Connexion impossible';
+      err.status === 401 ? 'Code incorrect' : err.status === 429 ? 'Trop d’essais, patientez une minute' : err.status === 503 ? 'Service non configuré (code d’accès absent ou trop court)' : 'Connexion impossible';
   } finally {
     btn.disabled = false;
   }
+});
+
+$('lock').addEventListener('click', async () => {
+  await store.flush(); // ne rien perdre avant de verrouiller
+  try {
+    await api('/staff/logout', { method: 'POST' });
+  } catch {
+    /* cookie effacé au prochain 401 de toute façon */
+  }
+  store.state.status = 'locked';
+  store.lock();
+  showGate();
 });
 
 function handleHash() {
