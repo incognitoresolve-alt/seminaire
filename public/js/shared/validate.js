@@ -1,4 +1,5 @@
 // Validation partagée client (UX) / serveur (sécurité).
+import { LEAD_INTERESTS } from './partner.js';
 const NAME_RE = /^[\p{L}\p{M}' .-]{1,80}$/u;
 const EMAIL_RE = /^[^\s@<>()[\]\\,;:"]{1,64}@[A-Za-z0-9.-]{1,190}\.[A-Za-z]{2,24}$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -150,4 +151,30 @@ export function validateSurvey(b) {
   };
   if (value.request_id && !UUID_RE.test(value.request_id)) errors.request_id = 'Identifiant invalide';
   return { ok: Object.keys(errors).length === 0, errors, value };
+}
+
+/** Demande de contact partenaire (opt-in marketing distinct, aucune donnée de santé). */
+export function validateLead(b) {
+  const errors = {};
+  const audience = b?.audience === 'pro' ? 'pro' : b?.audience === 'public' ? 'public' : null;
+  const v = {
+    audience,
+    name: clean(b?.name),
+    email: clean(b?.email).toLowerCase() || null,
+    phone: clean(b?.phone) || null,
+    interests: Array.isArray(b?.interests) ? [...new Set(b.interests.map(String))] : [],
+    message: freeText(b?.message, 1000, true),
+    consent: b?.consent === true,
+    request_id: b?.request_id ? String(b.request_id) : null,
+  };
+  if (!audience) errors.audience = 'Choix invalide';
+  if (!NAME_RE.test(v.name)) errors.name = 'Nom invalide';
+  if (v.email && (v.email.length > 254 || !EMAIL_RE.test(v.email))) errors.email = 'E-mail invalide';
+  if (v.phone && !PHONE_RE.test(v.phone)) errors.phone = 'Téléphone invalide';
+  if (!v.email && !v.phone) errors.email = 'Indiquez un e-mail ou un téléphone';
+  const allowed = audience ? Object.keys(LEAD_INTERESTS[audience]) : [];
+  if (v.interests.length > allowed.length || v.interests.some((i) => !allowed.includes(i))) errors.interests = 'Choix invalide';
+  if (!v.consent) errors.consent = 'Accord requis pour être recontacté';
+  if (v.request_id && !UUID_RE.test(v.request_id)) errors.request_id = 'Identifiant invalide';
+  return { ok: Object.keys(errors).length === 0, errors, value: v };
 }

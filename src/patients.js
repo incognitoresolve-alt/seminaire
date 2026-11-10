@@ -100,6 +100,7 @@ export async function purge(env) {
     env.DB.prepare('DELETE FROM patients WHERE deleted_at IS NOT NULL AND deleted_at < ?').bind(now - 86400e3),
     env.DB.prepare('DELETE FROM patients WHERE created_at < ?').bind(now - days * 86400e3),
     env.DB.prepare('DELETE FROM surveys WHERE created_at < ?').bind(now - days * 86400e3),
+    env.DB.prepare('DELETE FROM partner_leads WHERE created_at < ?').bind(now - Math.max(1, Number(env.LEADS_RETENTION_DAYS) || 180) * 86400e3),
   ]);
 }
 
@@ -134,4 +135,16 @@ export async function surveyStats(env) {
     env.DB.prepare("SELECT questions, created_at FROM surveys WHERE questions IS NOT NULL AND questions != '' ORDER BY created_at DESC LIMIT 100"),
   ]);
   return { ...agg.results[0], activity: freq.results, vax: vax.results, questions: qs.results };
+}
+
+/* ---------- Partenaire (table isolée) ---------- */
+export async function createLead(env, v) {
+  const now = Date.now();
+  const res = await env.DB.prepare(
+    `INSERT INTO partner_leads (id,request_id,audience,name,email,phone,interests,message,consent_at,created_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(request_id) DO NOTHING`,
+  )
+    .bind(crypto.randomUUID(), v.request_id, v.audience, v.name, v.email, v.phone, v.interests.join(',') || null, v.message, now, now)
+    .run();
+  return res.meta.changes > 0;
 }

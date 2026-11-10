@@ -1,6 +1,9 @@
 import { api } from './api.js';
 import { bindIdentityForm, identityFieldsHtml, passCardHtml } from './form.js';
+import { mountPartner } from './partner-ui.js';
 import { passUrl, qrSvg } from './qr.js';
+
+mountPartner();
 
 const KEY = 'sem-pass';
 const form = document.getElementById('reg');

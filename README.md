@@ -11,6 +11,7 @@ Application temps réel pour les consultations de prévention (11–14 nov. 2026
 | `/questionnaire` | participants | Questionnaire de prévention **anonyme** (8 sections du PDF), IMC calculé en direct, repères affichés après envoi |
 | `/staff` | soignants (PIN) | Liste temps réel triée par priorité, recherche instantanée, scanner QR, fiche (vitaux, IMC, glycémie, périmètre abdo., notes), assignation Médecin 1 (mer. 11/11) / Médecin 2 (sam. 14/11), ajout manuel, stats questionnaire en direct |
 | `/affiche` · `/affiche?cible=questionnaire` | accueil | Affiche imprimable avec QR d'entrée |
+| `/partenaire?pour=public\|pro` | tous | Page **Publicité** du partenaire assurances + formulaire de recontact (opt-in distinct) |
 
 ## Architecture
 
@@ -70,6 +71,21 @@ Le pire paramètre l'emporte ; aucune mesure = « À mesurer ». **Seuils indica
 - Droit à l'effacement (bouton fiche) : données écrasées immédiatement ; cron quotidien purge tout après `RETENTION_DAYS` (30 j).
 - Logs Workers sans PII ; `/api/health` pour l'uptime monitoring.
 - RGPD (Belgique) : données de santé (art. 9) ⇒ consentement explicite recueilli, D1 en juridiction UE. Compléter `[adresse]`/`[email-contact]` dans `confidentialite.html` et tenir le registre des traitements.
+
+## Partenaire assurances (publicité)
+
+Configuration unique : `public/js/shared/partner.js` (`enabled: false` masque tout, front et API).
+Remplir **obligatoirement** : nom commercial, mandant, n° FSMA, n° BCE, coordonnées.
+
+Encarts identifiés « Publicité » (pratique commerciale loyale, CDE art. VI.97–VI.100) uniquement :
+pied de l'inscription, fin du questionnaire (après les repères), bas de la liste staff (version « soignants », masquable).
+**Jamais** dans une fiche patient, un Pass, un résultat de triage ou les stats. Aucun ciblage selon les données de santé.
+
+Demandes de contact : table `partner_leads` isolée (aucune jointure possible avec patients/questionnaires), purge à 180 j.
+Export pour le partenaire :
+```bash
+npx wrangler d1 execute seminaire --remote --command "SELECT datetime(created_at/1000,'unixepoch') AS date, audience, name, email, phone, interests, message FROM partner_leads ORDER BY created_at" --json > leads.json
+```
 
 ## Checklist jour J
 

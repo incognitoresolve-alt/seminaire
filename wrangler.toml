@@ -43,6 +43,7 @@ simple = { limit = 1200, period = 60 }
 
 [vars]
 RETENTION_DAYS = "30"
+LEADS_RETENTION_DAYS = "180"
 
 [triggers]
 crons = ["17 3 * * *"]

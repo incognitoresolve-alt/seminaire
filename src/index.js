@@ -1,8 +1,9 @@
-import { validateIdentity, validatePatch, validateSurvey } from '../public/js/shared/validate.js';
+import { PARTNER } from '../public/js/shared/partner.js';
+import { validateIdentity, validateLead, validatePatch, validateSurvey } from '../public/js/shared/validate.js';
 import { checkPin, clearCookie, requireStaff, sessionCookie } from './auth.js';
 import { HttpError, assertSameOrigin, clientIp, json, rateLimit, readJson } from './http.js';
 import { hub } from './hub.js';
-import { createPatient, createSurvey, deletePatient, getDetail, listSince, lookup, purge, surveyStats, updatePatient } from './patients.js';
+import { createLead, createPatient, createSurvey, deletePatient, getDetail, listSince, lookup, purge, surveyStats, updatePatient } from './patients.js';
 
 export { Hub } from './hub.js';
 
@@ -108,6 +109,15 @@ async function route(req, env, ctx, url) {
     if (!ok) throw new HttpError(422, 'validation', { errors });
     const created = await createSurvey(env, value);
     if (created) broadcast(env, ctx, { t: 'survey' });
+    return json({ ok: true }, created ? 201 : 200);
+  }
+  if (path === '/api/partner/lead' && req.method === 'POST' && PARTNER.enabled) {
+    await rateLimit(env.RL_REGISTER, clientIp(req));
+    const body = await readJson(req, 4096);
+    if (body?.website) throw new HttpError(400, 'invalid');
+    const { ok, errors, value } = validateLead(body);
+    if (!ok) throw new HttpError(422, 'validation', { errors });
+    const created = await createLead(env, value);
     return json({ ok: true }, created ? 201 : 200);
   }
   if (path.startsWith('/api/staff/')) {

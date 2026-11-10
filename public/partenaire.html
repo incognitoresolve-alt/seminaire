@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Partenaire assurances – Semaine de la santé</title>
+  <meta name="description" content="Bilan assurances gratuit et sans engagement pour les familles et les professionnels de santé.">
+  <meta name="theme-color" content="#0369a1">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body class="min-h-dvh">
+  <main class="mx-auto max-w-xl px-4 pt-6 pb-16">
+    <p class="inline-block rounded-full bg-slate-200 px-3 py-1 text-xs font-bold tracking-widest text-slate-700 uppercase">Publicité</p>
+    <h1 class="mt-3 text-3xl font-extrabold" id="p-title">Un bilan assurances, simplement</h1>
+    <p class="mt-2 text-slate-600" id="p-intro"></p>
+
+    <div class="mt-4 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Vous êtes">
+      <label class="choice"><input type="radio" name="aud" value="public" form="lead"> Particulier / famille</label>
+      <label class="choice"><input type="radio" name="aud" value="pro" form="lead"> Professionnel de santé</label>
+    </div>
+
+    <form id="lead" novalidate class="relative mt-4 space-y-1 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <fieldset>
+        <legend class="label">Vos besoins <span class="font-normal text-slate-500">(facultatif)</span></legend>
+        <div id="interests" class="grid grid-cols-2 gap-2"></div>
+        <p class="err" data-err="interests"></p>
+      </fieldset>
+      <div><label class="label" for="l-name">Nom et prénom</label><input class="field" id="l-name" name="name" maxlength="80" autocomplete="name" required><p class="err" data-err="name"></p></div>
+      <div><label class="label" for="l-email">E-mail</label><input class="field" id="l-email" name="email" type="email" maxlength="254" autocomplete="email" inputmode="email"><p class="err" data-err="email"></p></div>
+      <div><label class="label" for="l-phone">Téléphone</label><input class="field" id="l-phone" name="phone" type="tel" maxlength="25" autocomplete="tel" inputmode="tel"><p class="err" data-err="phone"></p></div>
+      <div><label class="label" for="l-message">Message <span class="font-normal text-slate-500">(facultatif)</span></label><textarea class="field text-base" id="l-message" name="message" rows="3" maxlength="1000"></textarea></div>
+      <p class="rounded-xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">Ne communiquez ici <strong>aucune information médicale</strong>. Ce formulaire est indépendant du pôle santé : vos mesures et résultats de consultation ne sont jamais transmis au partenaire.</p>
+      <label class="mt-2 flex cursor-pointer items-start gap-3">
+        <input type="checkbox" name="consent" class="mt-1 size-6 shrink-0 accent-sky-700">
+        <span class="text-sm text-slate-700" id="consent-text"></span>
+      </label>
+      <p class="err" data-err="consent"></p>
+      <div class="absolute -left-[9999px]" aria-hidden="true"><label for="l-website">Ne pas remplir</label><input id="l-website" name="website" tabindex="-1" autocomplete="off"></div>
+      <p data-form-error class="err text-center" role="alert"></p>
+      <button type="submit" class="btn-primary w-full">Être recontacté(e)</button>
+    </form>
+
+    <section id="lead-done" hidden class="mt-4 rounded-3xl bg-emerald-50 p-6 text-center ring-1 ring-emerald-200" aria-live="polite">
+      <p class="text-xl font-extrabold text-emerald-900">Merci, votre demande est bien envoyée.</p>
+      <p class="mt-1 text-emerald-900">Vous serez recontacté(e) sans engagement.</p>
+    </section>
+
+    <section class="mt-8 text-xs leading-relaxed text-slate-500">
+      <h2 class="mb-1 text-sm font-bold text-slate-700">Mentions légales</h2>
+      <p id="legal"></p>
+      <p class="mt-2">Ce partenaire n’intervient pas dans les consultations et n’a accès à aucune donnée du pôle santé. Les soignants ne font aucune recommandation commerciale. Réclamations : Ombudsman des Assurances, Square de Meeûs 35, 1000 Bruxelles (ombudsman-insurance.be).</p>
+      <p class="mt-2">Données de ce formulaire : responsable de traitement le partenaire ci-dessus, finalité recontact commercial, base légale votre consentement (retirable à tout moment), conservation 180 jours maximum sans suite.</p>
+    </section>
+    <p class="mt-6 text-center text-sm"><a class="underline" href="/">← Retour</a></p>
+  </main>
+  <script type="module" src="/js/partenaire.js"></script>
+</body>
+</html>

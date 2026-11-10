@@ -1,4 +1,5 @@
 import { api, esc, uuid } from './api.js';
+import { mountPartner } from './partner-ui.js';
 import { bmi } from './shared/triage.js';
 import { validateSurvey } from './shared/validate.js';
 
@@ -28,6 +29,7 @@ form.addEventListener('input', (e) => (e.target.name === 'weight' || e.target.na
 function showThanks() {
   form.hidden = true;
   document.getElementById('thanks').hidden = false;
+  mountPartner();
   document.getElementById('answers').innerHTML = ANSWERS.map(([t, d]) => `<li><strong class="text-slate-900">${esc(t)} :</strong> ${esc(d)}</li>`).join('');
   scrollTo({ top: 0 });
 }

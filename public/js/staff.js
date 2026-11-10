@@ -1,5 +1,6 @@
 import { ageOf, api, esc } from './api.js';
 import { bindIdentityForm, identityFieldsHtml, passCardHtml } from './form.js';
+import { mountPartner } from './partner-ui.js';
 import { passUrl, qrSvg } from './qr.js';
 import { parsePassCode, startScanner } from './scanner.js';
 import { bmi, triage } from './shared/triage.js';
@@ -491,7 +492,10 @@ let subscribed = false;
 async function boot() {
   $('gate').hidden = true;
   $('app').hidden = false;
-  if (!subscribed) subscribed = !!store.subscribe(renderList);
+  if (!subscribed) {
+    subscribed = !!store.subscribe(renderList);
+    mountPartner();
+  }
   renderList();
   await store.start();
   if (store.state.status !== 'locked') handleHash();

@@ -49,3 +49,13 @@ test('questionnaire : taille en m ou cm, choix bornés', () => {
   assert.ok(validateSurvey({ screen_hours: '30' }).errors.screen_hours);
   assert.ok(validateSurvey({}).ok);
 });
+
+import { validateLead } from '../public/js/shared/validate.js';
+test('lead partenaire : opt-in distinct, contact requis, intérêts whitelistés', () => {
+  const base = { audience: 'pro', name: 'Jean Dupont', email: 'j@d.be', interests: ['rc_pro'], consent: true };
+  assert.ok(validateLead(base).ok);
+  assert.ok(validateLead({ ...base, consent: undefined }).errors.consent);
+  assert.ok(validateLead({ ...base, email: '' }).errors.email);
+  assert.ok(validateLead({ ...base, interests: ['auto'] }).errors.interests); // auto = public uniquement
+  assert.ok(validateLead({ ...base, audience: 'x' }).errors.audience);
+});
