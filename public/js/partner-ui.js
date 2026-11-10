@@ -26,7 +26,7 @@ export function mountCredit(root = document) {
   for (const el of root.querySelectorAll('[data-partner-credit]')) {
     el.innerHTML = `
       <p class="text-xs leading-relaxed text-slate-500">
-        Cette plateforme a été proposée par <a class="font-semibold text-slate-700 underline" href="/partenaire">${esc(PARTNER.person)}</a>,
+        CheckSanté a été proposé par <a class="font-semibold text-slate-700 underline" href="/partenaire">${esc(PARTNER.person)}</a>,
         ${esc(PARTNER.status.charAt(0).toLowerCase() + PARTNER.status.slice(1))} pour ${esc(PARTNER.principal)} · FSMA n° ${esc(PARTNER.fsma)}<br>
         <a class="underline" href="tel:${esc(PARTNER.phoneHref)}">${esc(PARTNER.phone)}</a> ·
         <a class="underline" href="mailto:${esc(PARTNER.email)}">${esc(PARTNER.email)}</a>

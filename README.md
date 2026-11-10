@@ -1,4 +1,8 @@
-# Semaine de la santé · ICC Liège — Inscription, triage & questionnaire
+# CheckSanté — Semaine de la santé · ICC Liège
+
+Inscription, triage temps réel & questionnaire de prévention.
+
+> Logo : croix médicale blanche sur fond bleu + check vert. **Ne jamais utiliser une croix rouge sur fond blanc** (emblème protégé, Conventions de Genève / loi belge du 4 juillet 1956).
 
 Application temps réel pour les consultations de prévention (11–14 nov. 2026).
 **Cloudflare Workers + D1 + Durable Objects**, front HTML/ES modules + Tailwind v4. Zéro framework, 2 dépendances runtime figées (`qrcode-generator`, `jsqr`).

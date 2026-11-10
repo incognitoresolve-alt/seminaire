@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#0f172a">
-  <title>Pôle soins – Séminaire</title>
+  <title>CheckSanté – Pôle soins</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="modulepreload" href="/js/staff.js">
   <link rel="modulepreload" href="/js/store.js">
@@ -14,7 +14,8 @@
 <body class="min-h-dvh">
   <!-- Verrou PIN d'événement -->
   <main id="gate" hidden class="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-4">
-    <h1 class="text-center text-3xl font-extrabold">Pôle soins</h1>
+    <p class="mb-2 flex justify-center text-3xl font-black"><span class="inline-flex items-center gap-2"><img src="/logo.svg" alt="" class="size-11" width="44" height="44"><span>Check<span class="text-sky-700">Santé</span></span></span></p>
+    <h1 class="text-center text-xl font-bold text-slate-700">Pôle soins</h1>
     <p class="mt-2 mb-6 text-center text-slate-600">Code d’accès de l’événement</p>
     <form id="gate-form" class="space-y-3">
       <label class="sr-only" for="pin">Code PIN</label>
@@ -28,7 +29,7 @@
   <div id="app" hidden>
     <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div class="mx-auto flex max-w-5xl items-center gap-2 px-4 py-2">
-        <h1 class="mr-auto text-lg font-extrabold">Pôle soins</h1>
+        <h1 class="mr-auto flex items-center gap-2 text-lg font-extrabold"><img src="/logo.svg" alt="" class="size-8" width="32" height="32"><span>Check<span class="text-sky-700">Santé</span><span class="hidden font-semibold text-slate-500 sm:inline"> · Pôle soins</span></span></h1>
         <span id="status" class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold" role="status" aria-live="polite"></span>
         <button id="lock" class="btn-ghost min-h-11 px-3" type="button" aria-label="Verrouiller cette tablette" title="Verrouiller">
           <svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>

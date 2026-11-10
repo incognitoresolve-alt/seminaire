@@ -1,9 +1,9 @@
 {
-  "name": "seminaire-triage",
+  "name": "checksante",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Enregistrement éclair et triage temps réel pour séminaire (Cloudflare Workers + D1 + Durable Objects)",
+  "description": "CheckSanté – enregistrement éclair et triage temps réel pour séminaire (Cloudflare Workers + D1 + Durable Objects)",
   "scripts": {
     "build": "node scripts/vendor.mjs && tailwindcss -i styles/input.css -o public/app.css --minify",
     "dev": "npm run build && wrangler dev",
