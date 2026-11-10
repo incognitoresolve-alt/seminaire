@@ -43,6 +43,8 @@ navigateur ──HTTPS──► Worker (src/index.js) ──► D1 (patients, su
 - **Concurrence** : last-write-wins par champ ; triage serveur mis à jour conditionnellement à la `version`.
 - **Code partagé** : `web/shared/{triage,validate}.js` utilisés par le navigateur ET le Worker (validation client UX + serveur sécurité, mêmes seuils).
 
+> **Liste détaillée de tout ce qui reste à faire : [`docs/A-FAIRE.md`](docs/A-FAIRE.md)**
+
 ## Déploiement via le dashboard Cloudflare (dépôt GitHub connecté)
 
 1. **Fusionner la branche de travail dans `main`** (ou choisir cette branche comme branche de production à l'étape 4).
