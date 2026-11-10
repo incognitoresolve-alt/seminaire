@@ -18,6 +18,7 @@ export const PARTNER = Object.freeze({
 
 export const LEAD_INTERESTS = Object.freeze({
   public: {
+    checkup: 'Check-up gratuit de ma couverture',
     epargne_pension: 'Épargne-pension',
     epargne_long_terme: 'Épargne à long terme',
     placement: 'Assurance-placement (branche 23)',

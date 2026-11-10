@@ -104,6 +104,8 @@ pied de l'inscription, fin du questionnaire (après les repères), bas de la lis
 **Jamais** dans une fiche patient, un Pass, un résultat de triage ou les stats. Aucun ciblage selon les données de santé.
 
 Demandes de contact : table `partner_leads` isolée (aucune jointure possible avec patients/questionnaires), purge à 180 j.
+Proposition « check-up couverture » : encart opt-in sur l'écran du Pass (après inscription), un clic = demande de contact (nom/e-mail/téléphone uniquement). Modèle d'e-mail conforme : `docs/modele-email-checkup.md`.
+
 Export pour le partenaire :
 ```bash
 npx wrangler d1 execute seminaire --remote --command "SELECT datetime(created_at/1000,'unixepoch') AS date, audience, name, email, phone, interests, message FROM partner_leads ORDER BY created_at" --json > leads.json
