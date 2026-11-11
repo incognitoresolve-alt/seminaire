@@ -5,7 +5,7 @@ import { HttpError, assertSameOrigin, clientIp, json, rateLimit, readJson } from
 import { hub } from './hub.js';
 import { ensureSchema } from './schema.js';
 import { sendCheckupMail } from './mail.js';
-import { createFeedback, deleteFeedback, listFeedback, updateFeedback, alreadyMailed, createLead, deleteLead, deleteLeadByToken, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, markMailed, qualifyLead, updateLead, createPatient, deletePatient, getDetail, listSince, purge, updatePatient } from './patients.js';
+import { createFeedback, deleteFeedback, listFeedback, updateFeedback, alreadyMailed, createLead, deleteLead, deleteLeadByToken, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, markMailed, qualifyLead, updateLead, consentProof, createPatient, deletePatient, getDetail, listSince, purge, updatePatient } from './patients.js';
 
 export { Hub } from './hub.js';
 
@@ -62,7 +62,7 @@ async function staffRoutes(req, env, ctx, url, path) {
     const s = await eventStats(env);
     const rows = [
       ['Inscriptions', s.total], ['Inscrites en autonomie (QR)', s.self], ['Inscrites à l’accueil', s.staff], ['Paramètres relevés', s.measured],
-      ['Parcours terminés', s.done], ['Accord transmission médecin (%)', s.consent_rate], ['Attente moyenne avant appel (min)', s.avg_wait_min ?? ''],
+      ['Parcours terminés', s.done], ['Accord transmission médecin traitant (%)', s.consent_rate], ['Attente moyenne avant appel (min)', s.avg_wait_min ?? ''],
       ['Intérêt check-up couverture (%)', s.checkup_rate],
       ...s.per_day.map((x) => [`Inscriptions le ${x.d}`, x.n]),
       ...Object.entries(s.ages).map(([k, n]) => [`Âge ${k} ans`, n]),
@@ -73,6 +73,15 @@ async function staffRoutes(req, env, ctx, url, path) {
   }
 
 
+  // Fiche de transmission au médecin traitant (document à imprimer / enregistrer en PDF).
+  const fm = path.match(/^\/patients\/([0-9a-f-]{36})\/fiche$/);
+  if (fm && method === 'GET') {
+    const row = await getDetail(env, fm[1]);
+    if (!row) throw new HttpError(404, 'not_found');
+    if (row.doctor_consent !== 1) throw new HttpError(403, 'consent_required'); // fail-closed : jamais sans accord du participant
+    const { consent_log: _log, token: _token, ...patient } = row;
+    return json({ patient, proof: await consentProof(row), generated_at: Date.now() });
+  }
   const m = path.match(/^\/patients\/([^/]+)$/);
   if (m) {
     const id = m[1];
@@ -80,7 +89,8 @@ async function staffRoutes(req, env, ctx, url, path) {
     if (method === 'GET') {
       const row = await getDetail(env, id);
       if (!row) throw new HttpError(404, 'not_found');
-      return json({ patient: row });
+      const { consent_log: _log, ...patient } = row;
+      return json({ patient, proof: await consentProof(row) });
     }
     if (method === 'PATCH') {
       const { ok, errors, value } = validatePatch(await readJson(req, 4096));

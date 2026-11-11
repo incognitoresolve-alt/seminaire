@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#5b1f8c">
+  <title>Fiche médecin traitant – CheckSanté</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="modulepreload" href="/dist/fiche.js">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body class="min-h-dvh print:bg-white">
+  <nav aria-label="Actions" class="glass mx-auto my-4 flex w-[min(210mm,calc(100%-2rem))] flex-wrap items-center gap-2 rounded-2xl p-3 print:hidden">
+    <p class="mr-auto text-sm font-semibold text-slate-700">Imprimez ou choisissez « Enregistrer au format PDF », puis envoyez le PDF au médecin traitant.</p>
+    <button id="print" class="btn-primary" type="button" disabled>Imprimer / Enregistrer en PDF</button>
+    <button id="close" class="btn-ghost" type="button">Fermer</button>
+  </nav>
+  <main id="doc" class="mx-auto mb-8 w-[min(210mm,calc(100%-2rem))] rounded-2xl bg-white p-[clamp(1rem,4vw,2.5rem)] text-slate-900 shadow-xl print:m-0 print:w-full print:rounded-none print:p-0 print:shadow-none" aria-live="polite">
+    <p class="py-16 text-center text-slate-500"><span class="spinner" aria-hidden="true"></span> Chargement de la fiche…</p>
+  </main>
+  <script type="module" src="/dist/fiche.js"></script>
+</body>
+</html>

@@ -17,3 +17,8 @@ CREATE TABLE IF NOT EXISTS feedback (id TEXT PRIMARY KEY, request_id TEXT UNIQUE
   message TEXT NOT NULL, contact TEXT, status TEXT NOT NULL DEFAULT 'nouveau' CHECK (status IN ('nouveau','lu','traite')), admin_notes TEXT,
   created_at INTEGER NOT NULL, updated_at INTEGER);
 CREATE INDEX IF NOT EXISTS idx_feedback_created ON feedback(created_at);
+
+-- Preuve des accords (RGPD art. 7.1) : date de la dernière décision de transmission au médecin traitant
+-- + historique horodaté (JSON : texte versionné, moyen, empreinte SHA-256). Facultatif : appliqué automatiquement.
+ALTER TABLE patients ADD COLUMN doctor_consent_at INTEGER;
+ALTER TABLE patients ADD COLUMN consent_log TEXT;

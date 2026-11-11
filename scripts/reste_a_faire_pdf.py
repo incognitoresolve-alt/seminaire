@@ -191,6 +191,7 @@ story.append(Task('4', 'Faire un vrai test avec 2 tablettes', '10 min', [
     f'Tablettes A et B : {a(SITE + "/staff")} → taper le <b>STAFF_PIN</b> → pastille verte <b>Temps réel</b>.',
     f'{b("Liste des inscrits")} → taper le nom → ouvrir la fiche → saisir une tension (ex. 150/85) → '
     f'choisir {b("Médecin 1")} → la fiche change sur l’autre tablette en quelques secondes.',
+    f'Sur la fiche d’une personne qui a dit « J’autorise » : {b("Fiche pour le médecin traitant (PDF)")} → la preuve de l’accord s’affiche (« ✓ vérifiée »).',
     f'{a(SITE + "/remarques")} → envoyer une remarque « Test » → {a(SITE + "/admin")} (ADMIN_KEY) → onglet {b("Remarques")} : elle apparaît.',
     'Mauvais PIN 11 fois de suite → « Trop d’essais, patientez une minute » (protection normale).',
 ], prio=True))
@@ -270,9 +271,9 @@ story.append(Task('12', 'E-mails automatiques « check-up » (Brevo) + nom de do
 # ---------------------------------------------------------------- Après
 story += [gap(4)]
 story.append(KeepTogether([P('APRÈS L’ÉVÉNEMENT', 'kick'), P('Clôturer proprement', 'h2'), Task('13', 'Transmettre, sécuriser, effacer', '20 min', [
-    '<b>Médecins</b> : uniquement les personnes qui ont autorisé la transmission. Requête prête dans '
-    f'{a(REPO + "/blob/main/docs/A-FAIRE.md", "docs/A-FAIRE.md, section I")}. Envoi par messagerie santé sécurisée '
-    '(eHealthBox), <b>jamais par Gmail</b>.',
+    f'<b>Médecins traitants</b> (personnes qui ont autorisé la transmission) : fiche soignant → {b("Fiche pour le médecin traitant (PDF)")} '
+    f'→ {b("Imprimer / Enregistrer en PDF")} → envoi au médecin indiqué, de préférence par messagerie sécurisée (eHealthBox). '
+    'La fiche contient la preuve de l’accord (texte exact, date et heure, empreinte vérifiée).',
     f'<b>Contacts check-up</b> : {a(SITE + "/admin")} → {b("Mes contacts")} → statut, notes, {b("Télécharger (Excel / CSV)")}. '
     'Une seule relance maximum ; « STOP » = effacement immédiat.',
     f'<b>Sécurité</b> : changer ou supprimer {c("STAFF_PIN")} dans Cloudflare → plus aucun accès soignants.',

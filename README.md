@@ -11,9 +11,10 @@ Application temps réel pour les consultations de prévention (11–14 nov. 2026
 
 | URL | Public | Rôle |
 |---|---|---|
-| `/` | participants | Inscription (identité + accord consultation + transmission de ses données à un médecin qui pourra suivre son dossier) par l'accueil ; formulaire vidé aussitôt pour la personne suivante (aucun Pass, rien stocké sur la tablette) |
+| `/` | participants | Inscription (identité + accord consultation + transmission de ses données à son médecin traitant, dont le nom est demandé si l'accord est donné) par l'accueil ; formulaire vidé aussitôt pour la personne suivante (aucun Pass, rien stocké sur la tablette) |
 | `/staff` | soignants (PIN) | Liste temps réel triée par priorité, recherche instantanée par nom, fiche (vitaux, IMC, glycémie, périmètre abdo., notes), assignation Médecin 1 (mer. 11/11) / Médecin 2 (sam. 14/11), ajout manuel, bilan anonyme en direct |
 | `/affiche` · `/affiche?cible=remarques` | accueil | Affiche A4 imprimable : QR d'auto-inscription (« Pas envie d'attendre ? ») ou des remarques des intervenants. Site officiel pré-rempli (modifiable) ; PDF prêts dans `docs/affiches/` ; localhost, réseau local et http refusés, impression bloquée sans adresse valide |
+| `/fiche?id=…` | soignants (PIN) | **Fiche pour le médecin traitant** (bouton de la fiche soignant) : identité, mesures, notes et **preuve de l'accord** (texte exact, date et heure, moyen, historique, empreinte SHA-256 vérifiée). Imprimer / Enregistrer en PDF, puis envoyer. Refusée sans accord (403) |
 | `/remarques` | soignants, médecins, intervenants, bénévoles | Remarques et propositions (rôle, type, message, nom/contact au choix) → `/admin`, onglet **Remarques** (clé `ADMIN_KEY`) : statut Nouveau / Lu / Traité, notes, export CSV. Affiche QR : `/affiche?cible=remarques` |
 | `/partenaire?pour=public\|pro` | tous | Page **Publicité** du partenaire assurances + formulaire de recontact (opt-in distinct) |
 
@@ -129,7 +130,7 @@ Format imposé : 1. Note importante · 2. Niveau d'urgence (112 / urgence médic
 - CSP stricte (`script-src 'self'`, aucun inline), HSTS, X-Frame-Options DENY, Permissions-Policy (caméra, micro, géolocalisation désactivés).
 - Rate limiting natif par IP (inscription 120/min — un Wi-Fi partagé = une IP —, login 10/min, API 1200/min).
 - Honeypot + idempotence (`request_id`) : double-clic ou réseau instable ⇒ jamais de doublon.
-- Minimisation : e-mail et téléphone chargés uniquement à l'ouverture d'une fiche ; sans accord de transmission, aucune assignation à un médecin n'est possible (contrôle serveur) ; les remarques des intervenants ne sont lisibles qu'avec `ADMIN_KEY`.
+- Minimisation : e-mail et téléphone chargés uniquement à l'ouverture d'une fiche ; sans accord de transmission, aucune fiche pour le médecin traitant ne peut être produite et son nom n'est pas enregistré (contrôle serveur) ; l'assignation Médecin 1 / 2 de l'événement relève de l'accord de consultation ; les remarques des intervenants ne sont lisibles qu'avec `ADMIN_KEY`.
 - Droit à l'effacement (bouton fiche) : données écrasées immédiatement ; cron quotidien purge tout après `RETENTION_DAYS` (30 j).
 - Logs Workers sans PII ; `/api/health` pour l'uptime monitoring.
 - RGPD (Belgique) : données de santé (art. 9) ⇒ consentement explicite recueilli, D1 en juridiction UE. Compléter `[adresse]`/`[email-contact]` dans `confidentialite.html` et tenir le registre des traitements.
@@ -181,3 +182,10 @@ npx wrangler d1 execute seminaire --remote --command "SELECT datetime(created_at
 
 `docs/video/CheckSante-tutoriel.mp4` (1080p, 30 i/s, son) : inscription (2 accords + option check-up assurance) → liste des inscrits → mesures et analyse → transmission au médecin.
 Régénérer : `node scripts/render_video.mjs /tmp/frames` · `python3 scripts/soundtrack.py /tmp/son.wav` · `ffmpeg -framerate 30 -i /tmp/frames/f%04d.jpg -i /tmp/son.wav -c:v libx264 -crf 18 -pix_fmt yuv420p -c:a aac -shortest -movflags +faststart docs/video/CheckSante-tutoriel.mp4` (source : `docs/video/source/video.html`).
+
+## Preuve des accords (RGPD art. 7.1 · eIDAS art. 3.10)
+
+Chaque décision (accord de consultation, accord / refus / retrait de transmission au médecin traitant) est ajoutée à `patients.consent_log` (JSON, jamais réécrit) :
+date et heure serveur, **version du texte exact** affiché (`web/shared/consent.js`, une version publiée n'est jamais modifiée), moyen (`self` formulaire en ligne,
+`staff` saisie par l'équipe, `sheet` fiche soignant) et empreinte **SHA-256**. La fiche médecin recalcule chaque empreinte (« ✓ vérifiée » / « ✗ altérée »)
+et affiche une empreinte globale du dossier d'accord. Inscriptions antérieures : accords « reconstitués » (date d'inscription, ancienne formulation), signalés comme tels.

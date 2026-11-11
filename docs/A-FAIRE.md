@@ -178,12 +178,14 @@ DELETE FROM partner_leads;
 
 ## I. Après l'événement
 
-1. **Dossiers par médecin** (uniquement les personnes qui ont autorisé la transmission) — D1 Console :
+1. **Fiches pour les médecins traitants** (uniquement les personnes qui ont autorisé la transmission) : espace soignants → ouvrir la fiche →
+   bouton **Fiche pour le médecin traitant (PDF)** → **Imprimer / Enregistrer en PDF** → envoyer le PDF au médecin traitant (nom indiqué sur la fiche).
+   La fiche contient la **preuve de l'accord** (texte exact, date et heure, moyen, empreinte vérifiée). Envoi **de préférence par messagerie sécurisée**
+   (eHealthBox) ; par e-mail classique, seulement à l'adresse du cabinet, en vérifiant le destinataire. Liste des personnes concernées — D1 Console :
    ```sql
-   SELECT doctor, last_name, first_name, birth_date, pulse, temp, sys, dia, glucose, weight, height, waist, notes, triage
-   FROM patients WHERE doctor_consent = 1 AND doctor IS NOT NULL AND deleted_at IS NULL ORDER BY doctor, triage DESC;
+   SELECT last_name, first_name, birth_date, gp_name, doctor_consent_at FROM patients
+   WHERE doctor_consent = 1 AND deleted_at IS NULL ORDER BY last_name;
    ```
-   `doctor` = 1 (Médecin 1, mercredi) ou 2 (Médecin 2, samedi). Transmettre **par un moyen sécurisé** (eHealthBox, messagerie santé), **jamais par Gmail**.
 2. **Contacts check-up** (toi uniquement) : `https://seminaire-triage.incognitoresolve.workers.dev/admin` + ta clé `PARTNER_KEY` → onglet *Mes contacts*.
    Statut par contact (Nouveau → Contacté → Rendez-vous → Client), notes, bouton **Télécharger (Excel / CSV)**.
    Une relance maximum, « STOP » = bouton d'effacement (`docs/modele-email-checkup.md`).

@@ -51,8 +51,10 @@ export function validateIdentity(b, now = new Date()) {
     phone: clean(b?.phone) || null,
     consent: b?.consent === true,
     doctor_consent: b?.doctor_consent,
+    gp_name: cleanName(b?.gp_name) || null,
     request_id: b?.request_id ? String(b.request_id) : null,
   };
+  if (v.doctor_consent !== true) v.gp_name = null; // minimisation : nom du médecin traitant seulement si transmission autorisée
   if (!NAME_RE.test(v.last_name)) errors.last_name = 'Nom invalide';
   if (!NAME_RE.test(v.first_name)) errors.first_name = 'Prénom invalide';
   if (!DATE_RE.test(v.birth_date)) {
@@ -66,6 +68,7 @@ export function validateIdentity(b, now = new Date()) {
   if (v.phone && !PHONE_RE.test(v.phone)) errors.phone = 'Téléphone invalide';
   if (!v.consent) errors.consent = 'Accord obligatoire pour la consultation';
   if (v.doctor_consent !== true && v.doctor_consent !== false) errors.doctor_consent = 'Choisissez une option';
+  if (v.gp_name && !NAME_RE.test(v.gp_name)) errors.gp_name = 'Nom invalide (lettres, espaces, points, tirets)';
   if (v.request_id && !UUID_RE.test(v.request_id)) errors.request_id = 'Identifiant invalide';
   return { ok: Object.keys(errors).length === 0, errors, value: v };
 }
@@ -108,6 +111,11 @@ export function validatePatch(b) {
     } else if (k === 'doctor_consent') {
       if (raw === 0 || raw === 1) value.doctor_consent = raw;
       else errors.doctor_consent = 'Valeur invalide';
+    } else if (k === 'gp_name') {
+      const n = raw === null ? '' : typeof raw === 'string' ? cleanName(raw) : null;
+      if (n === '') value.gp_name = null;
+      else if (n && NAME_RE.test(n)) value.gp_name = n;
+      else errors.gp_name = 'Nom du médecin traitant invalide';
     } else if (k === 'doctor') {
       if (raw === null || raw === 1 || raw === 2) value.doctor = raw;
       else errors.doctor = 'Médecin invalide';
