@@ -23,12 +23,7 @@ CREATE INDEX IF NOT EXISTS idx_feedback_created ON feedback(created_at);
 ALTER TABLE patients ADD COLUMN doctor_consent_at INTEGER;
 ALTER TABLE patients ADD COLUMN consent_log TEXT;
 
--- Accord facultatif : figurer dans le rapport nominatif d'ICC Liège (nom, prénom, GSM des personnes reçues au pôle santé).
--- Facultatif : appliqué automatiquement par l'application.
-ALTER TABLE patients ADD COLUMN church_consent INTEGER NOT NULL DEFAULT 0 CHECK (church_consent IN (0,1));
-
--- Envois manuels (aucun envoi automatique) : e-mail du médecin traitant, date d'envoi notée, réglages admin (e-mail d'ICC Liège).
+-- Envois manuels (aucun envoi automatique) : e-mail du médecin traitant et date d'envoi notée.
 -- Facultatif : appliqué automatiquement par l'application.
 ALTER TABLE patients ADD COLUMN gp_email TEXT;
 ALTER TABLE patients ADD COLUMN gp_sent_at INTEGER;
-CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT, updated_at INTEGER NOT NULL);

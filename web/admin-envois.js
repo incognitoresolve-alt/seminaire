@@ -1,7 +1,7 @@
 // Onglet « Envois » de /admin (clé ADMIN_KEY) : AUCUN envoi automatique.
 // L'application prépare l'e-mail (destinataire, objet, message) ; la personne joint le fichier et envoie elle-même.
 import { api, esc } from './api.js';
-import { validateEmailSetting } from './shared/validate.js';
+import { validateEmail } from './shared/validate.js';
 
 const $ = (id) => document.getElementById(id);
 const TZ = { timeZone: 'Europe/Brussels' };
@@ -9,23 +9,6 @@ const dDay = (ms) => new Date(ms).toLocaleDateString('fr-BE', { ...TZ, day: '2-d
 const dTime = (ms) => new Date(ms).toLocaleString('fr-BE', { ...TZ, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 const iso = (s) => (s ? s.split('-').reverse().join('/') : '');
 const mailto = (to, subject, body) => `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
-function churchMail(n) {
-  const file = `rapport-icc-pole-sante-${new Date().toISOString().slice(0, 10)}.csv`;
-  return {
-    subject: 'Rapport pôle santé – Séminaire spécial ICC Liège',
-    body: `Bonjour,
-
-Veuillez trouver en pièce jointe le rapport des personnes reçues au pôle santé du séminaire spécial (11 → 14 novembre 2026) qui ont accepté d’y figurer : ${n} personne(s) (nom, prénom, GSM, date de passage).
-
-Fichier à joindre : ${file}
-
-Ces données sont confidentielles : merci de les utiliser uniquement pour le suivi de l’événement.
-
-Bien cordialement,
-Pôle santé – Séminaire spécial ICC Liège`,
-  };
-}
 
 function gpMail(x) {
   return {
@@ -42,8 +25,6 @@ Pôle santé – Séminaire spécial ICC Liège`,
 }
 
 export function initEnvois({ toast, onAuthLost }) {
-  let church = null;
-  let reportN = 0;
   let items = [];
   let filter = 'todo';
   const fail = (e, msg) => (e.status === 401 || e.status === 403 ? onAuthLost() : toast(msg, 'error'));
@@ -55,13 +36,6 @@ export function initEnvois({ toast, onAuthLost }) {
     } catch {
       toast('Copie impossible sur cet appareil', 'error');
     }
-  }
-
-  function renderChurch() {
-    $('e-church').value = church || '';
-    $('e-report-n').textContent = reportN;
-    $('e-church-mail').disabled = !church;
-    $('e-church-hint').textContent = church ? '' : 'Enregistrez d’abord l’e-mail d’ICC Liège.';
   }
 
   function render() {
@@ -95,11 +69,7 @@ export function initEnvois({ toast, onAuthLost }) {
 
   async function load() {
     try {
-      const [s, t, r] = await Promise.all([api('/admin/settings'), api('/admin/transmissions'), api('/admin/report')]);
-      church = s.church_email;
-      items = t.items;
-      reportN = r.rows.length;
-      renderChurch();
+      items = (await api('/admin/transmissions')).items;
       render();
     } catch (e) {
       fail(e, 'Chargement des envois impossible');
@@ -118,26 +88,10 @@ export function initEnvois({ toast, onAuthLost }) {
     }
   }
 
-  $('e-church-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const v = validateEmailSetting($('e-church').value);
-    $('e-church-err').textContent = v.ok ? '' : v.error;
-    if (!v.ok) return;
-    try {
-      church = (await api('/admin/settings', { method: 'PUT', body: { church_email: v.value } })).church_email;
-      renderChurch();
-      toast(church ? 'E-mail d’ICC Liège enregistré ✓' : 'E-mail effacé');
-    } catch (err) {
-      fail(err, 'Enregistrement impossible');
-    }
-  });
-  $('e-church-mail').addEventListener('click', () => church && (location.href = mailto(church, churchMail(reportN).subject, churchMail(reportN).body)));
-  $('e-church-copy').addEventListener('click', () => copy(church, churchMail(reportN)));
-
   $('e-list').addEventListener('change', (e) => {
     if (!e.target.matches('[data-gp-email]')) return;
     const li = e.target.closest('[data-id]');
-    const v = validateEmailSetting(e.target.value);
+    const v = validateEmail(e.target.value);
     e.target.setAttribute('aria-invalid', String(!v.ok));
     if (!v.ok) return toast('E-mail invalide', 'error');
     patch(li.dataset.id, { gp_email: v.value }, v.value ? 'E-mail du médecin enregistré ✓' : 'E-mail effacé');

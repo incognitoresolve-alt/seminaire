@@ -56,10 +56,7 @@ export function identityFieldsHtml(prefix, { staff = false } = {}) {
       </div>
       <p class="err" id="${prefix}-doctor_consent-err" aria-live="polite"></p>
     </fieldset>
-    <label class="mt-3 flex cursor-pointer items-start gap-2 px-1">
-      <input type="checkbox" name="church_consent" class="mt-0.5 size-4 shrink-0 accent-sky-700">
-      <span class="text-xs leading-snug text-slate-600">${esc(CONSENT_TEXTS[CURRENT.eglise[staff ? 'staff' : 'self']])}</span>
-    </label>${
+${
       !staff && PARTNER.enabled
         ? `
     <label data-checkup class="mt-3 flex cursor-pointer items-start gap-2 px-1">
@@ -139,7 +136,6 @@ export function bindIdentityForm(form, send) {
       phone: fd.get('phone') || undefined,
       consent: fd.get('consent') === 'on',
       doctor_consent: fd.get('doctor_consent') === '1' ? true : fd.get('doctor_consent') === '0' ? false : undefined,
-      church_consent: fd.get('church_consent') === 'on',
       checkup: fd.get('checkup') === 'on', // opt-in partenaire, retiré avant l'appel /register
       website: fd.get('website') || undefined,
       request_id: requestId,

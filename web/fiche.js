@@ -40,7 +40,7 @@ function render({ patient: p, proof, generated_at }) {
   const al = [...parseAlerts(p.alerts)].map((k) => ALERTS[k] || CONTEXTS[k] || k);
   const t = proof.transmission;
   const hist = proof.entries
-    .filter((e) => e.k !== 'eglise') // le rapport ICC ne concerne pas le médecin traitant
+    .filter((e) => e.k !== 'eglise') // ancien accord « rapport ICC » (fonction retirée) : sans objet pour le médecin traitant
     .map(
       (e) => `<tr class="border-b border-slate-200 align-top">
         <td class="py-1.5 pr-2 whitespace-nowrap">${esc(dt(e.at))}</td>

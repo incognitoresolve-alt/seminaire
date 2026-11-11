@@ -2,7 +2,6 @@ import { api, esc } from './api.js';
 import { initFeedback } from './admin-feedback.js';
 import { initEnvois } from './admin-envois.js';
 import { initQr } from './admin-qr.js';
-import { initReport } from './admin-report.js';
 import { LEAD_INTERESTS } from './shared/partner.js';
 import { CONTACT_TIMES, LEAD_STATUS } from './shared/validate.js';
 
@@ -163,7 +162,6 @@ $('t-empty').addEventListener('click', () =>
 
 /* ---------- Remarques des intervenants (clé ADMIN_KEY) ---------- */
 const feedback = initFeedback({ toast, onAuthLost: () => start() });
-const report = initReport({ toast, onAuthLost: () => start() });
 const envois = initEnvois({ toast, onAuthLost: () => start() });
 initQr({ toast });
 
@@ -174,12 +172,10 @@ function showTab(t) {
   $('tab-trash').hidden = t !== 'trash';
   $('tab-contacts').hidden = t !== 'contacts';
   $('tab-feedback').hidden = t !== 'feedback';
-  $('tab-report').hidden = t !== 'report';
   $('tab-qr').hidden = t !== 'qr';
   $('tab-envois').hidden = t !== 'envois';
   if (t === 'envois') envois.load();
   feedback.watch(t === 'feedback');
-  if (t === 'report') report.load();
   if (t === 'trash') loadTrash();
   if (t === 'feedback') feedback.load();
   if (t === 'contacts') loadContacts();
@@ -202,7 +198,6 @@ async function start() {
   $('btn-trash').hidden = !roles.admin;
   $('btn-contacts').hidden = !roles.partner;
   $('btn-feedback').hidden = !roles.admin;
-  $('btn-report').hidden = !roles.admin;
   $('btn-envois').hidden = !roles.admin;
   if (roles.admin) feedback.load({ quiet: true }); // pastille « nouvelles remarques »
   showTab(roles.admin ? 'trash' : 'contacts');

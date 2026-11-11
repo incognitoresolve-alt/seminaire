@@ -83,7 +83,7 @@ Worker `seminaire-triage` → **Settings → Variables and Secrets → Add** →
 |---|---|---|
 | `STAFF_PIN` | code d'accès soignants, **8 caractères minimum** | ex. 8 chiffres aléatoires (pas une date de naissance). À donner **uniquement** aux soignants |
 | `SESSION_SECRET` | 32+ caractères aléatoires | Mac/Linux : `openssl rand -base64 48` ; sinon générateur de mot de passe (64 caractères) |
-| `ADMIN_KEY` | clé de `/admin` : corbeille, remarques, rapport ICC, **envois** (fiches des médecins traitants = données de santé) → **responsable médical** de préférence, **jamais** le partenaire ; **16 caractères minimum** | générateur de mot de passe |
+| `ADMIN_KEY` | clé de `/admin` : corbeille, remarques, **envois** (fiches des médecins traitants = données de santé) → **responsable médical** de préférence, **jamais** le partenaire ; **16 caractères minimum** | générateur de mot de passe |
 | `PARTNER_KEY` | ta clé d'accès à « Mes contacts » sur `/admin`, **16 caractères minimum** | générateur de mot de passe ; à garder pour toi seul (les soignants n'en ont pas besoin) |
 
 Les secrets s'appliquent immédiatement (nouvelle version déployée automatiquement).
@@ -176,10 +176,9 @@ DELETE FROM partner_leads;
    SELECT last_name, first_name, birth_date, gp_name, doctor_consent_at FROM patients
    WHERE doctor_consent = 1 AND deleted_at IS NULL ORDER BY last_name;
    ```
-2. **Rapport ICC Liège** : `/admin` + `ADMIN_KEY` → onglet **Envois** → enregistrer l'**e-mail d'ICC Liège** (une fois) → *1. Télécharger le rapport (CSV)* → *2. Préparer l'e-mail à ICC Liège* (joindre le CSV, envoyer). Nom, prénom, GSM des personnes reçues qui ont accepté d'y figurer. À faire avant l'effacement automatique (30 jours).
-3. **Contacts check-up** (toi uniquement) : `https://seminaire-triage.incognitoresolve.workers.dev/admin` + ta clé `PARTNER_KEY` → onglet *Mes contacts*.
+2. **Contacts check-up** (toi uniquement) : `https://seminaire-triage.incognitoresolve.workers.dev/admin` + ta clé `PARTNER_KEY` → onglet *Mes contacts*.
    Statut par contact (Nouveau → Contacté → Rendez-vous → Client), notes, bouton **Télécharger (Excel / CSV)**.
    Une relance maximum, « STOP » = bouton d'effacement (`docs/modele-email-checkup.md`).
-   **Bilan anonyme** (rapport ICC, présentations) : espace soignants → **Bilan** → **Exporter le bilan (CSV)**.
+   **Bilan anonyme** (bilan pour ICC, présentations) : espace soignants → **Bilan** → **Exporter le bilan (CSV)**.
 3. **Sécurité** : supprimer ou changer le secret `STAFF_PIN` → plus aucun accès soignants.
 4. **Effacement** : automatique (patients après 30 jours, contacts et remarques après 180 jours). Pour tout effacer plus tôt : mêmes `DELETE` qu'en G.

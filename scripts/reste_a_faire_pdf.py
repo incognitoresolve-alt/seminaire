@@ -173,7 +173,7 @@ story.append(Task('2', 'Ajouter les 4 codes secrets', '5 min', [
     f'Type : <b>Secret</b> (pas « Text ») → {b("Deploy")}. Recommencer pour chacun :',
     f'• {c("STAFF_PIN")} : code des soignants, <b>8 caractères minimum</b> (ex. 8 chiffres au hasard, pas une date de naissance).',
     f'• {c("SESSION_SECRET")} : <b>32 caractères minimum</b>, au hasard (générateur de mots de passe, 40 caractères).',
-    f'• {c("ADMIN_KEY")} : clé de /admin (corbeille, remarques, rapport ICC, envois des fiches = données de santé), <b>16 caractères minimum</b> → de préférence le responsable médical.',
+    f'• {c("ADMIN_KEY")} : clé de /admin (corbeille, remarques, envois des fiches = données de santé), <b>16 caractères minimum</b> → de préférence le responsable médical.',
     f'• {c("PARTNER_KEY")} : ta clé « Mes contacts » sur /admin, <b>16 caractères minimum</b> → pour toi seul.',
     '<font color="#b91c1c"><b>Ne les écris jamais dans ce PDF</b></font> ni dans un e-mail. Note-les dans un gestionnaire de mots de passe.',
     'Sans ces codes, l’accès soignants affiche « Service non configuré » : c’est voulu (sécurité).',
@@ -267,8 +267,6 @@ story.append(KeepTogether([P('APRÈS L’ÉVÉNEMENT', 'kick'), P('Clôturer pro
     '<b>Aucun envoi automatique</b> : tout part de ta messagerie, depuis l’onglet ' + b('Envois') + f' de {a(SITE + "/admin")} (ADMIN_KEY).',
     f'<b>Médecins traitants</b> : {b("Envois")} → pour chaque personne : e-mail du médecin → {b("1. Fiche PDF")} (Imprimer / Enregistrer en PDF) '
     f'→ {b("2. Préparer l’e-mail")} (joindre le PDF) → {b("3. Marquer comme envoyée")}. De préférence via la messagerie sécurisée (eHealthBox).',
-    f'<b>Rapport ICC Liège</b> : {b("Envois")} → enregistrer l’e-mail d’ICC Liège (une fois) → {b("1. Télécharger le rapport (CSV)")} '
-    f'→ {b("2. Préparer l’e-mail à ICC Liège")} (joindre le CSV). Nom, prénom, GSM des personnes reçues qui ont accepté (avant l’effacement à 30 jours).',
     f'<b>Contacts check-up</b> : {a(SITE + "/admin")} → {b("Mes contacts")} → statut, notes, {b("Télécharger (Excel / CSV)")}. '
     'Une seule relance maximum ; « STOP » = effacement immédiat.',
     f'<b>Sécurité</b> : changer ou supprimer {c("STAFF_PIN")} dans Cloudflare → plus aucun accès soignants.',

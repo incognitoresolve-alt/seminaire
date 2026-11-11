@@ -436,7 +436,7 @@ story += [P('A. Nom de domaine', 'h2'),
             f'règle {btn("Minimum TLS Version")} sur 1.2.'),
 ]
 story.append(tip('<b>Aucun envoi automatique d’e-mail</b> : tu écris toi-même aux personnes intéressées par le check-up '
-                 '(onglet « Mes contacts »), et le rapport ICC ainsi que les fiches des médecins traitants partent depuis '
+                 '(onglet « Mes contacts »), et les fiches des médecins traitants partent depuis '
                  '<b>ADRESSE/admin</b> → onglet « Envois ».'))
 story.append(PageBreak())
 
