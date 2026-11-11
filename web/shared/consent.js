@@ -10,7 +10,7 @@ export const CONSENT_TEXTS = {
   'T1-staff': 'Le participant autorise-t-il la transmission de ses données personnelles à un médecin qui pourra suivre son dossier si nécessaire ?',
   'T2-self': 'J’autorise la transmission de mes données personnelles à mon médecin traitant.',
   'T2-staff': 'Le participant autorise la transmission de ses données personnelles à son médecin traitant (formulaire papier signé ou accord explicite).',
-  // Accord facultatif : rapport nominatif pour l'organisateur (ICC Liège).
+  // Historique (fonction retirée le 11/11/2026) : conservé uniquement pour vérifier l'empreinte des accords déjà enregistrés.
   'E1-self': 'J’accepte que mes nom, prénom et numéro de GSM soient communiqués à ICC Liège, organisateur du séminaire, pour le suivi des personnes reçues au pôle santé (sans aucune mesure ni information médicale).',
   'E1-staff': 'Le participant accepte que ses nom, prénom et numéro de GSM soient communiqués à ICC Liège, organisateur du séminaire, pour le suivi des personnes reçues au pôle santé (sans aucune mesure ni information médicale).',
 };
@@ -19,10 +19,9 @@ export const CONSENT_TEXTS = {
 export const CURRENT = {
   consultation: { self: 'C1-self', staff: 'C1-staff' },
   transmission: { self: 'T2-self', staff: 'T2-staff' },
-  eglise: { self: 'E1-self', staff: 'E1-staff' },
 };
 
-export const KINDS = { consultation: 'Consultation de prévention', transmission: 'Transmission au médecin traitant', eglise: 'Rapport à ICC Liège (nom, prénom, GSM)' };
+export const KINDS = { consultation: 'Consultation de prévention', transmission: 'Transmission au médecin traitant', eglise: 'Rapport à ICC Liège (fonction retirée)' };
 export const CHANNELS = {
   self: 'Formulaire d’inscription en ligne : case cochée par le participant',
   staff: 'Inscription saisie par l’équipe soignante (formulaire papier signé ou accord explicite)',
@@ -37,7 +36,7 @@ export async function sha256Hex(s) {
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/** Nouvelle entrée de preuve (k : consultation | transmission | eglise ; v : 1 accord, 0 refus ou retrait). */
+/** Nouvelle entrée de preuve (k : consultation | transmission ; v : 1 accord, 0 refus ou retrait). */
 export async function makeEntry(pid, k, v, ch, tv, at) {
   const e = { k, v: v ? 1 : 0, at, ch, tv };
   e.h = await sha256Hex(proofPayload(pid, e));

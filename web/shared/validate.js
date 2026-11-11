@@ -51,7 +51,6 @@ export function validateIdentity(b, now = new Date()) {
     phone: clean(b?.phone) || null,
     consent: b?.consent === true,
     doctor_consent: b?.doctor_consent,
-    church_consent: b?.church_consent === true, // facultatif : rapport nominatif ICC Liège
     request_id: b?.request_id ? String(b.request_id) : null,
   };
   if (!NAME_RE.test(v.last_name)) errors.last_name = 'Nom invalide';
@@ -125,9 +124,6 @@ export function validatePatch(b) {
       if (raw === null || (typeof raw === 'string' && !raw.trim())) value[k] = null;
       else if (typeof raw === 'string' && raw.trim().length <= max) value[k] = freeText(raw, max, k === 'gp_address');
       else errors[k] = k === 'gp_contact' ? 'Coordonnées trop longues' : 'Adresse trop longue';
-    } else if (k === 'church_consent') {
-      if (raw === 0 || raw === 1) value.church_consent = raw;
-      else errors.church_consent = 'Valeur invalide';
     } else if (k === 'doctor') {
       if (raw === null || raw === 1 || raw === 2) value.doctor = raw;
       else errors.doctor = 'Médecin invalide';
@@ -248,8 +244,8 @@ export function validateFeedbackPatch(b) {
 }
 
 /* ---------- Envois manuels (page /admin, onglet « Envois ») ---------- */
-/** E-mail facultatif : '' ou null = effacé ; sinon adresse valide (minuscules). */
-export function validateEmailSetting(raw) {
+/** E-mail du médecin traitant : '' ou null = effacé ; sinon adresse valide (minuscules). */
+export function validateEmail(raw) {
   const e = raw === null || raw === undefined ? '' : typeof raw === 'string' ? clean(raw).toLowerCase() : null;
   if (e === '') return { ok: true, value: null };
   if (e && e.length <= 254 && EMAIL_RE.test(e)) return { ok: true, value: e };

@@ -46,24 +46,14 @@ test('médecin traitant : nom et coordonnées saisis sur la fiche soignant, vali
   assert.equal(validatePatch({ gp_contact: 'a\u0000b' }).value.gp_contact.includes('\u0000'), false);
 });
 
-test('rapport ICC : accord facultatif, séparé, enregistré seulement si coché', () => {
-  assert.match(CONSENT_TEXTS[CURRENT.eglise.self], /nom, prénom et numéro de GSM/);
-  assert.match(CONSENT_TEXTS[CURRENT.eglise.staff], /sans aucune mesure ni information médicale/);
-  assert.equal(validateIdentity({ ...base, doctor_consent: false }).value.church_consent, false); // non coché par défaut
-  assert.equal(validateIdentity({ ...base, doctor_consent: false, church_consent: true }).value.church_consent, true);
-  assert.equal(validateIdentity({ ...base, doctor_consent: false, church_consent: 'on' }).value.church_consent, false); // strict
-  assert.deepEqual(validatePatch({ church_consent: 1 }).value, { church_consent: 1 });
-  assert.ok(validatePatch({ church_consent: true }).errors.church_consent);
-});
-
-test('envois manuels : adresses e-mail validées (ICC Liège, médecin traitant)', async () => {
-  const { validateEmailSetting } = await import('../web/shared/validate.js');
-  assert.deepEqual(validateEmailSetting(' Secretariat@ICC-Liege.be '), { ok: true, value: 'secretariat@icc-liege.be' });
-  assert.deepEqual(validateEmailSetting(''), { ok: true, value: null });
-  assert.deepEqual(validateEmailSetting(null), { ok: true, value: null });
-  assert.equal(validateEmailSetting('pas-un-email').ok, false);
-  assert.equal(validateEmailSetting('a@b.be?cc=x@y.be').ok, false); // pas d'injection d'en-tête mailto
-  assert.equal(validateEmailSetting(42).ok, false);
+test('envois manuels : e-mail du médecin traitant validé', async () => {
+  const { validateEmail } = await import('../web/shared/validate.js');
+  assert.deepEqual(validateEmail(' Cabinet.Renard@Exemple.be '), { ok: true, value: 'cabinet.renard@exemple.be' });
+  assert.deepEqual(validateEmail(''), { ok: true, value: null });
+  assert.deepEqual(validateEmail(null), { ok: true, value: null });
+  assert.equal(validateEmail('pas-un-email').ok, false);
+  assert.equal(validateEmail('a@b.be?cc=x@y.be').ok, false); // pas d'injection d'en-tête mailto
+  assert.equal(validateEmail(42).ok, false);
   assert.deepEqual(validatePatch({ gp_email: 'Cabinet@Exemple.be' }).value, { gp_email: 'cabinet@exemple.be' });
   assert.ok(validatePatch({ gp_email: 'cabinet' }).errors.gp_email);
 });

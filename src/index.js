@@ -1,10 +1,10 @@
 import { LEAD_INTERESTS, PARTNER } from '../web/shared/partner.js';
-import { CONTACT_TIMES, FEEDBACK_KINDS, FEEDBACK_ROLES, FEEDBACK_STATUS, LEAD_STATUS, validateFeedback, validateFeedbackPatch, validateIdentity, validateLead, validateLeadPatch, validateLeadQualify, validatePatch, validateEmailSetting } from '../web/shared/validate.js';
+import { CONTACT_TIMES, FEEDBACK_KINDS, FEEDBACK_ROLES, FEEDBACK_STATUS, LEAD_STATUS, validateFeedback, validateFeedbackPatch, validateIdentity, validateLead, validateLeadPatch, validateLeadQualify, validatePatch, validateEmail } from '../web/shared/validate.js';
 import { checkPin, checkSecret, clearCookie, clearRoleCookie, hasRole, makeCookie, requireRole, requireStaff, roleConfigured, sessionCookie } from './auth.js';
 import { HttpError, assertSameOrigin, clientIp, json, rateLimit, readJson } from './http.js';
 import { hub } from './hub.js';
 import { ensureSchema } from './schema.js';
-import { createFeedback, deleteFeedback, listFeedback, updateFeedback, createLead, deleteLead, deleteLeadByToken, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, qualifyLead, updateLead, churchReport, consentProof, getSetting, listTransmissions, setSetting, updateTransmission, createPatient, deletePatient, getDetail, listSince, purge, updatePatient } from './patients.js';
+import { createFeedback, deleteFeedback, listFeedback, updateFeedback, createLead, deleteLead, deleteLeadByToken, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, qualifyLead, updateLead, consentProof, listTransmissions, updateTransmission, createPatient, deletePatient, getDetail, listSince, purge, updatePatient } from './patients.js';
 
 export { Hub } from './hub.js';
 
@@ -193,21 +193,14 @@ async function adminRoutes(req, env, ctx, path) {
   await requireRole('admin', req, env);
   const resync = () => ctx.waitUntil(hub(env).broadcast({ t: 'resync' }).catch(() => {}));
   if (path === '/trash' && method === 'GET') return json(await listTrash(env));
-  // Envois MANUELS (aucun e-mail envoyé par l'application) : réglages, fiches pour les médecins traitants.
-  if (path === '/settings' && method === 'GET') return json({ church_email: await getSetting(env, 'church_email') });
-  if (path === '/settings' && method === 'PUT') {
-    const v = validateEmailSetting((await readJson(req, 1024))?.church_email);
-    if (!v.ok) throw new HttpError(422, 'validation', { errors: { church_email: v.error } });
-    await setSetting(env, 'church_email', v.value);
-    return json({ church_email: v.value });
-  }
+  // Envois MANUELS (aucun e-mail envoyé par l'application) : fiches pour les médecins traitants.
   if (path === '/transmissions' && method === 'GET') return json({ items: await listTransmissions(env) });
   const tx = path.match(/^\/transmissions\/([0-9a-f-]{36})$/);
   if (tx && method === 'PATCH') {
     const body = await readJson(req, 1024);
     const patch = {};
     if (body && 'gp_email' in body) {
-      const v = validateEmailSetting(body.gp_email);
+      const v = validateEmail(body.gp_email);
       if (!v.ok) throw new HttpError(422, 'validation', { errors: { gp_email: v.error } });
       patch.gp_email = v.value;
     }
@@ -227,14 +220,6 @@ async function adminRoutes(req, env, ctx, path) {
     if (row.doctor_consent !== 1) throw new HttpError(403, 'consent_required');
     const { consent_log: _log, token: _token, ...patient } = row;
     return json({ patient, proof: await consentProof(row), generated_at: Date.now() });
-  }
-  // Rapport ICC Liège : nom, prénom, GSM des personnes reçues qui l'ont accepté (aucune donnée de santé).
-  if (path === '/report' && method === 'GET') return json(await churchReport(env));
-  if (path === '/report.csv' && method === 'GET') {
-    const r = await churchReport(env);
-    const rows = r.rows.map((x) => ({ ...x, created_at: dt(x.created_at).split(' ')[0], phone: x.phone || '' }));
-    const cols = [['last_name', 'Nom'], ['first_name', 'Prénom'], ['phone', 'GSM'], ['created_at', 'Date de passage']];
-    return csvResponse(toCsv(cols, rows), `rapport-icc-pole-sante-${new Date().toISOString().slice(0, 10)}.csv`);
   }
   // Remarques des intervenants
   if (path === '/feedback' && method === 'GET') return json({ items: await listFeedback(env) });

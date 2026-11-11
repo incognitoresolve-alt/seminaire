@@ -22,7 +22,7 @@
   <main class="mx-auto max-w-4xl px-4 py-6">
     <section id="gate" hidden class="mx-auto mb-8 max-w-sm">
       <h2 class="text-center text-2xl font-extrabold">Accès administration</h2>
-      <p class="mt-1 mb-5 text-center text-sm text-slate-600">Clé administrateur (corbeille, remarques, rapport ICC) ou clé partenaire (mes contacts)</p>
+      <p class="mt-1 mb-5 text-center text-sm text-slate-600">Clé administrateur (corbeille, remarques, envois) ou clé partenaire (mes contacts)</p>
       <form id="gate-form" class="space-y-3">
         <label class="sr-only" for="key">Clé d’accès</label>
         <input id="key" class="field text-center font-mono" type="password" autocomplete="current-password" required maxlength="128" placeholder="Clé d’accès">
@@ -35,7 +35,6 @@
       <div role="tablist" aria-label="Sections" class="mb-5 flex flex-wrap gap-2">
         <button id="btn-trash" role="tab" data-tab="trash" aria-selected="false" class="chip aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">Corbeille</button>
         <button id="btn-feedback" role="tab" data-tab="feedback" aria-selected="false" class="chip inline-flex items-center gap-1.5 aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">Remarques <span id="f-badge" hidden class="rounded-full bg-accent-dark px-1.5 text-xs font-bold text-white"></span></button>
-        <button id="btn-report" role="tab" data-tab="report" aria-selected="false" class="chip aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">Rapport ICC</button>
         <button id="btn-envois" role="tab" data-tab="envois" aria-selected="false" class="chip aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">Envois</button>
         <button id="btn-contacts" role="tab" data-tab="contacts" aria-selected="false" class="chip aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">Mes contacts</button>
         <button id="btn-qr" role="tab" data-tab="qr" aria-selected="false" class="chip aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">QR codes</button>
@@ -88,52 +87,10 @@
         <p class="pb-8 text-center text-xs text-slate-500">Mise à jour automatique toutes les minutes. Remarques effacées automatiquement après 180 jours : exportez-les pour les garder.</p>
       </section>
 
-      <!-- Rapport ICC Liège (ADMIN_KEY) -->
-      <section id="tab-report" hidden role="tabpanel" aria-labelledby="btn-report">
-        <div class="grid gap-3 sm:grid-cols-3">
-          <div class="glass rounded-2xl p-4"><p class="text-sm text-slate-600">Inscrits</p><p class="text-3xl font-black" id="r-registered">0</p></div>
-          <div class="glass rounded-2xl p-4"><p class="text-sm text-slate-600">Reçus au pôle santé</p><p class="text-3xl font-black" id="r-received">0</p></div>
-          <div class="glass rounded-2xl p-4"><p class="text-sm text-slate-600">Ont accepté le rapport</p><p class="text-3xl font-black" id="r-consented">0</p></div>
-        </div>
-        <div class="mt-4 mb-3 flex flex-wrap items-center gap-2">
-          <h2 class="mr-auto text-lg font-extrabold">Rapport ICC Liège · personnes reçues</h2>
-          <button id="r-refresh" type="button" class="btn-ghost min-h-10 px-3 py-2 text-sm">Actualiser</button>
-          <a href="/api/admin/report.csv" class="btn-primary min-h-10 px-3 py-2 text-sm" download>Télécharger (Excel / CSV)</a>
-        </div>
-        <label class="sr-only" for="r-q">Rechercher dans le rapport</label>
-        <input id="r-q" type="search" class="field py-2.5" placeholder="Rechercher un nom, un GSM…" autocomplete="off">
-        <div class="glass-soft mt-3 overflow-x-auto rounded-2xl p-3" tabindex="0" role="region" aria-label="Rapport : personnes reçues">
-          <table class="w-full min-w-[30rem] text-left text-sm">
-            <thead><tr class="border-b-2 border-slate-300 text-xs tracking-wide text-slate-600 uppercase"><th class="py-2 pr-3">Nom</th><th class="py-2 pr-3">Prénom</th><th class="py-2 pr-3">GSM</th><th class="py-2">Date de passage</th></tr></thead>
-            <tbody id="r-list"></tbody>
-          </table>
-          <p id="r-empty" class="py-8 text-center text-slate-500"></p>
-        </div>
-        <p class="pt-3 pb-8 text-center text-xs text-slate-500">Personnes reçues au pôle santé (paramètres relevés, médecin assigné ou parcours terminé). Seules celles qui ont accepté de figurer dans le rapport (case à l’inscription ou accord noté par un soignant) sont nommées ; les autres sont seulement comptées. Aucune donnée de santé. Liste effacée avec les dossiers (30 jours) : exportez-la pour la garder.</p>
-      </section>
-
       <!-- Envois MANUELS (ADMIN_KEY) : aucun e-mail n'est envoyé par l'application -->
       <section id="tab-envois" hidden role="tabpanel" aria-labelledby="btn-envois">
-        <p class="mb-4 rounded-2xl bg-sky-50 p-3 text-sm text-slate-700 ring-1 ring-sky-200"><b>Aucun envoi automatique.</b> Ici, vous enregistrez les adresses ; « Préparer l’e-mail » ouvre votre messagerie avec le destinataire, l’objet et le message déjà remplis : vous joignez le fichier, vérifiez et envoyez vous-même.</p>
-        <div class="glass rounded-2xl p-4">
-          <h2 class="text-lg font-extrabold">1. Rapport pour ICC Liège</h2>
-          <form id="e-church-form" class="mt-2 flex flex-wrap items-end gap-2" novalidate>
-            <div class="min-w-0 flex-1 basis-64"><label class="label" for="e-church">E-mail d’ICC Liège (destinataire du rapport)</label>
-              <input id="e-church" type="email" inputmode="email" autocomplete="off" maxlength="254" class="field py-2.5 text-base" placeholder="secretariat@…" aria-describedby="e-church-err"></div>
-            <button type="submit" class="btn-ghost min-h-11 px-3 py-2 text-sm">Enregistrer</button>
-          </form>
-          <p id="e-church-err" class="err" role="alert"></p>
-          <p class="text-sm text-slate-700">Rapport : <b id="e-report-n">0</b> personne(s) (onglet « Rapport ICC »).</p>
-          <div class="mt-2 flex flex-wrap gap-2">
-            <a href="/api/admin/report.csv" download class="btn-ghost min-h-10 px-3 py-2 text-sm">1. Télécharger le rapport (CSV)</a>
-            <button id="e-church-mail" type="button" class="btn-primary min-h-10 px-3 py-2 text-sm">2. Préparer l’e-mail à ICC Liège</button>
-            <button id="e-church-copy" type="button" class="btn-ghost min-h-10 px-3 py-2 text-sm">Copier le message</button>
-          </div>
-          <p id="e-church-hint" class="mt-1 text-xs text-slate-600" aria-live="polite"></p>
-        </div>
-        <div class="mt-5 mb-2 flex flex-wrap items-center gap-2">
-          <h2 class="mr-auto text-lg font-extrabold">2. Fiches pour les médecins traitants</h2>
-        </div>
+        <p class="mb-4 rounded-2xl bg-sky-50 p-3 text-sm text-slate-700 ring-1 ring-sky-200"><b>Aucun envoi automatique.</b> Ici, vous enregistrez l’e-mail du médecin traitant ; « Préparer l’e-mail » ouvre votre messagerie avec le destinataire, l’objet et le message déjà remplis : vous joignez la fiche PDF, vérifiez et envoyez vous-même.</p>
+        <h2 class="mb-2 text-lg font-extrabold">Fiches pour les médecins traitants</h2>
         <p class="text-sm text-slate-600">Personnes qui ont autorisé la transmission. Pour chacune : <b>1.</b> ouvrir la fiche → « Imprimer / Enregistrer en PDF » ; <b>2.</b> préparer l’e-mail et joindre le PDF ; <b>3.</b> marquer comme envoyée.</p>
         <p class="mt-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">Données de santé : de préférence via la messagerie sécurisée des médecins (eHealthBox) ; par e-mail classique, uniquement à l’adresse du cabinet, après vérification.</p>
         <label class="sr-only" for="e-q">Rechercher une personne</label>
