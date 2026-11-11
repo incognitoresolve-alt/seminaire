@@ -1,0 +1,13 @@
+-- CheckSanté : schéma complet en UN SEUL bloc (équivalent des migrations 0001 → 0004).
+-- À coller une fois dans Cloudflare → D1 → seminaire → Console → Execute.
+-- Sans risque si relancé (IF NOT EXISTS partout).
+CREATE TABLE IF NOT EXISTS patients (id TEXT PRIMARY KEY, token TEXT NOT NULL UNIQUE, short_code TEXT NOT NULL UNIQUE, request_id TEXT UNIQUE, last_name TEXT NOT NULL, first_name TEXT NOT NULL, birth_date TEXT NOT NULL, email TEXT NOT NULL, phone TEXT, consent_at INTEGER NOT NULL, gp_consent INTEGER NOT NULL DEFAULT 0 CHECK (gp_consent IN (0,1)), no_gp INTEGER NOT NULL DEFAULT 0 CHECK (no_gp IN (0,1)), gp_name TEXT, gp_address TEXT, gp_contact TEXT, source TEXT NOT NULL CHECK (source IN ('self','staff')), pulse INTEGER, temp REAL, weight REAL, height INTEGER, waist INTEGER, glucose INTEGER, sys INTEGER, dia INTEGER, notes TEXT, triage INTEGER NOT NULL DEFAULT 0 CHECK (triage BETWEEN 0 AND 3), doctor INTEGER CHECK (doctor IN (1,2)), version INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, deleted_at INTEGER, stage INTEGER NOT NULL DEFAULT 0 CHECK (stage IN (0,1,2)), stage_at INTEGER);
+CREATE INDEX IF NOT EXISTS idx_patients_updated ON patients(updated_at);
+CREATE INDEX IF NOT EXISTS idx_patients_created ON patients(created_at);
+CREATE INDEX IF NOT EXISTS idx_patients_triage ON patients(triage DESC, updated_at DESC) WHERE deleted_at IS NULL;
+CREATE TABLE IF NOT EXISTS surveys (id TEXT PRIMARY KEY, request_id TEXT UNIQUE, weight REAL, height REAL, bmi REAL, bmi_normal TEXT, waist INTEGER, waist_normal_f TEXT, waist_normal_m TEXT, activity_freq INTEGER CHECK (activity_freq BETWEEN 0 AND 4), activity_minutes INTEGER, glucose_tested INTEGER CHECK (glucose_tested IN (0,1)), glucose_normal TEXT, chol_known INTEGER CHECK (chol_known IN (0,1)), vax_status INTEGER CHECK (vax_status IN (0,1,2)), tetanus TEXT, screen_hours REAL, questions TEXT, created_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_surveys_created ON surveys(created_at);
+CREATE TABLE IF NOT EXISTS partner_leads (id TEXT PRIMARY KEY, request_id TEXT UNIQUE, audience TEXT NOT NULL CHECK (audience IN ('public','pro')), name TEXT NOT NULL, email TEXT, phone TEXT, interests TEXT, message TEXT, consent_at INTEGER NOT NULL, created_at INTEGER NOT NULL, unsub_token TEXT, mailed_at INTEGER);
+CREATE INDEX IF NOT EXISTS idx_leads_created ON partner_leads(created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_unsub ON partner_leads(unsub_token);
+CREATE INDEX IF NOT EXISTS idx_leads_email ON partner_leads(email, mailed_at);
