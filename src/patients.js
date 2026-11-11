@@ -56,9 +56,6 @@ export async function listSince(env, since, limit = 1000) {
 export const getDetail = (env, id) =>
   env.DB.prepare(`SELECT ${DETAIL_COLS} FROM patients WHERE id = ? AND deleted_at IS NULL`).bind(id).first();
 
-export const lookup = (env, q) =>
-  env.DB.prepare(`SELECT ${COLS} FROM patients WHERE (token = ?1 OR short_code = ?2) AND deleted_at IS NULL LIMIT 1`).bind(q, q.toUpperCase()).first();
-
 export async function updatePatient(env, id, patch) {
   const now = Date.now();
   if ('stage' in patch) patch = { ...patch, stage_at: now }; // horodatage serveur de l'étape

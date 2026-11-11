@@ -1,9 +1,7 @@
 import { registerSW } from './sw-register.js';
 import { ageOf, api, esc } from './api.js';
-import { bindIdentityForm, identityFieldsHtml, passCardHtml } from './form.js';
+import { bindIdentityForm, identityFieldsHtml } from './form.js';
 import { mountCredit, mountPartner } from './partner-ui.js';
-import { passUrl, qrSvg } from './qr.js';
-import { parsePassCode, startScanner } from './scanner.js';
 import { DOCTORS } from './shared/doctors.js';
 import { advice, bmi, triage } from './shared/triage.js';
 import { NOTES_MAX, VITALS, normalize, parseVital } from './shared/validate.js';
@@ -79,7 +77,7 @@ function rowHtml(p, level) {
       <span class="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
         <span class="min-w-0 flex-1">
           <span class="block truncate text-base font-bold">${esc(p.last_name)} ${esc(p.first_name)}</span>
-          <span class="block truncate text-sm text-slate-600">${p.birth_date ? `${esc(ageOf(p.birth_date))} · ` : ''}<span class="font-mono">${esc(p.short_code)}</span>${vit ? ` · ${esc(vit)}` : ''}</span>
+          <span class="block truncate text-sm text-slate-600">${esc([p.birth_date && ageOf(p.birth_date), vit].filter(Boolean).join(' · ')) || 'Paramètres à relever'}</span>
         </span>
         ${stageBadge}
         ${doc}
@@ -142,7 +140,7 @@ function renderList() {
       if (filters.triage !== 'all' && String(level) !== filters.triage) return false;
       if (filters.doctor !== 'all' && String(p.doctor || 'none') !== filters.doctor) return false;
       if (!q) return true;
-      return normalize(`${p.last_name} ${p.first_name}`).includes(q) || normalize(`${p.first_name} ${p.last_name}`).includes(q) || p.short_code.toLowerCase().startsWith(q);
+      return normalize(`${p.last_name} ${p.first_name}`).includes(q) || normalize(`${p.first_name} ${p.last_name}`).includes(q) ;
     })
     // En attente d'abord (priorité clinique puis ancienneté), puis en consultation, puis terminés.
     .sort((a, b) => (a.p.stage ?? 0) - (b.p.stage ?? 0) || T_RANK[a.level] - T_RANK[b.level] || a.p.created_at - b.p.created_at);
@@ -215,7 +213,7 @@ function openSheet(id) {
     <div class="sticky top-0 z-10 flex items-start gap-3 border-b border-slate-200 bg-white px-4 py-3">
       <div class="min-w-0 flex-1">
         <h2 id="sheet-name" class="truncate text-xl font-extrabold">${esc(p.last_name)} ${esc(p.first_name)}</h2>
-        <p class="text-sm text-slate-600">${p.birth_date ? `${esc(ageOf(p.birth_date))} · né(e) le ${esc(p.birth_date.split('-').reverse().join('/'))} · ` : ''}<span class="font-mono font-bold">${esc(p.short_code)}</span></p>
+        <p class="text-sm text-slate-600">${p.birth_date ? `${esc(ageOf(p.birth_date))} · né(e) le ${esc(p.birth_date.split('-').reverse().join('/'))}` : ''}</p>
         <p id="sheet-email" class="truncate text-sm text-slate-500"></p>
       </div>
       <button class="btn-ghost min-h-11 px-3" type="button" data-close aria-label="Fermer">✕</button>
@@ -411,10 +409,10 @@ store.state.onRejected = (id, e) => {
 let lastCreated = null;
 $('add-fields').innerHTML = identityFieldsHtml('a', { staff: true });
 bindIdentityForm($('add-form'), async (payload) => {
-  const { pass, patient } = await api('/staff/patients', { method: 'POST', body: payload });
+  const { patient } = await api('/staff/patients', { method: 'POST', body: payload });
   store.merge(patient);
   lastCreated = patient.id;
-  $('add-pass').innerHTML = passCardHtml(pass, qrSvg(passUrl(pass.token), { label: 'QR code du Pass Patient' }));
+  $('add-pass').innerHTML = `<p class="rounded-2xl bg-emerald-50 p-5 text-center text-lg font-bold text-emerald-900 ring-1 ring-emerald-200">✓ ${esc(patient.first_name)} ${esc(patient.last_name)} est inscrit(e).</p>`;
   $('add-form').hidden = true;
   $('add-done').hidden = false;
 });
@@ -434,49 +432,6 @@ $('add-again').addEventListener('click', () => {
 $('add-open').addEventListener('click', () => {
   $('add').close();
   openSheet(lastCreated);
-});
-
-/* ---------- Scanner ---------- */
-let stopScan = null;
-async function openByCode(raw) {
-  const code = parsePassCode(raw);
-  if (!code) return toast('QR code non reconnu', 'error');
-  let p = store.findByToken(code);
-  if (!p) {
-    try {
-      const { patient } = await api(`/staff/lookup?q=${encodeURIComponent(code)}`);
-      store.merge(patient);
-      p = patient;
-    } catch (e) {
-      return toast(e.status === 404 ? 'Pass inconnu' : 'Recherche impossible (réseau)', 'error');
-    }
-  }
-  if ($('scan').open) $('scan').close();
-  openSheet(p.id);
-}
-$('open-scan').addEventListener('click', async () => {
-  openDialog($('scan'));
-  $('scan-msg').textContent = 'Visez le QR code du Pass';
-  try {
-    let done = false;
-    stopScan = await startScanner($('scan-video'), (v) => {
-      if (done) return;
-      done = true;
-      openByCode(v);
-    });
-  } catch {
-    $('scan-msg').textContent = 'Caméra indisponible : saisissez le code de secours.';
-    $('scan-code').focus();
-  }
-});
-$('scan').addEventListener('close', () => {
-  stopScan?.();
-  stopScan = null;
-});
-$('scan-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  openByCode($('scan-code').value);
-  $('scan-code').value = '';
 });
 
 /* ---------- Statistiques questionnaire (anonyme) ---------- */
@@ -593,12 +548,6 @@ $('lock').addEventListener('click', async () => {
   showGate();
 });
 
-function handleHash() {
-  const m = location.hash.match(/p=([A-Za-z0-9_-]+)/);
-  if (m) openByCode(`#p=${m[1]}`);
-}
-addEventListener('hashchange', handleHash);
-
 let subscribed = false;
 async function boot() {
   $('gate').hidden = true;
@@ -609,7 +558,6 @@ async function boot() {
   }
   renderList();
   await store.start();
-  if (store.state.status !== 'locked') handleHash();
 }
 
 api('/staff/session')

@@ -108,9 +108,9 @@ Chaque commit sur `main` redéploie automatiquement (≈ 1 min).
 | # | Test | Résultat attendu |
 |---|---|---|
 | 1 | Ouvrir `https://<adresse>/api/health` | `{"ok":true}` |
-| 2 | S'inscrire depuis un téléphone en 4G, puis un autre en Wi-Fi | Pass affiché en moins de 1 s |
+| 2 | Inscrire 2 personnes à la suite (tablette d'accueil) | bandeau « ✓ … est inscrit(e) », formulaire vidé aussitôt |
 | 3 | `/staff` sur 2 tablettes, saisir le PIN | pastille verte **Temps réel**, les inscrits apparaissent |
-| 4 | **Scanner** le Pass avec un **iPhone** puis un **Android** (autoriser la caméra) | la fiche s'ouvre |
+| 4 | Bouton **Liste des inscrits** → taper le nom → ouvrir la fiche | la fiche s'ouvre |
 | 5 | Saisir pouls 135 sur une tablette | **Rouge** immédiat, visible sur l'autre tablette |
 | 6 | **Patient suivant** sur A, puis sur B | A et B ouvrent deux patients différents |
 | 7 | **Terminé** | la fiche se ferme, le patient quitte « À traiter » |
@@ -143,7 +143,7 @@ DELETE FROM partner_leads;
 
 **Briefing soignants (5 min)**
 - Code PIN : ne jamais le donner aux participants.
-- Flux : **Scanner** (ou recherche nom / code de secours) → saisir les mesures → assigner **Médecin 1 / Médecin 2** → **Patient suivant** → **Terminé**.
+- Flux : **Liste des inscrits** → recherche par nom → saisir les mesures → assigner **Médecin 1 / Médecin 2** → **Patient suivant** → **Terminé**.
 - Couleurs = aide indicative, le jugement clinique prime.
 - Tablette laissée sans surveillance : 🔒 **Verrouiller**.
 

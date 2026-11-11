@@ -377,12 +377,12 @@ story += section('s5', '5', 'Tester le site (et effacer les tests)', '20 min')
 story.append(P('Remplace <b>ADRESSE</b> par l’adresse de ton site (étape 3).'))
 tests = [
     f'Ouvre <b>ADRESSE/api/health</b> → la page affiche {code(chr(123)+chr(34)+"ok"+chr(34)+":true"+chr(125))}.',
-    'Sur ton téléphone, ouvre <b>ADRESSE</b> et inscris-toi (vrai nom ou nom de test) → le <b>Pass</b> avec QR code s’affiche.',
+    'Ouvre <b>ADRESSE</b> et inscris 2 personnes de test à la suite → après chaque inscription, un bandeau vert « ✓ … est inscrit(e) » s’affiche et le formulaire se vide.',
     'Sur une tablette ou un ordinateur, ouvre <b>ADRESSE/staff</b>, tape le PIN → la pastille <b>verte « Temps réel »</b> '
     'apparaît et ton inscription est dans la liste.',
     'Ouvre aussi <b>ADRESSE/staff</b> sur un 2ᵉ appareil (même PIN).',
-    f'Sur le 1er appareil : {btn("Scanner")} → autorise la caméra → vise le QR du Pass sur ton téléphone → la fiche s’ouvre. '
-    'Fais l’essai avec un <b>iPhone</b> et un <b>Android</b>.',
+    f'Sur le 1er appareil : {btn("Liste des inscrits")} → tape le nom d’une personne de test dans la recherche → la fiche s’ouvre. '
+    'Fais l’essai sur une tablette et sur un téléphone.',
     'Dans la fiche, tape un pouls de <b>135</b> → la fiche devient <b>Rouge</b>, et le 2ᵉ appareil l’affiche aussi en rouge en 1 seconde.',
     f'Appuie sur {btn("Patient suivant →")} sur chaque appareil → ils ouvrent deux personnes différentes.',
     f'Appuie sur {btn("Terminé")} → la fiche se ferme et la personne quitte la liste « À traiter ».',
@@ -478,7 +478,7 @@ story += [P('Matériel', 'h2'),
 ]
 story += [P('Briefing des soignants (5 minutes)', 'h2'),
     Step(6, 'Le PIN ne se donne jamais aux participants.'),
-    Step(7, f'Le circuit : {btn("Scanner")} (ou chercher le nom / le code de secours) → saisir les mesures → choisir '
+    Step(7, f'Le circuit : {btn("Liste des inscrits")} → chercher le nom → saisir les mesures → choisir '
             f'{btn("Médecin 1")} ou {btn("Médecin 2")} → {btn("Patient suivant →")} → {btn("Terminé")}.'),
     Step(8, 'Les couleurs sont une <b>aide</b> : le jugement clinique prime toujours.'),
     Step(11, 'Personne qui a refusé la transmission au médecin : les boutons Médecin 1 / 2 sont grisés. '
@@ -527,8 +527,7 @@ faq = [
      'Ça fonctionne ; vérifie le Wi-Fi si ça dure.'),
     ('La pastille est rouge « Hors ligne »', 'Plus de réseau. Les saisies sont gardées et partiront au retour du réseau. '
      'Passe sur le partage 4G.'),
-    ('La caméra ne s’ouvre pas (scanner)', 'iPhone : Réglages → Safari → Caméra → Autoriser. Sinon, tape le '
-     '<b>code de secours</b> de 6 lettres sous le QR.'),
+    ('Je ne trouve pas une personne dans la liste', 'Vérifie l’orthographe (les accents ne comptent pas) ; choisis le filtre « Tous » ; sinon elle n’est pas inscrite : bouton « Ajouter manuellement ».'),
     ('L’e-mail check-up n’arrive pas', 'Regarde les spams ; vérifie que le domaine est vert dans Brevo et que '
      'BREVO_API_KEY et MAIL_FROM sont bien des Secrets. L’inscription, elle, est toujours enregistrée.'),
     ('Le site ne marche plus après une modification', 'Worker → ' + btn('Deployments') + ' → version précédente → '

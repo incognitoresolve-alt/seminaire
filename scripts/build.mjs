@@ -1,12 +1,10 @@
 // Build front : 1 fichier JS minifié par page (0 cascade de requêtes) + service worker versionné.
 import { build } from 'esbuild';
-import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 
 const root = new URL('../', import.meta.url);
 const out = new URL('public/dist/', root);
 rmSync(out, { recursive: true, force: true });
-mkdirSync(new URL('public/vendor/', root), { recursive: true });
-copyFileSync(new URL('node_modules/jsqr/dist/jsQR.js', root), new URL('public/vendor/jsQR.js', root)); // chargé à la demande (iOS)
 
 const entries = ['register', 'questionnaire', 'staff', 'partenaire', 'affiche', 'credit', 'desinscription', 'espace-partenaire'];
 const res = await build({
