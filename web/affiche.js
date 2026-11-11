@@ -1,9 +1,7 @@
-import { mountCredit } from './partner-ui.js';
 import { qrSvg } from './qr.js';
 import { PARTNER } from './shared/partner.js';
 import { OFFICIAL_SITE, isPublic, parseSite } from './shared/site.js';
 
-mountCredit();
 
 // /affiche → auto-inscription ; ?cible=remarques → remarques des intervenants ; ?cible=checkup → check-up assurance (publicité).
 // Le QR code pointe vers le site officiel, ou l'adresse publique saisie (jamais localhost / réseau local).
@@ -14,7 +12,8 @@ const VARIANTS = {
     checkup: {
       path: '/checkup', title: 'Check-up gratuit', subtitle: 'Publicité · votre assurance-vie',
       steps: ['Scannez le QR code', 'Laissez vos coordonnées', `${PARTNER.person} vous recontacte`],
-      foot: 'Publicité · offre indépendante de la consultation de prévention',
+      // Mention légale OBLIGATOIRE d'une publicité d'intermédiaire d'assurances (identité + n° FSMA).
+      legal: `Publicité · ${PARTNER.person}, ${PARTNER.status.charAt(0).toLowerCase() + PARTNER.status.slice(1)} pour ${PARTNER.principal} · FSMA n° ${PARTNER.fsma}`,
     },
   }),
   remarques: {
@@ -35,7 +34,10 @@ if (variant) {
   $('title').textContent = variant.title;
   $('subtitle').textContent = variant.subtitle;
   variant.steps.forEach((t, i) => (document.querySelector(`[data-step="${i + 1}"]`).textContent = t));
-  if (variant.foot) $('foot').textContent = variant.foot;
+  if (variant.legal) {
+    $('legal').textContent = variant.legal;
+    $('legal').hidden = false;
+  }
 }
 if (!PARTNER.enabled) document.querySelector('[data-cible="checkup"]')?.remove();
 for (const l of document.querySelectorAll('[data-cible]')) if (l.dataset.cible === (variant ? cible : '')) l.setAttribute('aria-current', 'page');
@@ -48,17 +50,12 @@ function render() {
   const ok = Boolean(origin);
   $('site').setAttribute('aria-invalid', String(Boolean(raw.trim()) && !ok));
   $('print').disabled = !ok;
-  $('url-label').hidden = !ok;
   if (ok) {
     const url = origin + path;
     $('qr').innerHTML = qrSvg(url, { label: `QR code vers ${url}` });
-    const shown = url.replace(/^https:\/\//, '').replace(/\/$/, '');
-    $('url').textContent = shown;
-    $('url').className = `font-mono font-extrabold break-all text-sky-900 ${shown.length <= 28 ? 'text-[3.4cqw]' : shown.length <= 48 ? 'text-[2.6cqw]' : 'text-[2.1cqw]'}`;
     $('site-help').textContent = 'Le QR code est prêt. Scannez une feuille imprimée pour vérifier.';
   } else {
     $('qr').innerHTML = PLACEHOLDER;
-    $('url').textContent = '';
     $('site-help').textContent = raw.trim()
       ? 'Adresse non valide : saisissez l’adresse en ligne (https), pas une adresse locale.'
       : 'Adresse en ligne : Cloudflare → seminaire-triage → Settings → Domains & Routes.';
