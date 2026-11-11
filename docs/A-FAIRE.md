@@ -1,17 +1,17 @@
 # CheckSanté — ce qui reste à faire
 
 > ## ✅ Mise à jour du 11/11 : ce qu'il te reste à faire (le code est prêt)
-> **Déjà fait** : branche `main`, base D1 (ID saisi dans `wrangler.toml`), tableaux créés automatiquement, version téléphone + glassmorphism, accords qui scintillent, affiches QR A4, vidéo tutoriel (`docs/video/CheckSante-tutoriel.mp4`).
+> **Déjà fait** : site officiel `seminaire-triage.incognitoresolve.workers.dev`, affiches PDF (`docs/affiches/`), branche `main`, base D1 (ID saisi dans `wrangler.toml`), tableaux créés automatiquement, version téléphone + glassmorphism, accords qui scintillent, affiches QR A4, vidéo tutoriel (`docs/video/CheckSante-tutoriel.mp4`).
 >
 > | # | Où | Action | Durée |
 > |---|---|---|---|
 > | 1 | Cloudflare → Worker `seminaire-triage` → **Deployments** | Dernier déploiement = *Success* (sinon *Settings → Builds* : branche `main`, build `npm run build`, deploy `npx wrangler deploy`) | 2 min |
-> | 2 | **Settings → Domains & Routes** | Noter l'adresse du site (`https://seminaire-triage.<…>.workers.dev` ou ton domaine). C'est elle que le QR code imprimera | 1 min |
+> | 2 | Site officiel | `https://seminaire-triage.incognitoresolve.workers.dev/` (QR codes des affiches) | — |
 > | 3 | **Settings → Variables and Secrets** (type *Secret*) | `STAFF_PIN` (8+ car.) · `SESSION_SECRET` (32+ car. aléatoires) · `ADMIN_KEY` (16+ car., organisateur / responsable médical) · `PARTNER_KEY` (16+ car., toi seul). Sans eux : accès bloqué (sécurité) | 5 min |
-> | 4 | Navigateur | `https://<adresse>/api/health` → `{"ok":true}` | 1 min |
+> | 4 | Navigateur | `https://seminaire-triage.incognitoresolve.workers.dev/api/health` → `{"ok":true}` | 1 min |
 > | 5 | 2 tablettes | Test réel : 2 inscriptions → *Liste des inscrits* (PIN) → fiche → tension → *Médecin 1* → visible sur l'autre tablette | 5 min |
-> | 6 | `https://<adresse>/admin` + `ADMIN_KEY` | Effacer les tests : *Tout mettre à la corbeille* → *Vider* → *Effacer toutes les réponses* | 2 min |
-> | 7 | `https://<adresse>/affiche` | Vérifier l'adresse dans le champ au-dessus de l'affiche (remplie toute seule sur le site en ligne) → **Imprimer l'affiche (A4)** (inscription libre, sans attente) → **Affiche du questionnaire** → imprimer. Les adresses locales (localhost) sont refusées. Scanner une feuille imprimée pour vérifier | 10 min |
+> | 6 | `https://seminaire-triage.incognitoresolve.workers.dev/admin` + `ADMIN_KEY` | Effacer les tests : *Tout mettre à la corbeille* → *Vider* → *Effacer toutes les réponses* | 2 min |
+> | 7 | `docs/affiches/` | **Imprimer les PDF prêts** : `affiche-inscription-A4.pdf` (« Pas envie d'attendre ? ») et `affiche-questionnaire-A4.pdf`. QR codes vérifiés vers `https://seminaire-triage.incognitoresolve.workers.dev/`. Impression : A4, taille réelle (100 %), couleur. Scanner une feuille imprimée pour vérifier. (Aussi en ligne : `/affiche`) | 10 min |
 > | 8 | Envoyer à Claude | L'**e-mail de contact RGPD d'ICC Liège** (2 emplacements `[email-contact]` dans la politique de confidentialité) | 1 min |
 > | 9 | Médecins | Relire l'assistant éducatif (README) et les seuils marqués « Seuil de prudence CheckSanté » | 15 min |
 > | 10 | Sur place | PIN aux soignants uniquement · `ADMIN_KEY` à l'organisateur · tablettes chargées, veille désactivée · partage 4G de secours · diffuser la vidéo sur l'écran d'accueil | — |
@@ -126,7 +126,7 @@ Chaque commit sur `main` redéploie automatiquement (≈ 1 min).
 
 | # | Test | Résultat attendu |
 |---|---|---|
-| 1 | Ouvrir `https://<adresse>/api/health` | `{"ok":true}` |
+| 1 | Ouvrir `https://seminaire-triage.incognitoresolve.workers.dev/api/health` | `{"ok":true}` |
 | 2 | Inscrire 2 personnes à la suite (tablette d'accueil) | bandeau « ✓ … est inscrit(e) », formulaire vidé aussitôt |
 | 3 | `/staff` sur 2 tablettes, saisir le PIN | pastille verte **Temps réel**, les inscrits apparaissent |
 | 4 | Bouton **Liste des inscrits** → taper le nom → ouvrir la fiche | la fiche s'ouvre |
@@ -146,8 +146,8 @@ DELETE FROM partner_leads;
 ```
 
 ### Impression
-- Ouvrir `https://<adresse>/affiche` → **Imprimer** (A4 ou A3, plusieurs exemplaires : entrée, file d'attente, chaises).
-- Idem `https://<adresse>/affiche?cible=questionnaire` (salle de présentation).
+- Ouvrir `https://seminaire-triage.incognitoresolve.workers.dev/affiche` → **Imprimer** (A4 ou A3, plusieurs exemplaires : entrée, file d'attente, chaises).
+- Idem `https://seminaire-triage.incognitoresolve.workers.dev/affiche?cible=questionnaire` (salle de présentation).
 - **Scanner une affiche imprimée** avec un téléphone pour vérifier.
 
 ---
@@ -181,7 +181,7 @@ DELETE FROM partner_leads;
    FROM patients WHERE doctor_consent = 1 AND doctor IS NOT NULL AND deleted_at IS NULL ORDER BY doctor, triage DESC;
    ```
    `doctor` = 1 (Médecin 1, mercredi) ou 2 (Médecin 2, samedi). Transmettre **par un moyen sécurisé** (eHealthBox, messagerie santé), **jamais par Gmail**.
-2. **Contacts check-up** (toi uniquement) : `https://<adresse>/admin` + ta clé `PARTNER_KEY` → onglet *Mes contacts*.
+2. **Contacts check-up** (toi uniquement) : `https://seminaire-triage.incognitoresolve.workers.dev/admin` + ta clé `PARTNER_KEY` → onglet *Mes contacts*.
    Statut par contact (Nouveau → Contacté → Rendez-vous → Client), notes, bouton **Télécharger (Excel / CSV)**.
    Une relance maximum, « STOP » = bouton d'effacement (`docs/modele-email-checkup.md`).
    **Bilan anonyme** (rapport ICC, présentations) : espace soignants → **Bilan** → **Exporter le bilan (CSV)**.

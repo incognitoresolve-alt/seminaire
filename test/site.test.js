@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseSite } from '../web/shared/site.js';
+import { OFFICIAL_SITE, parseSite } from '../web/shared/site.js';
 
 test('affiche : adresse publique acceptée, normalisée en origine https', () => {
   assert.equal(parseSite('seminaire-triage.abc.workers.dev'), 'https://seminaire-triage.abc.workers.dev');
@@ -14,4 +14,8 @@ test('affiche : jamais localhost, réseau local, http, port ou identifiants (fai
     'https://user:pw@checksante.be', 'javascript:alert(1)', 'ftp://checksante.be', 'checksante', 'https://a b.be']) {
     assert.equal(parseSite(bad), null, bad);
   }
+});
+
+test('affiche : le site officiel est une adresse valide', () => {
+  assert.equal(parseSite(OFFICIAL_SITE), OFFICIAL_SITE);
 });
