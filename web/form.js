@@ -158,12 +158,3 @@ export function bindIdentityForm(form, send) {
     }
   });
 }
-
-export const passCardHtml = (pass, qr) => `
-  <div class="mx-auto w-full max-w-sm rounded-3xl border-4 border-sky-700 bg-white p-5 text-center shadow-xl">
-    <p class="text-xs font-bold tracking-[.2em] text-sky-800 uppercase">Pass Patient</p>
-    <p class="mt-1 text-2xl font-extrabold">${esc(pass.first_name)} ${esc(pass.last_name)}</p>
-    <div class="mx-auto my-4 w-64 max-w-full">${qr}</div>
-    <p class="text-sm text-slate-600">Code de secours</p>
-    <p class="font-mono text-3xl font-black tracking-[.3em]">${esc(pass.short_code)}</p>
-  </div>`;

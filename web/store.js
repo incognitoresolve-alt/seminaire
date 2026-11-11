@@ -65,7 +65,6 @@ export function view(id) {
 }
 export const all = () => [...rows.keys()].map(view);
 export const isPending = (id) => pending.has(id);
-export const findByToken = (t) => all().find((r) => r.token === t || r.short_code === t.toUpperCase()) || null;
 
 function handleAuth(e) {
   if (e.status === 401) {

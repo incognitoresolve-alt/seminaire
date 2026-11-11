@@ -5,12 +5,11 @@ import { HttpError, assertSameOrigin, clientIp, json, rateLimit, readJson } from
 import { hub } from './hub.js';
 import { ensureSchema } from './schema.js';
 import { sendCheckupMail } from './mail.js';
-import { alreadyMailed, createLead, deleteLead, deleteLeadByToken, eventStats, listLeads, markMailed, qualifyLead, updateLead, createPatient, createSurvey, deletePatient, getDetail, listSince, lookup, purge, surveyStats, updatePatient } from './patients.js';
+import { alreadyMailed, createLead, deleteLead, deleteLeadByToken, eventStats, listLeads, markMailed, qualifyLead, updateLead, createPatient, createSurvey, deletePatient, getDetail, listSince, purge, surveyStats, updatePatient } from './patients.js';
 
 export { Hub } from './hub.js';
 
 const ID_RE = /^[0-9a-f-]{36}$/;
-const passOf = (r) => ({ token: r.token, short_code: r.short_code, first_name: r.first_name, last_name: r.last_name });
 
 function broadcast(env, ctx, msg) {
   ctx.waitUntil(hub(env).broadcast(msg).catch((e) => console.error(JSON.stringify({ evt: 'broadcast_failed', err: String(e?.message) }))));
@@ -23,7 +22,8 @@ async function register(req, env, ctx, source) {
   if (!ok) throw new HttpError(422, 'validation', { errors });
   const { row, created } = await createPatient(env, value, source);
   if (created) broadcast(env, ctx, { t: 'upsert', p: row });
-  return json(source === 'self' ? { pass: passOf(row) } : { pass: passOf(row), patient: row }, created ? 201 : 200);
+  // Accueil : simple confirmation (aucun jeton renvoyé au public) ; soignants : la fiche complète.
+  return json(source === 'self' ? { ok: true, first_name: row.first_name, last_name: row.last_name } : { patient: row }, created ? 201 : 200);
 }
 
 async function staffRoutes(req, env, ctx, url, path) {
@@ -73,13 +73,6 @@ async function staffRoutes(req, env, ctx, url, path) {
     return csvResponse(toCsv([['a', 'Indicateur'], ['b', 'Valeur']], rows), `bilan-anonyme-checksante-${new Date().toISOString().slice(0, 10)}.csv`);
   }
 
-  if (path === '/lookup' && method === 'GET') {
-    const q = (url.searchParams.get('q') || '').trim();
-    if (!/^[A-Za-z0-9_-]{6,32}$/.test(q)) throw new HttpError(400, 'invalid');
-    const row = await lookup(env, q);
-    if (!row) throw new HttpError(404, 'not_found');
-    return json({ patient: row });
-  }
 
   const m = path.match(/^\/patients\/([^/]+)$/);
   if (m) {

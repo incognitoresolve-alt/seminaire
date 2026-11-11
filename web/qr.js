@@ -13,4 +13,3 @@ export function qrSvg(text, { label = 'QR code' } = {}) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${s} ${s}" shape-rendering="crispEdges" role="img" aria-label="${label}" class="h-auto w-full"><rect width="${s}" height="${s}" fill="#fff"/><path d="${d}" fill="#0f172a"/></svg>`;
 }
 
-export const passUrl = (token) => `${location.origin}/staff#p=${encodeURIComponent(token)}`;
