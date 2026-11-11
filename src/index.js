@@ -66,7 +66,6 @@ async function staffRoutes(req, env, ctx, url, path) {
       ...s.per_day.map((x) => [`Inscriptions le ${x.d}`, x.n]),
       ...Object.entries(s.ages).map(([k, n]) => [`Âge ${k} ans`, n]),
       ...Object.entries(s.triage).map(([k, n]) => [`Triage ${['à mesurer', 'vert', 'orange', 'rouge'][k] ?? k}`, n]),
-      ...Object.entries(s.doctors).map(([k, n]) => [`Médecin ${k}`, n]),
     ].map(([a, b]) => ({ a, b }));
     return csvResponse(toCsv([['a', 'Indicateur'], ['b', 'Valeur']], rows), `bilan-anonyme-checksante-${new Date().toISOString().slice(0, 10)}.csv`);
   }

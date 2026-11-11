@@ -124,9 +124,14 @@ export function validatePatch(b) {
       if (raw === null || (typeof raw === 'string' && !raw.trim())) value[k] = null;
       else if (typeof raw === 'string' && raw.trim().length <= max) value[k] = freeText(raw, max, k === 'gp_address');
       else errors[k] = k === 'gp_contact' ? 'Coordonnées trop longues' : 'Adresse trop longue';
-    } else if (k === 'doctor') {
-      if (raw === null || raw === 1 || raw === 2) value.doctor = raw;
-      else errors.doctor = 'Médecin invalide';
+    } else if (k === 'practitioner') {
+      // Soignant / praticien qui encode : obligatoire côté tablette avant toute saisie de paramètres.
+      const n = typeof raw === 'string' ? cleanName(raw) : '';
+      if (n.length >= 2 && NAME_RE.test(n)) value.practitioner = n;
+      else errors.practitioner = 'Nom du soignant invalide';
+    } else if (k === 'no_gp') {
+      if (raw === 0 || raw === 1) value.no_gp = raw;
+      else errors.no_gp = 'Valeur invalide';
     } else {
       errors[k] = 'Champ inconnu';
     }

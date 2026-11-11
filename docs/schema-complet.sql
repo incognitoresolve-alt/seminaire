@@ -27,3 +27,7 @@ ALTER TABLE patients ADD COLUMN consent_log TEXT;
 -- Facultatif : appliqué automatiquement par l'application.
 ALTER TABLE patients ADD COLUMN gp_email TEXT;
 ALTER TABLE patients ADD COLUMN gp_sent_at INTEGER;
+
+-- Nom du ou des soignants / praticiens qui ont encodé les paramètres ; « pas de médecin traitant ».
+-- Facultatif : appliqué automatiquement par l'application (no_gp existe déjà sur les bases créées en v1).
+ALTER TABLE patients ADD COLUMN practitioner TEXT;

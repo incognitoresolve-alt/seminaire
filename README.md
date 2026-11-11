@@ -12,7 +12,7 @@ Application temps réel pour les consultations de prévention (11–14 nov. 2026
 | URL | Public | Rôle |
 |---|---|---|
 | `/` | participants | Inscription (identité + accord consultation + transmission de ses données à son médecin traitant) par l'accueil ; formulaire vidé aussitôt pour la personne suivante (aucun Pass, rien stocké sur la tablette) |
-| `/staff` | soignants (PIN) | Liste temps réel triée par priorité, recherche instantanée par nom, fiche (vitaux, IMC, glycémie, périmètre abdo., notes), assignation Médecin 1 (mer. 11/11) / Médecin 2 (sam. 14/11), ajout manuel, bilan anonyme en direct |
+| `/staff` | soignants (PIN) | Liste temps réel triée par priorité, recherche instantanée par nom, fiche : **nom du soignant / praticien obligatoire avant toute saisie** (enregistré sur le dossier), vitaux, IMC, glycémie, périmètre abdo., notes, médecin traitant (ou « pas de médecin traitant »), ajout manuel, bilan anonyme en direct. Pas d'assignation à un médecin : l'envoi au cabinet du médecin traitant se fait depuis `/admin` → Envois |
 | `/affiche` · `/affiche?cible=remarques` | accueil | Affiche A4 imprimable : QR d'auto-inscription (« Pas envie d'attendre ? ») ou des remarques des intervenants. Site officiel pré-rempli (modifiable) ; PDF prêts dans `docs/affiches/` ; localhost, réseau local et http refusés, impression bloquée sans adresse valide |
 | `/fiche?id=…` | soignants (PIN) | **Fiche pour le médecin traitant** (bouton de la fiche soignant, où le soignant saisit le nom, le prénom et les coordonnées du médecin traitant) : identité, mesures, notes et **preuve de l'accord** (texte exact, date et heure, moyen, historique, empreinte SHA-256 vérifiée). Imprimer / Enregistrer en PDF, puis envoyer. Refusée sans accord (403) |
 | `/remarques` | soignants, médecins, intervenants, bénévoles | Remarques et propositions (rôle, type, message, nom/contact au choix) → `/admin`, onglet **Remarques** (clé `ADMIN_KEY`) : statut Nouveau / Lu / Traité, notes, export CSV. Affiche QR : `/affiche?cible=remarques` |
@@ -130,7 +130,7 @@ Format imposé : 1. Note importante · 2. Niveau d'urgence (112 / urgence médic
 - CSP stricte (`script-src 'self'`, aucun inline), HSTS, X-Frame-Options DENY, Permissions-Policy (caméra, micro, géolocalisation désactivés).
 - Rate limiting natif par IP (inscription 120/min — un Wi-Fi partagé = une IP —, login 10/min, API 1200/min).
 - Honeypot + idempotence (`request_id`) : double-clic ou réseau instable ⇒ jamais de doublon.
-- Minimisation : e-mail et téléphone chargés uniquement à l'ouverture d'une fiche ; sans accord de transmission, aucune fiche pour le médecin traitant ne peut être produite et son nom n'est pas enregistré (contrôle serveur) ; l'assignation Médecin 1 / 2 de l'événement relève de l'accord de consultation ; les remarques des intervenants ne sont lisibles qu'avec `ADMIN_KEY`.
+- Minimisation : e-mail et téléphone chargés uniquement à l'ouverture d'une fiche ; sans accord de transmission, aucune fiche pour le médecin traitant ne peut être produite et son nom n'est pas enregistré (contrôle serveur) ; les remarques des intervenants ne sont lisibles qu'avec `ADMIN_KEY`.
 - Droit à l'effacement (bouton fiche) : données écrasées immédiatement ; cron quotidien purge tout après `RETENTION_DAYS` (30 j).
 - Logs Workers sans PII ; `/api/health` pour l'uptime monitoring.
 - RGPD (Belgique) : données de santé (art. 9) ⇒ consentement explicite recueilli, D1 en juridiction UE. Compléter `[adresse]`/`[email-contact]` dans `confidentialite.html` et tenir le registre des traitements.

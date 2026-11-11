@@ -463,10 +463,10 @@ story += [P('Matériel', 'h2'),
 ]
 story += [P('Briefing des soignants (5 minutes)', 'h2'),
     Step(6, 'Le PIN ne se donne jamais aux participants.'),
-    Step(7, f'Le circuit : {btn("Liste des inscrits")} → chercher le nom → saisir les mesures → choisir '
-            f'{btn("Médecin 1")} ou {btn("Médecin 2")} → {btn("Patient suivant →")} → {btn("Terminé")}.'),
+    Step(7, f'Le circuit : {btn("Liste des inscrits")} → chercher le nom → <b>indiquer son nom (soignant)</b> → saisir les mesures → '
+            f'médecin traitant (ou « pas de médecin traitant ») → {btn("Patient suivant →")} → {btn("Terminé")}.'),
     Step(8, 'Les couleurs sont une <b>aide</b> : le jugement clinique prime toujours.'),
-    Step(11, 'Personne qui a refusé la transmission au médecin : les boutons Médecin 1 / 2 sont grisés. '
+    Step(11, 'Personne qui a refusé la transmission à son médecin traitant : aucune fiche ne peut lui être envoyée. '
              f'Si elle change d’avis : {btn("Le participant donne son accord")} dans sa fiche.'),
     Step(12, f'Retrouver une personne par son nom : sur l’écran d’inscription, bouton {btn("Espace soignants · liste des inscrits")}, '
              'puis taper son nom dans la recherche.'),

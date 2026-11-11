@@ -57,3 +57,13 @@ test('envois manuels : e-mail du médecin traitant validé', async () => {
   assert.deepEqual(validatePatch({ gp_email: 'Cabinet@Exemple.be' }).value, { gp_email: 'cabinet@exemple.be' });
   assert.ok(validatePatch({ gp_email: 'cabinet' }).errors.gp_email);
 });
+
+test('soignant qui encode (obligatoire côté tablette) et « pas de médecin traitant »', () => {
+  assert.deepEqual(validatePatch({ practitioner: '  Dr  Jean   Mbala ' }).value, { practitioner: 'Dr Jean Mbala' });
+  assert.ok(validatePatch({ practitioner: '' }).errors.practitioner);
+  assert.ok(validatePatch({ practitioner: 'X' }).errors.practitioner);
+  assert.ok(validatePatch({ practitioner: '<b>' }).errors.practitioner);
+  assert.ok(validatePatch({ practitioner: null }).errors.practitioner);
+  assert.deepEqual(validatePatch({ no_gp: 1 }).value, { no_gp: 1 });
+  assert.ok(validatePatch({ no_gp: true }).errors.no_gp);
+});
