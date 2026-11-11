@@ -92,3 +92,11 @@ test('apostrophe typographique (clavier iPhone) acceptée et normalisée', () =>
   assert.ok(r.ok, JSON.stringify(r.errors));
   assert.equal(r.value.last_name, "N'Diaye");
 });
+
+test('signes d’alerte : liste fermée', () => {
+  assert.equal(validatePatch({ alerts: 'avc,grossesse' }).value.alerts, 'avc,grossesse');
+  assert.equal(validatePatch({ alerts: '' }).value.alerts, null);
+  assert.ok(validatePatch({ alerts: 'avc,<script>' }).errors.alerts);
+  assert.ok(validatePatch({ spo2: 101 }).errors.spo2);
+  assert.ok(validatePatch({ rr: 18, spo2: 97 }).ok);
+});

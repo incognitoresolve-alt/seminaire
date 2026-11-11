@@ -24,7 +24,9 @@ test('IMC ≥ 30 => orange, glycémie ≥ 300 => rouge', () => {
   assert.equal(triage({ glucose: 320 }).level, LEVEL.RED);
 });
 
-import { advice, ageYears } from '../web/shared/triage.js';
+import { ageYears, news2 } from '../web/shared/triage.js';
+import { NOTE, RAPPEL, analyse } from '../web/shared/assistant.js';
+import { SOURCES } from '../web/shared/sources.js';
 const NOW = new Date('2026-11-11T10:00:00');
 test('âge calculé à la date du jour', () => {
   assert.equal(ageYears('1990-11-12', NOW), 35);
@@ -40,14 +42,44 @@ test('IMC adulte non appliqué avant 18 ans', () => {
   assert.equal(triage({ weight: 70, height: 150, birth_date: '2014-01-01' }, NOW).level, LEVEL.NONE);
   assert.equal(triage({ weight: 70, height: 150, birth_date: '1980-01-01' }, NOW).level, LEVEL.ORANGE);
 });
-test('conseils automatiques selon valeurs et âge', () => {
-  const a = advice({ sys: 150, dia: 85, birth_date: '1958-03-01' }, NOW).map((x) => x.text).join(' | ');
-  assert.match(a, /Tension élevée/);
-  assert.match(a, /risque de chute/); // 68 ans
-  assert.match(a, /glycémie/i); // ≥ 45 ans sans glycémie
-  assert.match(a, /colorectal/);
-  assert.match(a, /vaccins/);
-  assert.ok(advice({ glucose: 60 }, NOW).some((x) => x.tone === 'red'));
-  assert.ok(advice({ pulse: 80, birth_date: '2015-01-01' }, NOW).some((x) => /Mineur/.test(x.text)));
-  assert.equal(advice({ pulse: 72, temp: 36.8, birth_date: '2000-01-01' }, NOW).length, 0);
+
+test('NEWS2 (RCP 2017) : barème par paramètre', () => {
+  assert.deepEqual(news2({ rr: 22, pulse: 115, temp: 38.5 }), { score: 5, n: 3, max3: false });
+  assert.equal(news2({ spo2: 91 }).max3, true);
+  assert.equal(news2({ sys: 120, pulse: 72, rr: 16, spo2: 98, temp: 36.8 }).score, 0);
+});
+const lvl = (p) => analyse(p, NOW).level;
+test('assistant : niveaux d’urgence', () => {
+  assert.equal(lvl({ alerts: 'douleur_thoracique' }), 'urgence');
+  assert.equal(lvl({ spo2: 91, birth_date: '1980-01-01' }), 'urgence');
+  assert.equal(lvl({ spo2: 93, birth_date: '1980-01-01' }), 'urgence_medicale');
+  assert.equal(lvl({ sys: 185, dia: 95, birth_date: '1980-01-01' }), 'urgence_medicale');
+  assert.equal(lvl({ sys: 150, dia: 85, birth_date: '1980-01-01' }), 'consultation');
+  assert.equal(lvl({ temp: 38.4, birth_date: '1980-01-01' }), 'surveillance');
+  assert.equal(lvl({ pulse: 72, temp: 36.8, sys: 118, dia: 76, birth_date: '1980-01-01' }), 'rassurant');
+  assert.equal(lvl({}), 'incomplet');
+  assert.equal(lvl({ temp: 38.2, birth_date: '2026-10-01' }), 'urgence'); // nourrisson < 3 mois
+  assert.equal(lvl({ sys: 145, dia: 92, alerts: 'grossesse', birth_date: '1995-01-01' }), 'urgence_medicale');
+  assert.equal(lvl({ rr: 22, pulse: 115, temp: 38.5, birth_date: '1980-01-01' }), 'urgence_medicale'); // NEWS2 = 5
+});
+test('assistant : format obligatoire et sources réelles', () => {
+  const a = analyse({ sys: 150, dia: 85, birth_date: '1958-03-01' }, NOW);
+  assert.match(NOTE, /strictement indicative et éducative/);
+  assert.match(RAPPEL, /fournies à titre indicatif et éducatif/);
+  assert.ok(a.label.startsWith('CONSULTATION RAPIDE'));
+  assert.ok(a.understood.includes('68 ans'));
+  assert.ok(a.actions.length >= 2 && a.actions.length <= 5);
+  assert.ok(a.sources.some((x) => x.id === 'ESC_HTA') && a.sources.some((x) => x.id === 'BE_112'));
+  assert.ok(a.prevention.some((x) => /colorectal/.test(x.text)) && a.prevention.some((x) => /grippe/.test(x.text)));
+  // toutes les sources citées existent, et seules les sources « APP » n'ont pas d'URL
+  for (const x of Object.values(SOURCES)) assert.ok(x.tier === 'APP' ? !x.url : x.url.startsWith('https://'));
+});
+test('assistant : aucune prescription ni dose', () => {
+  const all = [];
+  for (const p of [{ glucose: 50 }, { glucose: 60 }, { temp: 39.8 }, { sys: 190, dia: 115 }, { alerts: 'douleur_thoracique,avc' }]) {
+    const a = analyse({ ...p, birth_date: '1970-01-01' }, NOW);
+    all.push(...a.findings.map((f) => f.text), ...a.actions);
+  }
+  assert.ok(!/\b\d+\s?(mg|g|ml|comprimé)\b(?!\/dL)/i.test(all.join(' ')), 'aucune dose');
+  assert.ok(!/paracétamol|ibuprofène|aspirine|insuline/i.test(all.join(' ')), 'aucun médicament');
 });

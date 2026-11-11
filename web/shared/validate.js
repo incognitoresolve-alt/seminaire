@@ -7,6 +7,8 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 
 export const VITALS = {
   pulse: { min: 20, max: 250, int: true, label: 'Pouls', unit: 'bpm' },
+  rr: { min: 4, max: 80, int: true, label: 'Respiration', unit: '/min' },
+  spo2: { min: 50, max: 100, int: true, label: 'SpO2', unit: '%' },
   temp: { min: 30, max: 45, dec: 1, label: 'Température', unit: '°C' },
   weight: { min: 1, max: 400, dec: 1, label: 'Poids', unit: 'kg' },
   height: { min: 50, max: 250, int: true, label: 'Taille', unit: 'cm' },
@@ -94,6 +96,12 @@ export function validatePatch(b) {
       if (raw === null || raw === '') value.notes = null;
       else if (typeof raw === 'string' && raw.length <= NOTES_MAX) value.notes = raw;
       else errors.notes = 'Notes trop longues';
+    } else if (k === 'alerts') {
+      // Liste fermée de signes d'alerte / contexte, séparés par des virgules.
+      const ALLOWED = ['douleur_thoracique', 'essoufflement', 'malaise', 'confusion', 'avc', 'saignement', 'grossesse'];
+      const list = raw === null || raw === '' ? [] : typeof raw === 'string' ? raw.split(',') : null;
+      if (list && list.length <= ALLOWED.length && list.every((x) => ALLOWED.includes(x))) value.alerts = list.length ? [...new Set(list)].join(',') : null;
+      else errors.alerts = 'Signes d’alerte invalides';
     } else if (k === 'stage') {
       if (raw === 0 || raw === 1 || raw === 2) value.stage = raw;
       else errors.stage = 'Étape invalide';

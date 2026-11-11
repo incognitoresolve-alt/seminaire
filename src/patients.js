@@ -3,7 +3,7 @@ import { HttpError } from './http.js';
 
 // Colonnes exposées au staff (sans email ni request_id : minimisation).
 const COLS =
-  'id,token,short_code,last_name,first_name,birth_date,source,doctor_consent,stage,stage_at,pulse,temp,weight,height,waist,glucose,sys,dia,notes,triage,doctor,version,created_at,updated_at,deleted_at';
+  'id,token,short_code,last_name,first_name,birth_date,source,doctor_consent,stage,stage_at,alerts,pulse,rr,spo2,temp,weight,height,waist,glucose,sys,dia,notes,triage,doctor,version,created_at,updated_at,deleted_at';
 const DETAIL_COLS = `${COLS},email,phone,consent_at`;
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // sans 0/O/1/I/L
 
@@ -87,7 +87,7 @@ export async function deletePatient(env, id) {
   const row = await env.DB.prepare(
     `UPDATE patients SET last_name='', first_name='', birth_date='', email='', phone=NULL, notes=NULL,
        gp_consent=0, no_gp=0, gp_name=NULL, gp_address=NULL, gp_contact=NULL, doctor_consent=0,
-       pulse=NULL, temp=NULL, weight=NULL, height=NULL, waist=NULL, glucose=NULL, sys=NULL, dia=NULL, doctor=NULL, triage=0,
+       pulse=NULL, rr=NULL, spo2=NULL, alerts=NULL, temp=NULL, weight=NULL, height=NULL, waist=NULL, glucose=NULL, sys=NULL, dia=NULL, doctor=NULL, triage=0,
        deleted_at = ?1, updated_at = ?1, version = version + 1
      WHERE id = ?2 AND deleted_at IS NULL RETURNING id, version, updated_at, deleted_at`,
   )
