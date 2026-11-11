@@ -63,7 +63,8 @@ function render({ patient: p, proof, generated_at }) {
       <p class="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-800 ring-1 ring-red-200">Confidentiel · données de santé</p>
     </header>
     <h1 class="mt-5 print:mt-3 text-2xl font-extrabold">Fiche de transmission au médecin traitant</h1>
-    <p class="mt-1 text-sm text-slate-600">À l’attention de : <b class="text-slate-900">${p.gp_name ? esc(p.gp_name) : 'médecin traitant (nom non précisé par le participant)'}</b></p>
+    <p class="mt-1 text-sm text-slate-600">À l’attention de : <b class="text-slate-900">${p.gp_name ? esc(p.gp_name) : 'médecin traitant (nom non renseigné)'}</b></p>
+    ${p.gp_contact || p.gp_address ? `<p class="mt-0.5 text-sm whitespace-pre-line text-slate-600">${esc([p.gp_contact, p.gp_address].filter(Boolean).join('\n'))}</p>` : ''}
 
     ${H('Patient')}
     <table class="w-full"><tbody>

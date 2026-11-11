@@ -272,13 +272,13 @@ function openSheet(id) {
   if (!matchMedia('(pointer: coarse)').matches) $('v-pulse').focus();
 }
 
-let sheetDetail = null; // { gp_name, proof } : chargé à l'ouverture (jamais diffusé aux autres tablettes)
+let sheetDetail = null; // { gp: {gp_name, gp_contact, gp_address}, proof } : chargé à l'ouverture (jamais diffusé aux autres tablettes)
 async function loadDetail(id) {
   try {
     const { patient: d, proof } = await api(`/staff/patients/${id}`);
     if (sheetId !== id) return;
     $('sheet-email').textContent = [d.email, d.phone].filter(Boolean).join(' · ');
-    sheetDetail = { gp_name: d.gp_name ?? null, proof };
+    sheetDetail = { gp: { gp_name: d.gp_name ?? null, gp_contact: d.gp_contact ?? null, gp_address: d.gp_address ?? null }, proof };
     const p = store.view(id);
     if (p) renderConsent(p);
   } catch {
@@ -292,17 +292,24 @@ function renderConsent(p, force = false) {
   const box = $('sheet-consent');
   const d = sheetDetail;
   const t = d?.proof?.transmission;
-  const key = `${p.doctor_consent}|${t ? `${t.at}|${t.v}` : ''}|${d?.gp_name ?? ''}`;
+  const key = `${p.doctor_consent}|${t ? `${t.at}|${t.v}` : ''}|${d ? JSON.stringify(d.gp) : ''}`;
   if (!force && box.dataset.state === key) return;
-  if (box.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return; // saisie en cours
+  if (box.contains(document.activeElement) && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return; // saisie en cours
   box.dataset.state = key;
   const when = t
     ? `<p class="mt-1 text-xs text-slate-600">${t.v ? 'Accord' : 'Refus ou retrait'} enregistré le ${esc(fmtDT(t.at))} · ${esc(t.channel)}${t.legacy ? ' (inscription antérieure à la preuve détaillée)' : ''}${d.proof.intact ? '' : ' · <b class="text-red-700">intégrité non vérifiée</b>'}</p>`
     : '';
   box.innerHTML = p.doctor_consent
     ? `<p class="font-bold text-slate-800">Transmission au médecin traitant : <span class="text-emerald-700">autorisée</span></p>${when}
-      <label class="label mt-3" for="sheet-gp">Nom du médecin traitant</label>
-      <input id="sheet-gp" class="field py-2.5 text-base" maxlength="80" autocomplete="off" autocapitalize="words" placeholder="Dr …" value="${esc(d?.gp_name ?? '')}">
+      <fieldset class="mt-3 space-y-2">
+        <legend class="text-sm font-bold text-slate-800">Médecin traitant <span class="font-normal text-slate-500">(saisi par le soignant)</span></legend>
+        <div><label class="label" for="sheet-gp-name">Nom et prénom</label>
+          <input id="sheet-gp-name" data-gp="gp_name" class="field py-2.5 text-base" maxlength="80" autocomplete="off" autocapitalize="words" placeholder="Dr Prénom Nom" value="${esc(d?.gp.gp_name ?? '')}"></div>
+        <div><label class="label" for="sheet-gp-contact">Téléphone / e-mail</label>
+          <input id="sheet-gp-contact" data-gp="gp_contact" class="field py-2.5 text-base" maxlength="200" autocomplete="off" placeholder="04 … · cabinet@…" value="${esc(d?.gp.gp_contact ?? '')}"></div>
+        <div><label class="label" for="sheet-gp-address">Adresse du cabinet</label>
+          <textarea id="sheet-gp-address" data-gp="gp_address" rows="2" maxlength="300" class="field py-2.5 text-base" autocomplete="off" placeholder="Rue, n°, code postal, commune">${esc(d?.gp.gp_address ?? '')}</textarea></div>
+      </fieldset>
       <div class="mt-3 flex flex-wrap gap-2">
         <a class="btn-primary min-h-10 py-2 text-sm" href="/fiche?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Fiche pour le médecin traitant (PDF)</a>
         <button type="button" data-consent="0" class="btn-danger min-h-10 py-2 text-sm">Retrait de l’autorisation</button>
@@ -468,15 +475,16 @@ $('sheet').addEventListener('click', (e) => {
     }
   }
 });
-// Nom du médecin traitant (fiche soignant) : validé puis enregistré comme les autres champs.
+// Médecin traitant (nom, coordonnées) : saisi par le soignant, validé puis enregistré comme les autres champs.
 $('sheet').addEventListener('change', (e) => {
-  if (e.target.id !== 'sheet-gp' || !sheetId) return;
-  const gp_name = e.target.value.trim() || null;
-  const { ok, errors } = validatePatch({ gp_name });
+  const k = e.target.dataset?.gp;
+  if (!k || !sheetId) return;
+  const v = e.target.value.trim() || null;
+  const { ok, errors, value } = validatePatch({ [k]: v });
   e.target.setAttribute('aria-invalid', String(!ok));
-  if (!ok) return toast(errors.gp_name, 'error');
-  if (sheetDetail) sheetDetail.gp_name = gp_name;
-  store.patch(sheetId, { gp_name });
+  if (!ok) return toast(errors[k], 'error');
+  if (sheetDetail) sheetDetail.gp[k] = value[k];
+  store.patch(sheetId, { [k]: value[k] });
   toast('Médecin traitant enregistré ✓', 'ok');
 });
 $('sheet').addEventListener('close', () => {

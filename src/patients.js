@@ -5,7 +5,7 @@ import { HttpError } from './http.js';
 // Colonnes exposées au staff (sans email ni request_id : minimisation).
 const COLS =
   'id,token,short_code,last_name,first_name,birth_date,source,doctor_consent,stage,stage_at,alerts,pulse,rr,spo2,temp,weight,height,waist,glucose,sys,dia,notes,triage,doctor,version,created_at,updated_at,deleted_at';
-const DETAIL_COLS = `${COLS},email,phone,consent_at,gp_name,doctor_consent_at,consent_log`;
+const DETAIL_COLS = `${COLS},email,phone,consent_at,gp_name,gp_contact,gp_address,doctor_consent_at,consent_log`;
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // sans 0/O/1/I/L
 
 const randomToken = () => {
@@ -33,12 +33,12 @@ export async function createPatient(env, v, source) {
     try {
       const row = await env.DB.prepare(
         `INSERT INTO patients (id,token,short_code,request_id,last_name,first_name,birth_date,email,phone,consent_at,
-           doctor_consent,source,created_at,updated_at,gp_name,doctor_consent_at,consent_log)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING ${COLS}`,
+           doctor_consent,source,created_at,updated_at,doctor_consent_at,consent_log)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING ${COLS}`,
       )
         .bind(
           id, randomToken(), shortCode(), v.request_id, v.last_name, v.first_name, v.birth_date, v.email, v.phone, now,
-          v.doctor_consent ? 1 : 0, source, now, now, v.doctor_consent ? v.gp_name : null, now, JSON.stringify(log),
+          v.doctor_consent ? 1 : 0, source, now, now, now, JSON.stringify(log),
         )
         .first();
       return { row, created: true };
@@ -105,12 +105,12 @@ export async function updatePatient(env, id, patch) {
   const proofBind = [];
   if ('doctor_consent' in patch) {
     const entry = await makeEntry(id, 'transmission', patch.doctor_consent, 'sheet', CURRENT.transmission.staff, now);
-    if (!patch.doctor_consent) patch = { ...patch, gp_name: null }; // retrait : le nom du médecin traitant n'est plus utile
+    if (!patch.doctor_consent) patch = { ...patch, gp_name: null, gp_contact: null, gp_address: null }; // retrait : coordonnées du médecin traitant effacées
     proofSql = `, doctor_consent_at = ?, consent_log = json_insert(COALESCE(consent_log, '[]'), '$[#]', json(?))`;
     proofBind.push(now, JSON.stringify(entry));
   }
-  if (patch.gp_name && !('doctor_consent' in patch)) {
-    // Nom du médecin traitant enregistré seulement si la transmission est autorisée (contrôle serveur).
+  if (['gp_name', 'gp_contact', 'gp_address'].some((k) => patch[k]) && !('doctor_consent' in patch)) {
+    // Médecin traitant (nom, coordonnées) enregistré seulement si la transmission est autorisée (contrôle serveur).
     const ok = await env.DB.prepare('SELECT doctor_consent FROM patients WHERE id = ? AND deleted_at IS NULL').bind(id).first();
     if (ok && ok.doctor_consent !== 1) throw new HttpError(409, 'consent_required');
   }

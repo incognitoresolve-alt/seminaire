@@ -25,19 +25,23 @@ test('preuve : empreinte SHA-256 vérifiable, toute modification détectée', as
 
 const base = { last_name: 'Diallo', first_name: 'Awa', birth_date: '1985-04-12', email: 'awa@exemple.be', consent: true };
 
-test('médecin traitant : nom gardé seulement si la transmission est autorisée', () => {
-  const yes = validateIdentity({ ...base, doctor_consent: true, gp_name: ' Dr. Jean-Marc  Lambert ' });
-  assert.equal(yes.ok, true, JSON.stringify(yes.errors));
-  assert.equal(yes.value.gp_name, 'Dr. Jean-Marc Lambert');
-  assert.equal(validateIdentity({ ...base, doctor_consent: true }).value.gp_name, null); // facultatif
-  assert.equal(validateIdentity({ ...base, doctor_consent: false, gp_name: 'Dr Lambert' }).value.gp_name, null); // minimisation
-  assert.ok(validateIdentity({ ...base, doctor_consent: true, gp_name: '<script>' }).errors.gp_name);
+test('inscription inchangée : aucun champ médecin traitant (saisi ensuite par le soignant)', () => {
+  const r = validateIdentity({ ...base, doctor_consent: true, gp_name: 'Dr Lambert', gp_contact: 'x' });
+  assert.equal(r.ok, true, JSON.stringify(r.errors));
+  assert.equal('gp_name' in r.value, false);
+  assert.equal('gp_contact' in r.value, false);
 });
 
-test('médecin traitant : modification sur la fiche soignant validée', () => {
+test('médecin traitant : nom et coordonnées saisis sur la fiche soignant, validés', () => {
   assert.deepEqual(validatePatch({ gp_name: 'Dr Lambert' }).value, { gp_name: 'Dr Lambert' });
   assert.deepEqual(validatePatch({ gp_name: null }).value, { gp_name: null });
   assert.deepEqual(validatePatch({ gp_name: '  ' }).value, { gp_name: null });
   assert.ok(validatePatch({ gp_name: 42 }).errors.gp_name);
   assert.ok(validatePatch({ gp_name: 'x'.repeat(81) }).errors.gp_name);
+  assert.deepEqual(validatePatch({ gp_contact: ' 04 222 33 44 · cabinet@exemple.be ' }).value, { gp_contact: '04 222 33 44 · cabinet@exemple.be' });
+  assert.deepEqual(validatePatch({ gp_address: 'Rue X 1\n4000 Liège' }).value, { gp_address: 'Rue X 1\n4000 Liège' });
+  assert.deepEqual(validatePatch({ gp_contact: '' }).value, { gp_contact: null });
+  assert.ok(validatePatch({ gp_contact: 'x'.repeat(201) }).errors.gp_contact);
+  assert.ok(validatePatch({ gp_address: 12 }).errors.gp_address);
+  assert.equal(validatePatch({ gp_contact: 'a\u0000b' }).value.gp_contact.includes('\u0000'), false);
 });

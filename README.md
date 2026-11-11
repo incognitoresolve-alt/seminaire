@@ -11,10 +11,10 @@ Application temps réel pour les consultations de prévention (11–14 nov. 2026
 
 | URL | Public | Rôle |
 |---|---|---|
-| `/` | participants | Inscription (identité + accord consultation + transmission de ses données à son médecin traitant, dont le nom est demandé si l'accord est donné) par l'accueil ; formulaire vidé aussitôt pour la personne suivante (aucun Pass, rien stocké sur la tablette) |
+| `/` | participants | Inscription (identité + accord consultation + transmission de ses données à son médecin traitant) par l'accueil ; formulaire vidé aussitôt pour la personne suivante (aucun Pass, rien stocké sur la tablette) |
 | `/staff` | soignants (PIN) | Liste temps réel triée par priorité, recherche instantanée par nom, fiche (vitaux, IMC, glycémie, périmètre abdo., notes), assignation Médecin 1 (mer. 11/11) / Médecin 2 (sam. 14/11), ajout manuel, bilan anonyme en direct |
 | `/affiche` · `/affiche?cible=remarques` | accueil | Affiche A4 imprimable : QR d'auto-inscription (« Pas envie d'attendre ? ») ou des remarques des intervenants. Site officiel pré-rempli (modifiable) ; PDF prêts dans `docs/affiches/` ; localhost, réseau local et http refusés, impression bloquée sans adresse valide |
-| `/fiche?id=…` | soignants (PIN) | **Fiche pour le médecin traitant** (bouton de la fiche soignant) : identité, mesures, notes et **preuve de l'accord** (texte exact, date et heure, moyen, historique, empreinte SHA-256 vérifiée). Imprimer / Enregistrer en PDF, puis envoyer. Refusée sans accord (403) |
+| `/fiche?id=…` | soignants (PIN) | **Fiche pour le médecin traitant** (bouton de la fiche soignant, où le soignant saisit le nom, le prénom et les coordonnées du médecin traitant) : identité, mesures, notes et **preuve de l'accord** (texte exact, date et heure, moyen, historique, empreinte SHA-256 vérifiée). Imprimer / Enregistrer en PDF, puis envoyer. Refusée sans accord (403) |
 | `/remarques` | soignants, médecins, intervenants, bénévoles | Remarques et propositions (rôle, type, message, nom/contact au choix) → `/admin`, onglet **Remarques** (clé `ADMIN_KEY`) : statut Nouveau / Lu / Traité, notes, export CSV. Affiche QR : `/affiche?cible=remarques` |
 | `/partenaire?pour=public\|pro` | tous | Page **Publicité** du partenaire assurances + formulaire de recontact (opt-in distinct) |
 
