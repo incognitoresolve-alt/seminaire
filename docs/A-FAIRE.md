@@ -24,9 +24,9 @@ Le dépôt n'a qu'une branche : `ccr-7e184915-u0pmfk`. Cloudflare déploiera dep
 4. GitHub → branche `main` → fichier `wrangler.toml` → ✏️ (Edit) → ligne 17 :
    `database_id = "00000000-0000-0000-0000-000000000000"` → remplacer par l'ID copié → **Commit changes**.
 
-### Créer les tables
+### Créer les tables (FACULTATIF : l'application les crée toute seule au premier accès)
 5. D1 → `seminaire` → onglet **Console**.
-6. Pour chaque fichier, **dans cet ordre** : `migrations/0001_init.sql`, `0002_partner_leads.sql`, `0003_lead_mail.sql`, `0004_stage.sql`
+6. Pour chaque fichier, **dans cet ordre** : `migrations/0001_init.sql`, `0002_partner_leads.sql`, `0003_lead_mail.sql`, `0004_stage.sql`, `0005_doctor_consent.sql`
    - GitHub → ouvrir le fichier → bouton **Raw** → tout copier → coller dans la console → **Execute**.
    - Si la console refuse plusieurs instructions d'un coup : exécuter les blocs `CREATE …;` / `ALTER …;` un par un.
    - Ne lancer chaque fichier **qu'une fois** (relancer 0003/0004 donne « duplicate column » : sans gravité, déjà fait).
@@ -63,6 +63,7 @@ Worker `seminaire-triage` → **Settings → Variables and Secrets → Add** →
 | `SESSION_SECRET` | 32+ caractères aléatoires | Mac/Linux : `openssl rand -base64 48` ; sinon générateur de mot de passe (64 caractères) |
 | `BREVO_API_KEY` | clé API Brevo | voir étape E (facultatif) |
 | `MAIL_FROM` | ex. `checkup@checksante.be` | voir étape E (facultatif) |
+| `PARTNER_KEY` | ta clé d'accès à l'espace partenaire, **16 caractères minimum** | générateur de mot de passe ; à garder pour toi seul (les soignants n'en ont pas besoin) |
 
 Les secrets s'appliquent immédiatement (nouvelle version déployée automatiquement).
 
@@ -155,19 +156,15 @@ DELETE FROM partner_leads;
 
 ## I. Après l'événement
 
-1. **Médecins traitants** (personnes ayant autorisé la transmission, cas orange/rouge) — D1 Console :
+1. **Dossiers par médecin** (uniquement les personnes qui ont autorisé la transmission) — D1 Console :
    ```sql
-   SELECT last_name, first_name, birth_date, gp_name, gp_address, gp_contact,
-          pulse, temp, sys, dia, glucose, weight, height, waist, notes, triage
-   FROM patients
-   WHERE gp_consent = 1 AND no_gp = 0 AND triage >= 2 AND deleted_at IS NULL;
+   SELECT doctor, last_name, first_name, birth_date, pulse, temp, sys, dia, glucose, weight, height, waist, notes, triage
+   FROM patients WHERE doctor_consent = 1 AND doctor IS NOT NULL AND deleted_at IS NULL ORDER BY doctor, triage DESC;
    ```
-   Transmettre **par un moyen sécurisé** (eHealthBox, messagerie santé), **jamais par Gmail**.
-2. **Contacts check-up** (toi uniquement) :
-   ```sql
-   SELECT datetime(created_at/1000,'unixepoch') AS date, name, email, phone, interests, mailed_at IS NOT NULL AS email_envoye
-   FROM partner_leads ORDER BY created_at;
-   ```
-   Une relance maximum, « STOP » = suppression (`docs/modele-email-checkup.md`).
+   `doctor` = 1 (Médecin 1, mercredi) ou 2 (Médecin 2, samedi). Transmettre **par un moyen sécurisé** (eHealthBox, messagerie santé), **jamais par Gmail**.
+2. **Contacts check-up** (toi uniquement) : `https://<adresse>/espace-partenaire` + ta clé `PARTNER_KEY`.
+   Statut par contact (Nouveau → Contacté → Rendez-vous → Client), notes, bouton **Télécharger (Excel / CSV)**.
+   Une relance maximum, « STOP » = bouton d'effacement (`docs/modele-email-checkup.md`).
+   **Bilan anonyme** (rapport ICC, présentations) : espace soignants → **Bilan** → **Exporter le bilan (CSV)**.
 3. **Sécurité** : supprimer ou changer le secret `STAFF_PIN` → plus aucun accès soignants.
 4. **Effacement** : automatique (patients et questionnaires après 30 jours, contacts après 180 jours). Pour tout effacer plus tôt : mêmes `DELETE` qu'en G.

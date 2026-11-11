@@ -1,10 +1,11 @@
-import { PARTNER } from '../web/shared/partner.js';
-import { validateIdentity, validateLead, validatePatch, validateSurvey } from '../web/shared/validate.js';
-import { checkPin, clearCookie, requireStaff, sessionCookie } from './auth.js';
+import { LEAD_INTERESTS, PARTNER } from '../web/shared/partner.js';
+import { CONTACT_TIMES, LEAD_STATUS, validateIdentity, validateLead, validateLeadPatch, validateLeadQualify, validatePatch, validateSurvey } from '../web/shared/validate.js';
+import { checkPin, checkSecret, clearCookie, clearRoleCookie, makeCookie, requireRole, requireStaff, sessionCookie } from './auth.js';
 import { HttpError, assertSameOrigin, clientIp, json, rateLimit, readJson } from './http.js';
 import { hub } from './hub.js';
+import { ensureSchema } from './schema.js';
 import { sendCheckupMail } from './mail.js';
-import { alreadyMailed, createLead, deleteLeadByToken, markMailed, createPatient, createSurvey, deletePatient, getDetail, listSince, lookup, purge, surveyStats, updatePatient } from './patients.js';
+import { alreadyMailed, createLead, deleteLead, deleteLeadByToken, eventStats, listLeads, markMailed, qualifyLead, updateLead, createPatient, createSurvey, deletePatient, getDetail, listSince, lookup, purge, surveyStats, updatePatient } from './patients.js';
 
 export { Hub } from './hub.js';
 
@@ -57,6 +58,20 @@ async function staffRoutes(req, env, ctx, url, path) {
   if (path === '/patients' && method === 'POST') return register(req, env, ctx, 'staff');
 
   if (path === '/survey-stats' && method === 'GET') return json(await surveyStats(env));
+  if (path === '/stats' && method === 'GET') return json(await eventStats(env));
+  if (path === '/stats.csv' && method === 'GET') {
+    const s = await eventStats(env);
+    const rows = [
+      ['Inscriptions', s.total], ['Inscrites en autonomie (QR)', s.self], ['Inscrites à l’accueil', s.staff], ['Paramètres relevés', s.measured],
+      ['Parcours terminés', s.done], ['Accord transmission médecin (%)', s.consent_rate], ['Attente moyenne avant appel (min)', s.avg_wait_min ?? ''],
+      ['Intérêt check-up couverture (%)', s.checkup_rate], ['Questionnaires remplis', s.surveys],
+      ...s.per_day.map((x) => [`Inscriptions le ${x.d}`, x.n]),
+      ...Object.entries(s.ages).map(([k, n]) => [`Âge ${k} ans`, n]),
+      ...Object.entries(s.triage).map(([k, n]) => [`Triage ${['à mesurer', 'vert', 'orange', 'rouge'][k] ?? k}`, n]),
+      ...Object.entries(s.doctors).map(([k, n]) => [`Médecin ${k}`, n]),
+    ].map(([a, b]) => ({ a, b }));
+    return csvResponse(toCsv([['a', 'Indicateur'], ['b', 'Valeur']], rows), `bilan-anonyme-checksante-${new Date().toISOString().slice(0, 10)}.csv`);
+  }
 
   if (path === '/lookup' && method === 'GET') {
     const q = (url.searchParams.get('q') || '').trim();
@@ -87,6 +102,59 @@ async function staffRoutes(req, env, ctx, url, path) {
       broadcast(env, ctx, { t: 'delete', p: row });
       return json({ ok: true });
     }
+  }
+  throw new HttpError(404, 'not_found');
+}
+
+/* ---------- Espace partenaire : ses demandes de contact, rien d'autre ---------- */
+const CSV_SAFE = (v) => {
+  let s = v === null || v === undefined ? '' : String(v);
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`; // anti-injection de formules (Excel)
+  return /[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+const toCsv = (cols, rows) => `\uFEFF${[cols.map(([, h]) => h), ...rows.map((r) => cols.map(([k]) => r[k]))].map((l) => l.map(CSV_SAFE).join(';')).join('\r\n')}`;
+const dt = (ms) => (ms ? new Date(ms).toLocaleString('fr-BE', { timeZone: 'Europe/Brussels' }) : '');
+const csvResponse = (body, name) =>
+  new Response(body, { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="${name}"`, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
+
+async function partnerRoutes(req, env, url, path) {
+  const method = req.method;
+  if (path === '/login' && method === 'POST') {
+    await rateLimit(env.RL_LOGIN, `p:${clientIp(req)}`);
+    await rateLimit(env.RL_LOGIN_GLOBAL, 'global');
+    const { key } = await readJson(req, 512);
+    if (!(await checkSecret('partner', key, env))) throw new HttpError(401, 'bad_key');
+    return json({ ok: true }, 200, { 'Set-Cookie': await makeCookie('partner', env) });
+  }
+  if (path === '/logout' && method === 'POST') return json({ ok: true }, 200, { 'Set-Cookie': clearRoleCookie('partner') });
+  await requireRole('partner', req, env);
+  if (path === '/session' && method === 'GET') return json({ ok: true });
+  if (path === '/leads' && method === 'GET') return json({ leads: await listLeads(env) });
+  if (path === '/leads.csv' && method === 'GET') {
+    const LBL = { ...LEAD_INTERESTS.pro, ...LEAD_INTERESTS.public };
+    const rows = (await listLeads(env)).map((r) => ({
+      ...r,
+      created_at: dt(r.created_at),
+      consent_at: dt(r.consent_at),
+      mailed_at: dt(r.mailed_at),
+      status: LEAD_STATUS[r.status] ?? r.status,
+      contact_time: CONTACT_TIMES[r.contact_time] ?? '',
+      interests: (r.interests || '').split(',').filter(Boolean).map((i) => LBL[i] ?? i).join(', '),
+      audience: r.audience === 'pro' ? 'Professionnel de santé' : 'Particulier',
+    }));
+    const cols = [['created_at', 'Date'], ['name', 'Nom'], ['email', 'E-mail'], ['phone', 'Téléphone'], ['interests', 'Intérêts'], ['contact_time', 'Moment préféré'],
+      ['status', 'Statut'], ['partner_notes', 'Notes'], ['message', 'Message'], ['audience', 'Public'], ['consent_at', 'Accord donné le'], ['mailed_at', 'E-mail envoyé le']];
+    return csvResponse(toCsv(cols, rows), `contacts-checksante-${new Date().toISOString().slice(0, 10)}.csv`);
+  }
+  const m = path.match(/^\/leads\/([0-9a-f-]{36})$/);
+  if (m && method === 'PATCH') {
+    const { ok, errors, value } = validateLeadPatch(await readJson(req, 4096));
+    if (!ok) throw new HttpError(422, 'validation', { errors });
+    return json({ lead: await updateLead(env, m[1], value) });
+  }
+  if (m && method === 'DELETE') {
+    await deleteLead(env, m[1]); // « STOP » : effacement définitif
+    return json({ ok: true });
   }
   throw new HttpError(404, 'not_found');
 }
@@ -137,8 +205,17 @@ async function route(req, env, ctx, url) {
           .catch((e) => console.error(JSON.stringify({ evt: 'mail_failed', err: String(e?.message).slice(0, 120) }))),
       );
     }
-    return json({ ok: true }, lead ? 201 : 200);
+    // Jeton secret renvoyé à la personne : lui permet de préciser sa demande (et de se désinscrire).
+    return json({ ok: true, t: lead?.unsub_token }, lead ? 201 : 200);
   }
+  if (path === '/api/partner/qualify' && req.method === 'POST' && PARTNER.enabled) {
+    await rateLimit(env.RL_REGISTER, `qualify:${clientIp(req)}`);
+    const { ok, errors, value, t } = validateLeadQualify(await readJson(req, 512));
+    if (!ok) throw new HttpError(422, 'validation', { errors });
+    await qualifyLead(env, t, value);
+    return json({ ok: true });
+  }
+  if (path.startsWith('/api/partner/') && PARTNER.enabled) return partnerRoutes(req, env, url, path.slice('/api/partner'.length));
   if (path.startsWith('/api/staff/')) {
     if (path === '/api/staff/ws') assertSameOrigin(req, url); // anti cross-site WebSocket hijacking
     return staffRoutes(req, env, ctx, url, path.slice('/api/staff'.length));
@@ -151,6 +228,7 @@ export default {
     const url = new URL(req.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(req);
     try {
+      await ensureSchema(env);
       return await route(req, env, ctx, url);
     } catch (e) {
       if (e instanceof HttpError) return json({ error: e.code, ...e.extra }, e.status);

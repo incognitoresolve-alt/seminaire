@@ -1,3 +1,4 @@
 # Copier en .dev.vars pour le dev local (jamais commité)
 STAFF_PIN=24681357
 SESSION_SECRET=remplacer-par-une-longue-chaine-aleatoire-de-64-caracteres-minimum
+PARTNER_KEY=cle-partenaire-de-test-123456

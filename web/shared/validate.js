@@ -46,11 +46,7 @@ export function validateIdentity(b, now = new Date()) {
     email: clean(b?.email).toLowerCase(),
     phone: clean(b?.phone) || null,
     consent: b?.consent === true,
-    gp_consent: b?.gp_consent,
-    no_gp: b?.no_gp === true,
-    gp_name: freeText(b?.gp_name, 120),
-    gp_address: freeText(b?.gp_address, 200),
-    gp_contact: freeText(b?.gp_contact, 120),
+    doctor_consent: b?.doctor_consent,
     request_id: b?.request_id ? String(b.request_id) : null,
   };
   if (!NAME_RE.test(v.last_name)) errors.last_name = 'Nom invalide';
@@ -65,9 +61,7 @@ export function validateIdentity(b, now = new Date()) {
   if (v.email.length > 254 || !EMAIL_RE.test(v.email)) errors.email = 'E-mail invalide';
   if (v.phone && !PHONE_RE.test(v.phone)) errors.phone = 'Téléphone invalide';
   if (!v.consent) errors.consent = 'Accord obligatoire pour la consultation';
-  if (v.gp_consent !== true && v.gp_consent !== false) errors.gp_consent = 'Choisissez une option';
-  if (v.gp_consent === true && !v.no_gp && !v.gp_name) errors.gp_name = 'Nom du médecin traitant requis (ou cochez « pas de médecin traitant »)';
-  if (v.gp_consent !== true) v.gp_name = v.gp_address = v.gp_contact = null; // minimisation
+  if (v.doctor_consent !== true && v.doctor_consent !== false) errors.doctor_consent = 'Choisissez une option';
   if (v.request_id && !UUID_RE.test(v.request_id)) errors.request_id = 'Identifiant invalide';
   return { ok: Object.keys(errors).length === 0, errors, value: v };
 }
@@ -101,9 +95,9 @@ export function validatePatch(b) {
     } else if (k === 'stage') {
       if (raw === 0 || raw === 1 || raw === 2) value.stage = raw;
       else errors.stage = 'Étape invalide';
-    } else if (k === 'gp_consent') {
-      if (raw === 0 || raw === 1) value.gp_consent = raw;
-      else errors.gp_consent = 'Valeur invalide';
+    } else if (k === 'doctor_consent') {
+      if (raw === 0 || raw === 1) value.doctor_consent = raw;
+      else errors.doctor_consent = 'Valeur invalide';
     } else if (k === 'doctor') {
       if (raw === null || raw === 1 || raw === 2) value.doctor = raw;
       else errors.doctor = 'Médecin invalide';
@@ -161,6 +155,40 @@ export function validateSurvey(b) {
     request_id: b?.request_id ? String(b.request_id) : null,
   };
   if (value.request_id && !UUID_RE.test(value.request_id)) errors.request_id = 'Identifiant invalide';
+  return { ok: Object.keys(errors).length === 0, errors, value };
+}
+
+export const CONTACT_TIMES = { matin: 'Le matin', 'apres-midi': 'L’après-midi', soir: 'En soirée' };
+export const LEAD_STATUS = { nouveau: 'Nouveau', contacte: 'Contacté', rdv: 'Rendez-vous', client: 'Client' };
+const TOKEN_RE = /^[A-Za-z0-9_-]{20,40}$/;
+
+/** Qualification facultative juste après l'accord (moment préféré, sujet) — dans le périmètre du consentement. */
+export function validateLeadQualify(b) {
+  const errors = {};
+  const value = {};
+  if (!TOKEN_RE.test(String(b?.t ?? ''))) errors.t = 'Jeton invalide';
+  if (b?.contact_time !== undefined) {
+    if (b.contact_time in CONTACT_TIMES) value.contact_time = b.contact_time;
+    else errors.contact_time = 'Choix invalide';
+  }
+  if (b?.interest !== undefined) {
+    if (['epargne_pension', 'deces', 'obseques'].includes(b.interest)) value.interest = b.interest;
+    else errors.interest = 'Choix invalide';
+  }
+  if (!Object.keys(value).length && !errors.t) errors._ = 'Aucun champ';
+  return { ok: Object.keys(errors).length === 0, errors, value, t: b?.t };
+}
+
+/** Mise à jour par le partenaire (statut de suivi, notes). */
+export function validateLeadPatch(b) {
+  const errors = {};
+  const value = {};
+  for (const [k, v] of Object.entries(b && typeof b === 'object' && !Array.isArray(b) ? b : {})) {
+    if (k === 'status' && v in LEAD_STATUS) value.status = v;
+    else if (k === 'partner_notes' && (v === null || (typeof v === 'string' && v.length <= NOTES_MAX))) value.partner_notes = v || null;
+    else errors[k] = 'Champ invalide';
+  }
+  if (!Object.keys(value).length && !Object.keys(errors).length) errors._ = 'Aucun champ';
   return { ok: Object.keys(errors).length === 0, errors, value };
 }
 

@@ -11,7 +11,7 @@ Application temps réel pour les consultations de prévention (11–14 nov. 2026
 
 | URL | Public | Rôle |
 |---|---|---|
-| `/` | participants | Inscription (identité + accord consultation + transmission médecin traitant) → **Pass Patient** (QR + code de secours 6 car.) |
+| `/` | participants | Inscription (identité + accord consultation + transmission de ses données à un médecin qui pourra suivre son dossier) → **Pass Patient** (QR + code de secours 6 car.) |
 | `/questionnaire` | participants | Questionnaire de prévention **anonyme** (8 sections du PDF), IMC calculé en direct, repères affichés après envoi |
 | `/staff` | soignants (PIN) | Liste temps réel triée par priorité, recherche instantanée, scanner QR, fiche (vitaux, IMC, glycémie, périmètre abdo., notes), assignation Médecin 1 (mer. 11/11) / Médecin 2 (sam. 14/11), ajout manuel, stats questionnaire en direct |
 | `/affiche` · `/affiche?cible=questionnaire` | accueil | Affiche imprimable avec QR d'entrée |
@@ -51,7 +51,7 @@ navigateur ──HTTPS──► Worker (src/index.js) ──► D1 (patients, su
 2. **Créer la base D1** : *Storage & Databases → D1 → Create* · nom `seminaire` · emplacement **Western Europe** (ou juridiction UE).
    Copier son **Database ID** dans `wrangler.toml` (`database_id = "…"`), commit, push.
 3. **Créer les tables** : D1 → `seminaire` → *Console* → coller puis exécuter le contenu de
-   `migrations/0001_init.sql`, `0002_partner_leads.sql`, `0003_lead_mail.sql`, puis `0004_stage.sql` (dans cet ordre).
+   `migrations/0001_init.sql`, `0002_partner_leads.sql`, `0003_lead_mail.sql`, `0004_stage.sql`, puis `0005_doctor_consent.sql` (dans cet ordre). **Facultatif** : l'application crée et met à jour ses tableaux toute seule au premier accès.
 4. **Connecter le dépôt** : *Workers & Pages → Create → Import a repository* → `seminaire`.
    - Nom du Worker : **`seminaire-triage`** (doit correspondre à `name` dans `wrangler.toml`)
    - Build command : `npm run build`
@@ -115,7 +115,7 @@ Le pire paramètre l'emporte ; aucune mesure = « À mesurer ». **Seuils indica
 - CSP stricte (`script-src 'self'`, aucun inline), HSTS, X-Frame-Options DENY, Permissions-Policy (caméra seulement).
 - Rate limiting natif par IP (inscription 120/min — un Wi-Fi partagé = une IP —, login 10/min, API 1200/min).
 - Honeypot + idempotence (`request_id`) : double-clic ou réseau instable ⇒ jamais de doublon.
-- Minimisation : e-mail, téléphone et coordonnées du médecin traitant chargés uniquement à l'ouverture d'une fiche ; supprimés si la transmission est refusée ; le questionnaire ne stocke ni identité ni IP.
+- Minimisation : e-mail et téléphone chargés uniquement à l'ouverture d'une fiche ; sans accord de transmission, aucune assignation à un médecin n'est possible (contrôle serveur) ; le questionnaire ne stocke ni identité ni IP.
 - Droit à l'effacement (bouton fiche) : données écrasées immédiatement ; cron quotidien purge tout après `RETENTION_DAYS` (30 j).
 - Logs Workers sans PII ; `/api/health` pour l'uptime monitoring.
 - RGPD (Belgique) : données de santé (art. 9) ⇒ consentement explicite recueilli, D1 en juridiction UE. Compléter `[adresse]`/`[email-contact]` dans `confidentialite.html` et tenir le registre des traitements.
@@ -140,7 +140,13 @@ Mise en place (≈ 10 min) :
 3. *SMTP & API → API keys* → créer une clé.
 4. Secrets du Worker : `BREVO_API_KEY` = la clé, `MAIL_FROM` = ex. `checkup@checksante.be`.
 
-Export pour le partenaire :
+**Espace partenaire (mini-CRM)** — `/espace-partenaire`, clé secrète `PARTNER_KEY` (16+ caractères), cloisonné des soignants :
+statut de suivi (Nouveau / Contacté / Rendez-vous / Client), notes, téléphone et e-mail cliquables, export CSV Excel (anti-injection de formules), bouton STOP = effacement.
+Après l'accord, la personne peut préciser en un geste son moment préféré et son sujet (dans le périmètre de son consentement).
+
+**Bilan anonyme** — espace soignants → *Bilan* : inscriptions par jour, tranches d'âge, triage, taux d'accord, intérêt check-up, attente moyenne ; groupes < 5 masqués (k-anonymat) ; export CSV réutilisable librement (données non personnelles).
+
+Export SQL (alternative) :
 ```bash
 npx wrangler d1 execute seminaire --remote --command "SELECT datetime(created_at/1000,'unixepoch') AS date, audience, name, email, phone, interests, message FROM partner_leads ORDER BY created_at" --json > leads.json
 ```

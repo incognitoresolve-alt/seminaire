@@ -33,9 +33,9 @@
         <button id="lock" class="btn-ghost min-h-11 px-3" type="button" aria-label="Verrouiller cette tablette" title="Verrouiller">
           <svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
         </button>
-        <button id="open-stats" class="btn-ghost min-h-11 px-3" type="button" aria-label="Statistiques du questionnaire">
+        <button id="open-stats" class="btn-ghost min-h-11 px-3" type="button" aria-label="Bilan et statistiques">
           <svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
-          <span class="hidden lg:inline">Questionnaire</span>
+          <span class="hidden lg:inline">Bilan</span>
         </button>
         <button id="open-scan" class="btn-ghost min-h-11 px-3" type="button" aria-label="Scanner un Pass">
           <svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"/></svg>
@@ -63,6 +63,7 @@
       <ul id="list" class="space-y-2" aria-live="off"></ul>
       <div id="list-state" class="py-12 text-center text-slate-500"></div>
       <div data-partner="pro" data-dismissible class="mx-auto max-w-xl pb-6"></div>
+      <p class="pb-4 text-center"><a href="/" class="text-sm font-semibold text-sky-800 underline">← Écran d’inscription des participants</a></p>
       <footer class="pb-8 text-center"><div data-partner-credit></div></footer>
     </main>
   </div>
@@ -112,7 +113,7 @@
   <!-- Statistiques questionnaire -->
   <dialog id="stats" class="m-0 h-dvh max-h-none w-full max-w-none bg-slate-50 p-0 sm:m-auto sm:h-auto sm:max-h-[92dvh] sm:max-w-2xl sm:rounded-3xl" aria-labelledby="stats-title">
     <div class="sticky top-0 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-      <h2 id="stats-title" class="text-lg font-extrabold">Questionnaire de prévention · résultats en direct</h2>
+      <h2 id="stats-title" class="text-lg font-extrabold">Bilan & questionnaire · en direct</h2>
       <button class="btn-ghost min-h-11 px-3" type="button" data-close aria-label="Fermer">✕</button>
     </div>
     <div id="stats-body" class="space-y-6 p-4"></div>

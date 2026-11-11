@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseVital, validateIdentity, validatePatch, validateSurvey } from '../web/shared/validate.js';
 
-const ok = { last_name: 'Dupont-Élise', first_name: "Anne-Marie d'Arc", birth_date: '1980-02-29', email: 'A@b.fr', consent: true, gp_consent: false };
+const ok = { last_name: 'Dupont-Élise', first_name: "Anne-Marie d'Arc", birth_date: '1980-02-29', email: 'A@b.fr', consent: true, doctor_consent: false };
 
 test('identité valide + email normalisé', () => {
   const r = validateIdentity(ok);
@@ -34,12 +34,12 @@ test('patch : whitelist stricte', () => {
   assert.ok(!validatePatch([]).ok);
 });
 
-test('transmission médecin traitant', () => {
-  assert.ok(validateIdentity({ ...ok, gp_consent: undefined }).errors.gp_consent);
-  assert.ok(validateIdentity({ ...ok, gp_consent: true }).errors.gp_name);
-  assert.ok(validateIdentity({ ...ok, gp_consent: true, no_gp: true }).ok);
-  const r = validateIdentity({ ...ok, gp_consent: false, gp_name: 'Dr X' });
-  assert.equal(r.value.gp_name, null); // minimisation si refus
+test('transmission au médecin de la consultation (choix obligatoire)', () => {
+  assert.ok(validateIdentity({ ...ok, doctor_consent: undefined }).errors.doctor_consent);
+  assert.ok(validateIdentity({ ...ok, doctor_consent: 'oui' }).errors.doctor_consent);
+  assert.ok(validateIdentity({ ...ok, doctor_consent: true }).ok);
+  assert.ok(validatePatch({ doctor_consent: 0 }).ok);
+  assert.ok(validatePatch({ gp_consent: 1 }).errors.gp_consent); // ancien champ refusé
 });
 
 test('questionnaire : taille en m ou cm, choix bornés', () => {
@@ -73,4 +73,16 @@ test('étape du parcours', () => {
   assert.ok(validatePatch({ stage: 2 }).ok);
   assert.ok(validatePatch({ stage: 5 }).errors.stage);
   assert.ok(validatePatch({ stage_at: 1 }).errors.stage_at); // horodatage réservé au serveur
+});
+
+import { validateLeadPatch, validateLeadQualify } from '../web/shared/validate.js';
+test('qualification et suivi partenaire : listes fermées', () => {
+  const t = 'abcdefghijklmnopqrstuv';
+  assert.ok(validateLeadQualify({ t, contact_time: 'soir' }).ok);
+  assert.ok(validateLeadQualify({ t, interest: 'deces' }).ok);
+  assert.ok(validateLeadQualify({ t, interest: 'auto' }).errors.interest); // non-vie refusé
+  assert.ok(validateLeadQualify({ t: 'x', contact_time: 'soir' }).errors.t);
+  assert.ok(validateLeadPatch({ status: 'rdv', partner_notes: 'rappeler mardi' }).ok);
+  assert.ok(validateLeadPatch({ status: 'vip' }).errors.status);
+  assert.ok(validateLeadPatch({ email: 'x@y.z' }).errors.email); // le partenaire ne modifie pas les coordonnées
 });
