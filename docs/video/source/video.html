@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>CheckSanté — motion design 30 s</title>
+<style>
+  :root { --v900:#2a0c47; --v800:#3f1466; --v700:#5b1f8c; --v600:#6d28a8; --v400:#a855f7; --or:#f26b1d; --or2:#ff9a4d; --gr:#10b981; --red:#e11d48; --amb:#f59e0b; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #12041f; font-family: Inter, "Inter Display", system-ui, sans-serif; color: #fff; }
+  #stage { position: absolute; inset: 0; overflow: hidden; }
+  #bg { position: absolute; inset: -10%; background: radial-gradient(120% 90% at 30% 20%, #4a1a78 0%, #24093d 45%, #12041f 100%); }
+  .orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; will-change: transform; }
+  #orb1 { width: 900px; height: 900px; background: #7c2fd0; left: -200px; top: -250px; }
+  #orb2 { width: 700px; height: 700px; background: #f26b1d; right: -180px; top: 120px; opacity: .35; }
+  #orb3 { width: 800px; height: 800px; background: #5b1f8c; left: 600px; bottom: -420px; }
+  #grain { position: absolute; inset: 0; opacity: .07; mix-blend-mode: overlay; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+  #vignette { position: absolute; inset: 0; background: radial-gradient(120% 100% at 50% 50%, transparent 55%, rgba(0,0,0,.55) 100%); pointer-events: none; }
+  #sweep { position: absolute; top: -40%; width: 520px; height: 180%; transform: rotate(18deg); background: linear-gradient(90deg, transparent, rgba(242,107,29,.0) 10%, rgba(255,154,77,.85) 50%, rgba(242,107,29,0) 90%, transparent); filter: blur(6px); opacity: 0; }
+  .scene { position: absolute; inset: 0; opacity: 0; }
+  .glass { background: rgba(255,255,255,.10); border: 1.5px solid rgba(255,255,255,.22); box-shadow: 0 40px 120px -30px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.25); backdrop-filter: blur(22px) saturate(1.4); }
+  .device { position: absolute; border-radius: 44px; overflow: hidden; }
+  .screen { position: absolute; inset: 18px; border-radius: 30px; background: #f7f4fb; color: #1e1530; overflow: hidden; }
+  /* Texte de gauche */
+  .copy { position: absolute; left: 150px; top: 300px; width: 760px; }
+  .step { display: inline-flex; align-items: center; gap: 16px; font-weight: 800; font-size: 26px; letter-spacing: .22em; text-transform: uppercase; color: var(--or2); }
+  .step b { display: inline-grid; place-items: center; width: 64px; height: 64px; border-radius: 20px; background: linear-gradient(135deg, var(--or), #c2410c); color: #fff; letter-spacing: 0; font-size: 30px; box-shadow: 0 10px 40px -8px rgba(242,107,29,.7); }
+  .copy h2 { margin-top: 26px; font-family: "Inter Display", Inter; font-size: 84px; line-height: .98; font-weight: 900; letter-spacing: -.02em; }
+  .copy p { margin-top: 26px; font-size: 32px; line-height: 1.35; color: rgba(255,255,255,.78); font-weight: 500; }
+  .w { display: inline-block; will-change: transform, opacity; }
+  /* Mini UI */
+  .ui-h { padding: 26px 30px 18px; font-weight: 800; font-size: 26px; color: #2a0c47; display: flex; align-items: center; gap: 12px; }
+  .ui-logo { width: 38px; height: 38px; border-radius: 11px; background: var(--v700); position: relative; }
+  .ui-logo::before, .ui-logo::after { content: ""; position: absolute; background: #fff; border-radius: 2px; }
+  .ui-logo::before { left: 15px; top: 8px; width: 8px; height: 22px; } .ui-logo::after { left: 8px; top: 15px; width: 22px; height: 8px; }
+  .lbl { margin: 14px 30px 6px; font-size: 18px; font-weight: 700; color: #3b2a55; }
+  .inp { margin: 0 30px; height: 62px; border-radius: 16px; border: 2px solid #ddd3ea; background: #fff; font-size: 25px; padding: 15px 18px; font-weight: 600; color: #1e1530; position: relative; }
+  .inp.focus { border-color: var(--v600); box-shadow: 0 0 0 5px rgba(109,40,168,.15); }
+  .caret { display: inline-block; width: 2.5px; height: 28px; background: var(--v600); vertical-align: -5px; margin-left: 2px; }
+  .chk { margin: 14px 30px 0; border-radius: 16px; padding: 16px 18px; display: flex; gap: 14px; align-items: center; font-size: 19px; font-weight: 600; color: #2a1d40; border: 2.5px solid #ddd3ea; background: #fff; position: relative; overflow: hidden; }
+  .box { width: 32px; height: 32px; border-radius: 9px; border: 2.5px solid #9d8db5; flex: none; display: grid; place-items: center; background: #fff; }
+  .box svg { width: 22px; height: 22px; }
+  .btn { margin: 22px 30px 0; height: 70px; border-radius: 18px; background: var(--v700); color: #fff; display: grid; place-items: center; font-size: 25px; font-weight: 800; box-shadow: 0 16px 30px -12px rgba(91,31,140,.7); }
+  .toast { position: absolute; left: 30px; right: 30px; top: 92px; border-radius: 18px; background: #ecfdf5; border: 2px solid #6ee7b7; color: #065f46; font-weight: 800; font-size: 23px; padding: 18px 20px; }
+  .row { margin: 0 26px 12px; height: 84px; border-radius: 18px; background: #fff; border: 1.5px solid #e9e2f3; display: flex; align-items: center; gap: 16px; padding-right: 18px; overflow: hidden; box-shadow: 0 6px 18px -12px rgba(42,12,71,.35); }
+  .row .bar { width: 10px; align-self: stretch; }
+  .row .nm { font-weight: 800; font-size: 23px; color: #1e1530; }
+  .row .sb { font-size: 17px; color: #6b5b84; font-weight: 600; }
+  .pill { margin-left: auto; border-radius: 10px; padding: 6px 12px; font-weight: 800; font-size: 16px; }
+  .vit { border-radius: 20px; background: #fff; border: 1.5px solid #e9e2f3; padding: 16px 18px; }
+  .vit .k { font-size: 16px; font-weight: 700; color: #6b5b84; } .vit .v { font-size: 40px; font-weight: 900; color: #1e1530; letter-spacing: -.01em; margin-top: 4px; }
+  .banner { margin: 18px 26px 0; border-radius: 18px; padding: 18px 20px; font-weight: 900; font-size: 22px; }
+  .chip { display: inline-flex; border-radius: 999px; padding: 8px 14px; font-weight: 800; font-size: 16px; }
+  /* Barre de progression */
+  #track { position: absolute; left: 50%; bottom: 58px; transform: translateX(-50%); display: flex; gap: 14px; opacity: 0; }
+  .tk { display: flex; align-items: center; gap: 10px; padding: 12px 22px 12px 14px; border-radius: 999px; font-weight: 800; font-size: 20px; color: rgba(255,255,255,.55); border: 1.5px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05); }
+  .tk i { font-style: normal; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,.12); font-size: 16px; }
+  .tk.on { color: #fff; border-color: rgba(255,154,77,.8); background: rgba(242,107,29,.18); box-shadow: 0 0 30px -6px rgba(242,107,29,.7); }
+  .tk.on i { background: var(--or); }
+  .tk.done i { background: var(--gr); color: #fff; }
+  /* Intro / outro */
+  #logo { position: absolute; left: 50%; top: 330px; width: 190px; height: 190px; margin-left: -95px; border-radius: 52px; background: linear-gradient(150deg, #7c2fd0, #5b1f8c); box-shadow: 0 30px 100px -20px rgba(124,47,208,.9), inset 0 2px 0 rgba(255,255,255,.3); }
+  #logo .v { position: absolute; left: 74px; top: 38px; width: 42px; height: 114px; border-radius: 10px; background: #fff; transform-origin: 50% 50%; }
+  #logo .h { position: absolute; left: 38px; top: 74px; width: 114px; height: 42px; border-radius: 10px; background: #fff; transform-origin: 50% 50%; }
+  #logo .ck { position: absolute; right: -18px; bottom: -18px; width: 86px; height: 86px; border-radius: 50%; background: var(--or); border: 7px solid #24093d; display: grid; place-items: center; }
+  .bigtitle { position: absolute; left: 0; right: 0; text-align: center; font-family: "Inter Display", Inter; font-weight: 900; letter-spacing: -.03em; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bg"></div>
+  <div class="orb" id="orb1"></div><div class="orb" id="orb2"></div><div class="orb" id="orb3"></div>
+
+  <!-- 0. Intro -->
+  <div class="scene" id="s0">
+    <div id="logo"><div class="v"></div><div class="h"></div><div class="ck"><svg width="46" height="46" viewBox="0 0 24 24"><path id="ckpath" d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="24" stroke-dashoffset="24"/></svg></div></div>
+    <div class="bigtitle" id="i-title" style="top:570px;font-size:120px"></div>
+    <div class="bigtitle" id="i-sub" style="top:720px;font-size:34px;font-weight:700;letter-spacing:.32em;color:#ff9a4d;text-transform:uppercase">Séminaire spécial · ICC Liège</div>
+    <div class="bigtitle" id="i-tag" style="top:790px;font-size:40px;font-weight:600;color:rgba(255,255,255,.8)">De l’accueil au médecin, en 4 étapes</div>
+  </div>
+
+  <!-- 1. Inscription -->
+  <div class="scene" id="s1">
+    <div class="copy"><div class="step"><b>1</b>Accueil</div><h2 id="h1"></h2><p>Nom, prénom, date de naissance, e-mail.<br>Deux accords, et c’est enregistré.</p></div>
+    <div class="device glass" id="d1" style="left:1080px;top:70px;width:660px;height:900px">
+      <div class="screen">
+        <div class="ui-h"><span class="ui-logo"></span>Check<span style="color:#6d28a8">Santé</span></div>
+        <div class="lbl">Nom</div><div class="inp" id="f-nom"></div>
+        <div class="lbl">Prénom</div><div class="inp" id="f-pre"></div>
+        <div class="lbl">Date de naissance</div><div class="inp" id="f-dob"></div>
+        <div class="lbl">E-mail</div><div class="inp" id="f-mail"></div>
+        <div class="chk" id="c1"><span class="box" id="b1"></span>J’accepte la consultation de prévention</div>
+        <div class="chk" id="c2"><span class="box" id="b2"></span>J’autorise la transmission à un médecin</div>
+        <div class="btn" id="btn1">Enregistrer l’inscription</div>
+        <div class="toast" id="toast1">✓ Awa Diallo est inscrite</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Liste des inscrits -->
+  <div class="scene" id="s2">
+    <div class="copy"><div class="step"><b>2</b>Soignants</div><h2 id="h2"></h2><p>Code soignant, puis recherche par nom :<br>la fiche s’ouvre en un geste.</p></div>
+    <div class="device glass" id="d2" style="left:1080px;top:70px;width:660px;height:900px">
+      <div class="screen">
+        <div class="ui-h"><span class="ui-logo"></span>Pôle soins<span style="margin-left:auto;font-size:15px;color:#047857;background:#d1fae5;border-radius:999px;padding:6px 12px">● Temps réel</span></div>
+        <div id="pin" style="position:absolute;inset:90px 0 0;display:grid;place-items:center;align-content:center;gap:26px">
+          <div style="font-size:26px;font-weight:800;color:#2a0c47">Code soignant</div>
+          <div style="display:flex;gap:16px" id="dots"></div>
+        </div>
+        <div id="lst" style="position:absolute;inset:90px 0 0">
+          <div class="inp" id="srch" style="margin-bottom:18px;color:#6b5b84"></div>
+          <div id="rows"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Paramètres -->
+  <div class="scene" id="s3">
+    <div class="copy"><div class="step"><b>3</b>Paramètres</div><h2 id="h3"></h2><p>Triage automatique selon l’âge,<br>et une analyse indicative sourcée.</p></div>
+    <div class="device glass" id="d3" style="left:1080px;top:70px;width:660px;height:900px">
+      <div class="screen">
+        <div class="ui-h" style="padding-bottom:6px">Awa Diallo<span style="font-size:17px;color:#6b5b84;font-weight:600">· 41 ans</span></div>
+        <div id="tri" style="margin:8px 26px 0;border-radius:18px;padding:16px 20px;font-weight:900;font-size:26px;display:flex;align-items:center;gap:14px"><span id="tdot" style="width:22px;height:22px;border-radius:50%"></span><span id="tlab"></span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 26px 0">
+          <div class="vit"><div class="k">Tension</div><div class="v" id="v-ta">–</div></div>
+          <div class="vit"><div class="k">Pouls</div><div class="v" id="v-p">–</div></div>
+          <div class="vit"><div class="k">SpO2</div><div class="v" id="v-s">–</div></div>
+          <div class="vit"><div class="k">Température</div><div class="v" id="v-t">–</div></div>
+        </div>
+        <div class="banner" id="ban3" style="background:#fef3c7;color:#78350f;border:2px solid #fcd34d">CONSULTATION RAPIDE — 24 à 72 h</div>
+        <div id="src3" style="margin:14px 26px 0;display:flex;gap:10px;flex-wrap:wrap"><span class="chip" style="background:#f3e8ff;color:#5b1f8c">ESC 2024</span><span class="chip" style="background:#f3e8ff;color:#5b1f8c">NEWS2</span><span class="chip" style="background:#ffedd5;color:#9a3412">Indicatif</span></div>
+        <div class="banner" id="alert3" style="background:#e11d48;color:#fff;font-size:21px">Signe d’alerte coché → URGENCE : appelez le 112</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Médecin -->
+  <div class="scene" id="s4">
+    <div class="copy" style="top:150px"><div class="step"><b>4</b>Médecin</div><h2 id="h4"></h2><p>Avec l’accord du patient, la fiche<br>arrive en temps réel chez le médecin.</p></div>
+    <div class="device glass" id="d4a" style="left:150px;top:520px;width:560px;height:420px">
+      <div class="screen" style="padding-top:22px">
+        <div style="margin:0 26px;font-weight:900;font-size:24px;color:#2a0c47">Assignation</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 26px 0">
+          <div id="doc1" style="height:92px;border-radius:18px;border:2.5px solid #ddd3ea;background:#fff;display:grid;place-items:center;text-align:center;font-weight:800;font-size:19px;color:#2a0c47;line-height:1.25">Médecin 1<br><span style="font-weight:600;font-size:16px">Mer. 11/11</span></div>
+          <div style="height:92px;border-radius:18px;border:2.5px solid #ddd3ea;background:#fff;display:grid;place-items:center;text-align:center;font-weight:800;font-size:19px;color:#2a0c47;line-height:1.25">Médecin 2<br><span style="font-weight:600;font-size:16px">Sam. 14/11</span></div>
+        </div>
+        <div style="margin:18px 26px 0;font-size:16px;font-weight:700;color:#047857">✓ Accord de transmission donné</div>
+      </div>
+    </div>
+    <svg id="path4" width="1920" height="1080" style="position:absolute;inset:0;overflow:visible"><path id="trail" d="M600 700 C 900 380, 1100 360, 1330 470" fill="none" stroke="url(#gtrail)" stroke-width="6" stroke-linecap="round" stroke-dasharray="900" stroke-dashoffset="900"/><defs><linearGradient id="gtrail" x1="0" x2="1"><stop offset="0" stop-color="#f26b1d" stop-opacity="0"/><stop offset="1" stop-color="#ff9a4d"/></linearGradient></defs></svg>
+    <div id="fly" class="row" style="position:absolute;left:0;top:0;width:430px;margin:0;z-index:5"><span class="bar" style="background:#f59e0b"></span><div><div class="nm">Awa Diallo</div><div class="sb">150/85 · pouls 88</div></div><span class="pill" style="background:#fef3c7;color:#78350f">Orange</span></div>
+    <div class="device glass" id="d4b" style="left:1180px;top:200px;width:600px;height:720px">
+      <div class="screen">
+        <div class="ui-h"><span style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#5b1f8c);display:grid;place-items:center;color:#fff;font-size:18px">Dr</span>Médecin 1</div>
+        <div id="dslot" style="margin:6px 0 0"></div>
+        <div id="stage4" class="chip" style="margin:6px 26px 0;background:#5b1f8c;color:#fff">En consultation</div>
+      </div>
+    </div>
+    <div id="waves" style="position:absolute;left:1180px;top:200px;width:600px;height:720px;pointer-events:none"></div>
+  </div>
+
+  <!-- 5. Outro -->
+  <div class="scene" id="s5">
+    <div id="pillars" style="position:absolute;left:0;right:0;top:300px;display:flex;justify-content:center;gap:40px"></div>
+    <div class="bigtitle" id="o-title" style="top:610px;font-size:110px"></div>
+    <div class="bigtitle" id="o-sub" style="top:750px;font-size:32px;font-weight:700;letter-spacing:.28em;color:#ff9a4d;text-transform:uppercase">Séminaire spécial · ICC Liège · 11 – 14 novembre</div>
+    <div class="bigtitle" id="o-note" style="top:820px;font-size:24px;font-weight:600;color:rgba(255,255,255,.62)">Analyse indicative et éducative — elle ne remplace pas un avis médical. Urgence : 112.</div>
+  </div>
+
+  <div id="track"></div>
+  <div id="sweep"></div>
+  <div id="grain"></div>
+  <div id="vignette"></div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, k) => a + (b - a) * k;
+const eOut = (k) => 1 - Math.pow(1 - k, 3);
+const eExpo = (k) => (k >= 1 ? 1 : 1 - Math.pow(2, -10 * k));
+const eIO = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+const eBack = (k) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
+const css = (el, o) => Object.assign(el.style, o);
+
+// Découpe un titre en mots animables
+function words(el, text) { el.innerHTML = text.split(' ').map((w) => `<span class="w">${w}</span>`).join(' '); return [...el.children]; }
+const W = {
+  h1: words($('h1'), 'Inscription éclair'), h2: words($('h2'), 'Liste des inscrits'), h3: words($('h3'), 'Mesures & analyse'), h4: words($('h4'), 'Transmission au médecin'),
+};
+const letters = (el, text) => { el.innerHTML = [...text].map((c) => `<span class="w">${c === ' ' ? '&nbsp;' : c}</span>`).join(''); return [...el.children]; };
+const IT = letters($('i-title'), 'CheckSanté'); IT.slice(5).forEach((s) => (s.style.color = '#ff9a4d'));
+const OT = letters($('o-title'), 'CheckSanté'); OT.slice(5).forEach((s) => (s.style.color = '#ff9a4d'));
+
+// Barre d'étapes
+const TK = ['Inscription', 'Liste', 'Paramètres', 'Médecin'];
+$('track').innerHTML = TK.map((n, i) => `<div class="tk" id="tk${i}"><i>${i + 1}</i>${n}</div>`).join('');
+
+// Liste des inscrits
+const PEOPLE = [['Martin Léa', '36 ans', '#10b981', 'Vert'], ['Diallo Awa', '41 ans', '#94a3b8', 'À mesurer'], ['Peeters Jan', '58 ans', '#f59e0b', 'Orange'], ['Nguyen Bao', '29 ans', '#94a3b8', 'À mesurer'], ['Kasongo Ruth', '67 ans', '#e11d48', 'Rouge']];
+const PILL = { Vert: ['#d1fae5', '#065f46'], 'À mesurer': ['#f1f5f9', '#334155'], Orange: ['#fef3c7', '#78350f'], Rouge: ['#ffe4e6', '#9f1239'] };
+$('rows').innerHTML = PEOPLE.map(([n, a, c, l], i) => `<div class="row" id="r${i}"><span class="bar" style="background:${c}"></span><div><div class="nm">${n}</div><div class="sb">${a}</div></div><span class="pill" style="background:${PILL[l][0]};color:${PILL[l][1]}">${l}</span></div>`).join('');
+$('dots').innerHTML = Array.from({ length: 8 }, (_, i) => `<span id="dt${i}" style="width:26px;height:26px;border-radius:50%;border:3px solid #6d28a8"></span>`).join('');
+$('pillars').innerHTML = [['⚡', 'Rapide', 'inscription en 20 s'], ['⟲', 'Temps réel', 'toutes les tablettes'], ['🔒', 'Conforme RGPD', 'accords explicites']].map(([ic, t, s], i) => `<div class="glass" id="pl${i}" style="width:380px;border-radius:30px;padding:30px 34px"><div style="font-size:44px">${ic}</div><div style="font-size:40px;font-weight:900;margin-top:10px">${t}</div><div style="font-size:24px;color:rgba(255,255,255,.7);margin-top:6px;font-weight:600">${s}</div></div>`).join('');
+
+const CHECK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function typed(el, text, k, focus) { const n = Math.round(text.length * clamp(k)); el.innerHTML = text.slice(0, n) + (focus ? '<span class="caret"></span>' : ''); el.classList.toggle('focus', !!focus); }
+function inWords(ws, t, t0) { ws.forEach((w, i) => { const k = eExpo(seg(t, t0 + i * 0.09, t0 + i * 0.09 + 0.7)); css(w, { opacity: k, transform: `translateY(${(1 - k) * 60}px) rotate(${(1 - k) * 4}deg)` }); }); }
+function sceneVis(el, t, a, b, f = 0.45) { const k = Math.min(seg(t, a, a + f), 1 - seg(t, b - f, b)); el.style.opacity = k; return k; }
+function deviceIn(el, t, t0, from = 140) { const k = eExpo(seg(t, t0, t0 + 1.1)); css(el, { opacity: k, transform: `translateX(${(1 - k) * from}px) rotateY(${(1 - k) * -14}deg) scale(${0.94 + 0.06 * k})` }); }
+
+window.render = function (t) {
+  // Fond vivant
+  css($('orb1'), { transform: `translate(${Math.sin(t * 0.35) * 120}px, ${Math.cos(t * 0.27) * 80}px)` });
+  css($('orb2'), { transform: `translate(${Math.cos(t * 0.3) * -140}px, ${Math.sin(t * 0.22) * 120}px) scale(${1 + 0.1 * Math.sin(t * 0.5)})` });
+  css($('orb3'), { transform: `translate(${Math.sin(t * 0.2) * 200}px, ${Math.cos(t * 0.33) * -60}px)` });
+  css($('bg'), { transform: `scale(${1.05 + 0.03 * Math.sin(t * 0.15)})` });
+
+  // Balayages lumineux de transition
+  const cuts = [3.15, 9.4, 14.4, 20.9, 26.4];
+  let sw = null; for (const c of cuts) if (t > c - 0.35 && t < c + 0.45) sw = seg(t, c - 0.35, c + 0.45);
+  if (sw !== null) css($('sweep'), { opacity: Math.sin(sw * Math.PI), left: `${lerp(-700, 2100, eIO(sw))}px` }); else $('sweep').style.opacity = 0;
+
+  // Barre d'étapes
+  const tv = Math.min(seg(t, 3.4, 3.9), 1 - seg(t, 26.2, 26.6));
+  css($('track'), { opacity: tv, transform: `translateX(-50%) translateY(${(1 - tv) * 30}px)` });
+  const active = t < 9.4 ? 0 : t < 14.4 ? 1 : t < 20.9 ? 2 : 3;
+  TK.forEach((_, i) => { const e = $('tk' + i); e.classList.toggle('on', i === active); e.classList.toggle('done', i < active); e.firstChild.textContent = i < active ? '✓' : i + 1; });
+
+  // ---- 0. Intro (0 – 3.3 s)
+  const s0 = $('s0'); const o0 = 1 - seg(t, 2.9, 3.3); s0.style.opacity = o0;
+  css(s0, { transform: `scale(${1 + seg(t, 2.9, 3.3) * 0.12})`, filter: `blur(${seg(t, 2.9, 3.3) * 14}px)` });
+  const lk = eBack(seg(t, 0.15, 1.0)); css($('logo'), { transform: `scale(${lk}) rotate(${(1 - lk) * -20}deg)`, opacity: seg(t, 0.15, 0.4) });
+  css($('logo').querySelector('.v'), { transform: `scaleY(${eOut(seg(t, 0.5, 0.95))})` });
+  css($('logo').querySelector('.h'), { transform: `scaleX(${eOut(seg(t, 0.6, 1.05))})` });
+  css($('logo').querySelector('.ck'), { transform: `scale(${eBack(seg(t, 1.0, 1.4))})` });
+  $('ckpath').setAttribute('stroke-dashoffset', 24 * (1 - eOut(seg(t, 1.25, 1.6))));
+  IT.forEach((s, i) => { const k = eExpo(seg(t, 0.8 + i * 0.05, 1.5 + i * 0.05)); css(s, { opacity: k, transform: `translateY(${(1 - k) * 80}px)` }); });
+  css($('i-sub'), { opacity: eOut(seg(t, 1.6, 2.2)), letterSpacing: `${lerp(0.6, 0.32, eOut(seg(t, 1.6, 2.4)))}em` });
+  css($('i-tag'), { opacity: eOut(seg(t, 2.0, 2.6)), transform: `translateY(${(1 - eOut(seg(t, 2.0, 2.6))) * 30}px)` });
+
+  // ---- 1. Inscription (3.2 – 9.5 s)
+  const k1 = sceneVis($('s1'), t, 3.15, 9.5);
+  if (k1 > 0) {
+    inWords(W.h1, t, 3.4); deviceIn($('d1'), t, 3.35);
+    css($('d1'), { transform: $('d1').style.transform + ` scale(${1 + seg(t, 4.4, 9.4) * 0.03})` });
+    const reset = t > 8.2;
+    typed($('f-nom'), 'Diallo', reset ? 0 : seg(t, 4.1, 4.6), t > 4.0 && t < 4.65);
+    typed($('f-pre'), 'Awa', reset ? 0 : seg(t, 4.7, 5.0), t > 4.65 && t < 5.05);
+    typed($('f-dob'), '12/04/1985', reset ? 0 : seg(t, 5.1, 5.7), t > 5.05 && t < 5.75);
+    typed($('f-mail'), 'awa@exemple.be', reset ? 0 : seg(t, 5.8, 6.4), t > 5.75 && t < 6.45);
+    [[1, 6.95], [2, 7.3]].forEach(([n, tc]) => {
+      const c = $('c' + n), b = $('b' + n); const checked = t >= tc && !reset;
+      const pulse = 0.5 + 0.5 * Math.sin(t * 9 + n);
+      css(c, checked ? { borderColor: '#6d28a8', boxShadow: 'none', background: '#faf5ff' } : { borderColor: '#f26b1d', boxShadow: `0 0 0 ${3 + pulse * 6}px rgba(242,107,29,${0.12 + pulse * 0.2})`, background: '#fff6ef' });
+      b.innerHTML = checked ? CHECK : ''; css(b, checked ? { background: '#6d28a8', borderColor: '#6d28a8', transform: `scale(${eBack(seg(t, tc, tc + 0.3))})` } : { background: '#fff', borderColor: '#f26b1d', transform: 'none' });
+    });
+    const press = seg(t, 7.65, 7.85) * (1 - seg(t, 7.85, 8.05));
+    css($('btn1'), { transform: `scale(${1 - press * 0.05})`, boxShadow: `0 0 0 ${press * 14}px rgba(124,47,208,.25)` });
+    const tk = eBack(seg(t, 8.0, 8.45)) * (1 - seg(t, 9.0, 9.3));
+    css($('toast1'), { opacity: Math.min(1, tk * 1.5), transform: `translateY(${(1 - tk) * -40}px) scale(${0.9 + 0.1 * tk})` });
+  }
+
+  // ---- 2. Liste (9.4 – 14.5 s)
+  const k2 = sceneVis($('s2'), t, 9.4, 14.5);
+  if (k2 > 0) {
+    inWords(W.h2, t, 9.6); deviceIn($('d2'), t, 9.55, -120);
+    const pinOut = seg(t, 11.0, 11.3);
+    css($('pin'), { opacity: 1 - pinOut, transform: `scale(${1 - pinOut * 0.08})` });
+    for (let i = 0; i < 8; i++) $('dt' + i).style.background = t > 10.2 + i * 0.09 ? '#6d28a8' : 'transparent';
+    css($('lst'), { opacity: seg(t, 11.1, 11.4) });
+    const q = t < 12.2 ? '' : 'dia'.slice(0, Math.round(3 * seg(t, 12.2, 12.7)));
+    $('srch').innerHTML = q ? `<span style="color:#1e1530">${q}</span><span class="caret"></span>` : 'Rechercher par nom…';
+    $('srch').classList.toggle('focus', t > 12.1);
+    PEOPLE.forEach((_, i) => {
+      const r = $('r' + i); const kin = eExpo(seg(t, 11.2 + i * 0.12, 11.9 + i * 0.12));
+      const hide = i !== 1 ? eIO(seg(t, 12.75, 13.15)) : 0;
+      css(r, { opacity: kin * (1 - hide), transform: `translateX(${(1 - kin) * 80}px) scaleY(${1 - hide})`, height: `${84 * (1 - hide)}px`, marginBottom: `${12 * (1 - hide)}px` });
+    });
+    const tap = seg(t, 13.5, 13.75) * (1 - seg(t, 13.75, 14.0));
+    css($('r1'), { boxShadow: `0 0 0 ${tap * 10}px rgba(124,47,208,.25), 0 6px 18px -12px rgba(42,12,71,.35)`, transform: `scale(${1 - tap * 0.03})` });
+  }
+
+  // ---- 3. Paramètres (14.4 – 21 s)
+  const k3 = sceneVis($('s3'), t, 14.4, 21.0);
+  if (k3 > 0) {
+    inWords(W.h3, t, 14.6); deviceIn($('d3'), t, 14.55);
+    const cnt = (a, b, from, to, dec = 0) => { const k = eOut(seg(t, a, b)); return k <= 0 ? '–' : (from + (to - from) * k).toFixed(dec).replace('.', ','); };
+    $('v-ta').textContent = t < 15.0 ? '–' : `${cnt(15.0, 15.8, 90, 150)}/${cnt(15.0, 15.8, 60, 85)}`;
+    $('v-p').textContent = cnt(15.6, 16.2, 50, 88);
+    $('v-s').textContent = t < 16.0 ? '–' : `${cnt(16.0, 16.6, 90, 97)} %`;
+    $('v-t').textContent = t < 16.3 ? '–' : `${cnt(16.3, 16.9, 35, 37.1, 1)} °C`;
+    const orange = t >= 17.0;
+    const g = Math.max(0, 1 - Math.abs(t - 17.15) * 3);
+    css($('tri'), { background: orange ? '#fef3c7' : '#f1f5f9', color: orange ? '#78350f' : '#334155', boxShadow: `0 0 ${g * 60}px ${g * 10}px rgba(245,158,11,.45)` });
+    css($('tdot'), { background: orange ? '#f59e0b' : '#94a3b8', transform: `scale(${1 + g * 0.6})` });
+    $('tlab').textContent = orange ? 'Orange · tension élevée' : 'À mesurer';
+    const bk = eBack(seg(t, 17.4, 17.85)); css($('ban3'), { opacity: seg(t, 17.4, 17.6), transform: `translateY(${(1 - bk) * 30}px) scale(${0.94 + 0.06 * bk})` });
+    css($('src3'), { opacity: seg(t, 18.0, 18.4) });
+    const ak = eBack(seg(t, 19.1, 19.55)) * (1 - seg(t, 20.4, 20.8));
+    css($('alert3'), { opacity: Math.min(1, ak * 1.4), transform: `translateY(${(1 - ak) * 26}px)`, boxShadow: `0 0 ${30 + 20 * Math.sin(t * 12)}px rgba(225,29,72,.55)` });
+  }
+
+  // ---- 4. Médecin (20.9 – 26.5 s)
+  const k4 = sceneVis($('s4'), t, 20.9, 26.5);
+  if (k4 > 0) {
+    inWords(W.h4, t, 21.1); deviceIn($('d4a'), t, 21.05, -120); deviceIn($('d4b'), t, 21.25, 160);
+    const tap = seg(t, 21.7, 21.9) * (1 - seg(t, 21.9, 22.1));
+    const sel = t > 21.85;
+    css($('doc1'), { borderColor: sel ? '#5b1f8c' : '#ddd3ea', background: sel ? '#5b1f8c' : '#fff', color: sel ? '#fff' : '#2a0c47', transform: `scale(${1 - tap * 0.06})` });
+    // Trajectoire courbe (Bézier) de la fiche vers la tablette du médecin
+    const fk = eIO(seg(t, 22.1, 23.4));
+    const P = [[380, 690], [820, 700], [1080, 620], [1206, 286]];
+    const bz = (a, b, c, d, k) => (1 - k) ** 3 * a + 3 * (1 - k) ** 2 * k * b + 3 * (1 - k) * k * k * c + k ** 3 * d;
+    const x = bz(P[0][0], P[1][0], P[2][0], P[3][0], fk), y = bz(P[0][1], P[1][1], P[2][1], P[3][1], fk);
+    const appear = seg(t, 21.95, 22.15);
+    css($('fly'), { opacity: appear, transform: `translate(${x}px, ${y}px) scale(${0.85 + 0.15 * Math.sin(fk * Math.PI) + (fk >= 1 ? 0.15 : 0)}) rotate(${Math.sin(fk * Math.PI) * -6}deg)`, boxShadow: `0 ${20 + 40 * Math.sin(fk * Math.PI)}px 60px -20px rgba(0,0,0,.55)` });
+    if (!$('trail').dataset.set) {
+      const o = [215, 42]; // centre de la fiche
+      $('trail').setAttribute('d', `M${P[0][0] + o[0]} ${P[0][1] + o[1]} C ${P[1][0] + o[0]} ${P[1][1] + o[1]}, ${P[2][0] + o[0]} ${P[2][1] + o[1]}, ${P[3][0] + o[0]} ${P[3][1] + o[1]}`);
+      $('trail').dataset.set = 1;
+    }
+    $('trail').setAttribute('stroke-dashoffset', 900 * (1 - eIO(seg(t, 22.1, 23.4))));
+    $('trail').style.opacity = 1 - seg(t, 23.4, 24.0);
+    const sk = eBack(seg(t, 24.0, 24.4)); css($('stage4'), { opacity: seg(t, 24.0, 24.2), transform: `scale(${sk})`, marginTop: '420px' });
+    // Ondes « temps réel »
+    $('waves').innerHTML = [0, 1, 2].map((i) => { const ph = ((t - 23.4) * 0.9 + i / 3) % 1; if (t < 23.4) return ''; return `<span style="position:absolute;left:50%;top:50%;width:${200 + ph * 700}px;height:${200 + ph * 700}px;margin:${-(100 + ph * 350)}px 0 0 ${-(100 + ph * 350)}px;border-radius:50%;border:3px solid rgba(255,154,77,${0.5 * (1 - ph)})"></span>`; }).join('');
+  }
+
+  // ---- 5. Outro (26.4 – 30 s)
+  const k5 = sceneVis($('s5'), t, 26.25, 30.4, 0.3);
+  if (k5 > 0) {
+    [0, 1, 2].forEach((i) => { const k = eBack(seg(t, 26.4 + i * 0.16, 27.1 + i * 0.16)); css($('pl' + i), { opacity: seg(t, 26.4 + i * 0.16, 26.7 + i * 0.16), transform: `translateY(${(1 - k) * 80}px) scale(${0.9 + 0.1 * k})` }); });
+    OT.forEach((s, i) => { const k = eExpo(seg(t, 27.6 + i * 0.04, 28.3 + i * 0.04)); css(s, { opacity: k, transform: `translateY(${(1 - k) * 70}px)` }); });
+    css($('o-sub'), { opacity: eOut(seg(t, 28.2, 28.8)) });
+    css($('o-note'), { opacity: eOut(seg(t, 28.5, 29.1)) });
+    css($('s5'), { opacity: k5 * (1 - seg(t, 29.55, 30.0)) });
+  }
+};
+window.render(0);
+</script>
+</body>
+</html>
