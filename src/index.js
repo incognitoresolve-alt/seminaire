@@ -1,11 +1,11 @@
 import { LEAD_INTERESTS, PARTNER } from '../web/shared/partner.js';
-import { CONTACT_TIMES, LEAD_STATUS, validateIdentity, validateLead, validateLeadPatch, validateLeadQualify, validatePatch, validateSurvey } from '../web/shared/validate.js';
+import { CONTACT_TIMES, FEEDBACK_KINDS, FEEDBACK_ROLES, FEEDBACK_STATUS, LEAD_STATUS, validateFeedback, validateFeedbackPatch, validateIdentity, validateLead, validateLeadPatch, validateLeadQualify, validatePatch, validateSurvey } from '../web/shared/validate.js';
 import { checkPin, checkSecret, clearCookie, clearRoleCookie, hasRole, makeCookie, requireRole, requireStaff, roleConfigured, sessionCookie } from './auth.js';
 import { HttpError, assertSameOrigin, clientIp, json, rateLimit, readJson } from './http.js';
 import { hub } from './hub.js';
 import { ensureSchema } from './schema.js';
 import { sendCheckupMail } from './mail.js';
-import { alreadyMailed, createLead, deleteLead, deleteLeadByToken, clearSurveys, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, markMailed, qualifyLead, updateLead, createPatient, createSurvey, deletePatient, getDetail, listSince, purge, surveyStats, updatePatient } from './patients.js';
+import { createFeedback, deleteFeedback, listFeedback, updateFeedback, alreadyMailed, createLead, deleteLead, deleteLeadByToken, clearSurveys, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, markMailed, qualifyLead, updateLead, createPatient, createSurvey, deletePatient, getDetail, listSince, purge, surveyStats, updatePatient } from './patients.js';
 
 export { Hub } from './hub.js';
 
@@ -186,6 +186,30 @@ async function adminRoutes(req, env, ctx, path) {
   await requireRole('admin', req, env);
   const resync = () => ctx.waitUntil(hub(env).broadcast({ t: 'resync' }).catch(() => {}));
   if (path === '/trash' && method === 'GET') return json(await listTrash(env));
+  // Remarques des intervenants
+  if (path === '/feedback' && method === 'GET') return json({ items: await listFeedback(env) });
+  if (path === '/feedback.csv' && method === 'GET') {
+    const rows = (await listFeedback(env)).map((r) => ({
+      ...r,
+      created_at: dt(r.created_at),
+      role: FEEDBACK_ROLES[r.role] ?? r.role,
+      kind: FEEDBACK_KINDS[r.kind] ?? r.kind,
+      status: FEEDBACK_STATUS[r.status] ?? r.status,
+    }));
+    const cols = [['created_at', 'Date'], ['kind', 'Type'], ['role', 'Rôle'], ['name', 'Nom'], ['contact', 'Contact'], ['message', 'Message'],
+      ['status', 'Statut'], ['admin_notes', 'Notes de l’organisation']];
+    return csvResponse(toCsv(cols, rows), `remarques-intervenants-checksante-${new Date().toISOString().slice(0, 10)}.csv`);
+  }
+  const fb = path.match(/^\/feedback\/([0-9a-f-]{36})$/);
+  if (fb && method === 'PATCH') {
+    const { ok, errors, value } = validateFeedbackPatch(await readJson(req, 4096));
+    if (!ok) throw new HttpError(422, 'validation', { errors });
+    return json({ item: await updateFeedback(env, fb[1], value) });
+  }
+  if (fb && method === 'DELETE') {
+    await deleteFeedback(env, fb[1]);
+    return json({ ok: true });
+  }
   if (path === '/trash' && method === 'DELETE') {
     const n = await emptyTrash(env);
     return json({ ok: true, n });
@@ -247,6 +271,16 @@ async function route(req, env, ctx, url) {
     if (!ok) throw new HttpError(422, 'validation', { errors });
     const created = await createSurvey(env, value);
     if (created) broadcast(env, ctx, { t: 'survey' });
+    return json({ ok: true }, created ? 201 : 200);
+  }
+  if (path === '/api/feedback' && req.method === 'POST') {
+    // Lien public partagé aux intervenants : anti-spam (honeypot + limite par IP), validation stricte, rejeu idempotent.
+    await rateLimit(env.RL_REGISTER, `fb:${clientIp(req)}`);
+    const body = await readJson(req, 8192);
+    if (body?.website) throw new HttpError(400, 'invalid');
+    const { ok, errors, value } = validateFeedback(body);
+    if (!ok) throw new HttpError(422, 'validation', { errors });
+    const created = await createFeedback(env, value);
     return json({ ok: true }, created ? 201 : 200);
   }
   if (path === '/api/partner/lead' && req.method === 'POST' && PARTNER.enabled) {

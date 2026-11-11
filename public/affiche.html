@@ -16,7 +16,11 @@
       <input id="site" class="field font-mono text-base" type="text" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" maxlength="200" placeholder="seminaire-triage.….workers.dev" aria-describedby="site-help">
     </div>
     <button id="print" class="btn-primary" type="button">Imprimer l’affiche (A4)</button>
-    <a id="switch" class="btn-ghost" href="/affiche?cible=questionnaire">Affiche du questionnaire</a>
+    <div class="flex flex-wrap gap-2" aria-label="Choisir l’affiche" role="group">
+      <a data-cible="" class="chip inline-flex items-center aria-[current=page]:border-slate-900 aria-[current=page]:bg-slate-900 aria-[current=page]:text-white" href="/affiche">Inscription</a>
+      <a data-cible="questionnaire" class="chip inline-flex items-center aria-[current=page]:border-slate-900 aria-[current=page]:bg-slate-900 aria-[current=page]:text-white" href="/affiche?cible=questionnaire">Questionnaire</a>
+      <a data-cible="remarques" class="chip inline-flex items-center aria-[current=page]:border-slate-900 aria-[current=page]:bg-slate-900 aria-[current=page]:text-white" href="/affiche?cible=remarques">Remarques des intervenants</a>
+    </div>
     <p id="site-help" class="w-full text-sm text-slate-600" aria-live="polite"></p>
   </nav>
 

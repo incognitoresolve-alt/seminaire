@@ -1,4 +1,5 @@
 import { api, esc } from './api.js';
+import { initFeedback } from './admin-feedback.js';
 import { LEAD_INTERESTS } from './shared/partner.js';
 import { CONTACT_TIMES, LEAD_STATUS } from './shared/validate.js';
 
@@ -162,13 +163,19 @@ $('t-empty').addEventListener('click', () =>
   act('/admin/trash', 'DELETE', (r) => `${r.n} dossier(s) supprimé(s) définitivement`, `Vider la corbeille ? Les ${trash.items.length} dossier(s) seront supprimés DÉFINITIVEMENT. Action irréversible.`),
 );
 
+/* ---------- Remarques des intervenants (clé ADMIN_KEY) ---------- */
+const feedback = initFeedback({ toast, onAuthLost: () => start() });
+
 /* ---------- Onglets, accès ---------- */
 let roles = { admin: false, partner: false };
 function showTab(t) {
   for (const b of document.querySelectorAll('[data-tab]')) b.setAttribute('aria-selected', String(b.dataset.tab === t));
   $('tab-trash').hidden = t !== 'trash';
   $('tab-contacts').hidden = t !== 'contacts';
+  $('tab-feedback').hidden = t !== 'feedback';
+  feedback.watch(t === 'feedback');
   if (t === 'trash') loadTrash();
+  if (t === 'feedback') feedback.load();
   if (t === 'contacts') loadContacts();
 }
 document.querySelector('[role=tablist]').addEventListener('click', (e) => {
@@ -188,6 +195,8 @@ async function start() {
   if (!any) return $('key').focus();
   $('btn-trash').hidden = !roles.admin;
   $('btn-contacts').hidden = !roles.partner;
+  $('btn-feedback').hidden = !roles.admin;
+  if (roles.admin) feedback.load({ quiet: true }); // pastille « nouvelles remarques »
   showTab(roles.admin ? 'trash' : 'contacts');
 }
 $('gate-form').addEventListener('submit', async (e) => {
@@ -214,6 +223,7 @@ $('logout').addEventListener('click', async () => {
   await api('/admin/logout', { method: 'POST' }).catch(() => {});
   leads = [];
   trash = { items: [], active: 0, trash_days: 30 };
+  feedback.reset();
   start();
 });
 start();

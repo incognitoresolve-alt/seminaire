@@ -23,6 +23,10 @@ const CREATE = [
     name TEXT NOT NULL, email TEXT, phone TEXT, interests TEXT, message TEXT, consent_at INTEGER NOT NULL, created_at INTEGER NOT NULL,
     unsub_token TEXT, mailed_at INTEGER)`,
   'CREATE INDEX IF NOT EXISTS idx_leads_created ON partner_leads(created_at)',
+  `CREATE TABLE IF NOT EXISTS feedback (id TEXT PRIMARY KEY, request_id TEXT UNIQUE, name TEXT, role TEXT NOT NULL, kind TEXT NOT NULL,
+    message TEXT NOT NULL, contact TEXT, status TEXT NOT NULL DEFAULT 'nouveau' CHECK (status IN ('nouveau','lu','traite')), admin_notes TEXT,
+    created_at INTEGER NOT NULL, updated_at INTEGER)`,
+  'CREATE INDEX IF NOT EXISTS idx_feedback_created ON feedback(created_at)',
 ];
 // Colonnes ajoutées après coup : pour les bases créées par d'anciennes versions (erreur « duplicate column » ignorée).
 const ALTER = [

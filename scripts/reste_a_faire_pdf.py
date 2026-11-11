@@ -146,14 +146,14 @@ story.append(box([
     '<b>Clique sur les cases</b> ☐ quand une tâche est faite, puis <b>Fichier → Enregistrer</b> pour garder ta progression '
     '(Adobe Reader, Aperçu sur Mac, ou Chrome/Edge).',
     '<b>Liens violets soulignés</b> : un clic ouvre directement la bonne page.',
-    '<b>Ordre conseillé</b> : tâches 1 → 6 maintenant (≈ 30 min), puis 7 → 9 avant l’ouverture. Les autres sont facultatives.',
+    '<b>Ordre conseillé</b> : tâches 1 → 6 maintenant (≈ 30 min), puis 7 → 10 avant l’ouverture. Les autres sont facultatives.',
     'Tu bloques ? Fais une <b>capture d’écran</b> et envoie-la à Claude dans la conversation.',
 ], VIOLET_L, VIOLET, 'Comment utiliser ce PDF'))
 
 story.append(box([
     'Application complète et testée (34 tests automatiques, accessibilité vérifiée, sécurité « tout fermé par défaut ») · '
     'branche <b>main</b> · base de données D1 (ID enregistré) · tableaux créés automatiquement · site en ligne · '
-    'version téléphone + effet verre · accords qui scintillent · corbeille et page /admin · '
+    'version téléphone + effet verre · accords qui scintillent · corbeille et page /admin · page « Remarques » des intervenants · '
     '<b>affiches A4 avec QR codes vérifiés</b> · <b>vidéo tutoriel 30 s</b>.',
 ], GREEN_L, GREEN, '✓ Déjà fait (rien à faire de ton côté)'))
 
@@ -199,12 +199,14 @@ story.append(gap())
 story.append(Task('5', 'Effacer toutes les données de test', '2 min', [
     f'Ouvre {a(SITE + "/admin")} → colle l’<b>ADMIN_KEY</b> → onglet Corbeille :',
     f'{b("Tout mettre à la corbeille")} → {b("Vider")} → {b("Effacer toutes les réponses")} (questionnaire).',
+    f'Onglet {b("Remarques")} : supprimer les remarques de test.',
     f'Si tu as coché le check-up pendant le test : {b("Ajouter une clé")} → <b>PARTNER_KEY</b> → onglet {b("Mes contacts")} → supprimer les contacts « Test ».',
 ], prio=True))
 story.append(gap())
 
 story.append(Task('6', 'Imprimer les affiches QR', '10 min', [
-    f'Fichiers prêts : {c("affiche-inscription-A4.pdf")} (« Pas envie d’attendre ? ») et {c("affiche-questionnaire-A4.pdf")}. '
+    f'Fichiers prêts : {c("affiche-inscription-A4.pdf")} (« Pas envie d’attendre ? »), {c("affiche-questionnaire-A4.pdf")} '
+    f'et {c("affiche-remarques-intervenants-A4.pdf")} (salle des intervenants). '
     f'Envoyés dans la conversation, et aussi sur {a(REPO + "/tree/main/docs/affiches", "GitHub → docs/affiches")}.',
     'Imprimante : format <b>A4</b>, <b>taille réelle (100 %)</b>, <b>couleur</b>. Plusieurs exemplaires : entrée, file d’attente, chaises, salle.',
     '<b>Scanne une feuille imprimée</b> avec ton téléphone : la page d’inscription doit s’ouvrir.',
@@ -237,17 +239,28 @@ story.append(Task('9', 'Préparer le jour J', '20 min', [
     'Couleurs = aide indicative, le jugement clinique prime. Tablette laissée seule : bouton cadenas « Verrouiller ».',
     '<b>Accueil</b> : diffuser la vidéo tutoriel en boucle ; quelques formulaires papier + bouton « Ajouter manuellement » en secours.',
 ]))
+story.append(gap())
+
+story.append(Task('10', 'Partager le lien des remarques aux intervenants', '5 min', [
+    f'Lien : {a(SITE + "/remarques")} → à envoyer aux <b>soignants, médecins, intervenants et bénévoles</b> '
+    '(groupe WhatsApp, e-mail) + affiche QR dans la salle des intervenants.',
+    'Ils choisissent leur rôle et le type (remarque, proposition, problème, point positif), écrivent leur message ; '
+    'nom et contact seulement s’ils le souhaitent.',
+    f'Tu les lis dans {a(SITE + "/admin")} → clé <b>ADMIN_KEY</b> → onglet {b("Remarques")} (pastille = nouvelles remarques) : '
+    f'statut Nouveau / Lu / Traité, notes, {b("Copier le lien")}, {b("Télécharger (Excel / CSV)")}.',
+    'Lien aussi présent en bas de l’écran des soignants (« Une remarque, une proposition ? »).',
+]))
 
 # ---------------------------------------------------------------- Facultatif
 story += [gap(4)]
-story.append(KeepTogether([P('FACULTATIF', 'kick'), P('Pour aller plus loin', 'h2'), Task('10', 'Retirer la croix rouge « Workers Builds » sur GitHub', '2 min', [
+story.append(KeepTogether([P('FACULTATIF', 'kick'), P('Pour aller plus loin', 'h2'), Task('11', 'Retirer la croix rouge « Workers Builds » sur GitHub', '2 min', [
     'Elle concerne seulement les versions d’essai des modifications (le site officiel se met bien à jour).',
     f'{a(CF, "Worker")} → {b("Settings")} → {b("Builds")} → désactiver les builds des branches autres que '
     f'{c("main")} (« Non-production branch builds »).',
 ])]))
 story.append(gap())
 
-story.append(Task('11', 'E-mails automatiques « check-up » (Brevo) + nom de domaine', '30 min', [
+story.append(Task('12', 'E-mails automatiques « check-up » (Brevo) + nom de domaine', '30 min', [
     'Nécessite un nom de domaine à toi (ex. checksante.be) : sans domaine, Brevo ne peut pas envoyer.',
     f'Étapes détaillées : {a(REPO + "/blob/main/docs/A-FAIRE.md", "docs/A-FAIRE.md, section E")}.',
     f'Sans Brevo, rien n’est perdu : les demandes de check-up sont enregistrées dans {a(SITE + "/admin")} → '
@@ -256,14 +269,15 @@ story.append(Task('11', 'E-mails automatiques « check-up » (Brevo) + nom de do
 
 # ---------------------------------------------------------------- Après
 story += [gap(4)]
-story.append(KeepTogether([P('APRÈS L’ÉVÉNEMENT', 'kick'), P('Clôturer proprement', 'h2'), Task('12', 'Transmettre, sécuriser, effacer', '20 min', [
+story.append(KeepTogether([P('APRÈS L’ÉVÉNEMENT', 'kick'), P('Clôturer proprement', 'h2'), Task('13', 'Transmettre, sécuriser, effacer', '20 min', [
     '<b>Médecins</b> : uniquement les personnes qui ont autorisé la transmission. Requête prête dans '
     f'{a(REPO + "/blob/main/docs/A-FAIRE.md", "docs/A-FAIRE.md, section I")}. Envoi par messagerie santé sécurisée '
     '(eHealthBox), <b>jamais par Gmail</b>.',
     f'<b>Contacts check-up</b> : {a(SITE + "/admin")} → {b("Mes contacts")} → statut, notes, {b("Télécharger (Excel / CSV)")}. '
     'Une seule relance maximum ; « STOP » = effacement immédiat.',
     f'<b>Sécurité</b> : changer ou supprimer {c("STAFF_PIN")} dans Cloudflare → plus aucun accès soignants.',
-    '<b>Effacement automatique</b> : dossiers et questionnaires après 30 jours, contacts après 180 jours.',
+    f'<b>Remarques des intervenants</b> : {b("Télécharger (Excel / CSV)")} pour le bilan de l’organisation.',
+    '<b>Effacement automatique</b> : dossiers et questionnaires après 30 jours, contacts et remarques après 180 jours.'
 ])]))
 
 story.append(box([
@@ -274,7 +288,7 @@ story.append(box([
     'Journaux d’erreurs : Worker → ' + b('Observability') + ' / ' + b('Logs') + '.',
 ], RED_L, RED, 'En cas de problème'))
 
-story += [gap(4), Field('Mes notes (pas de codes secrets ici)', 'notes', h=70)]
+story += [gap(4), Field('Mes notes (pas de codes secrets ici)', 'notes', h=44)]
 
 
 # ---------------------------------------------------------------- Mise en page
