@@ -4,8 +4,8 @@ import { HttpError } from './http.js';
 
 // Colonnes exposées au staff (sans email ni request_id : minimisation).
 const COLS =
-  'id,token,short_code,last_name,first_name,birth_date,source,doctor_consent,stage,stage_at,alerts,pulse,rr,spo2,temp,weight,height,waist,glucose,sys,dia,notes,triage,doctor,version,created_at,updated_at,deleted_at';
-const DETAIL_COLS = `${COLS},email,phone,consent_at,gp_name,gp_contact,gp_address,gp_email,gp_sent_at,doctor_consent_at,consent_log`;
+  'id,token,short_code,last_name,first_name,birth_date,source,doctor_consent,stage,stage_at,alerts,pulse,rr,spo2,temp,weight,height,waist,glucose,sys,dia,notes,triage,practitioner,version,created_at,updated_at,deleted_at';
+const DETAIL_COLS = `${COLS},email,phone,consent_at,no_gp,gp_name,gp_contact,gp_address,gp_email,gp_sent_at,doctor_consent_at,consent_log`;
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // sans 0/O/1/I/L
 
 const randomToken = () => {
@@ -116,14 +116,21 @@ export async function updatePatient(env, id, patch) {
     proofSql += `, consent_log = json_insert(COALESCE(consent_log, '[]')${entries.map(() => ", '$[#]', json(?)").join('')})`;
     proofBind.push(...entries.map((e) => JSON.stringify(e)));
   }
-  if (['gp_name', 'gp_contact', 'gp_address', 'gp_email'].some((k) => patch[k]) && !('doctor_consent' in patch)) {
+  if (patch.no_gp === 1) patch = { ...patch, gp_name: null, gp_contact: null, gp_address: null, gp_email: null }; // « pas de médecin traitant »
+  if (['gp_name', 'gp_contact', 'gp_address', 'gp_email', 'no_gp'].some((k) => patch[k]) && !('doctor_consent' in patch)) {
     // Médecin traitant (nom, coordonnées) enregistré seulement si la transmission est autorisée (contrôle serveur).
     const ok = await env.DB.prepare('SELECT doctor_consent FROM patients WHERE id = ? AND deleted_at IS NULL').bind(id).first();
     if (ok && ok.doctor_consent !== 1) throw new HttpError(409, 'consent_required');
   }
-  const keys = Object.keys(patch); // whitelist garantie par validatePatch
+  // Soignant(s) qui encodent : liste sans doublon (« A, B »), jamais écrasée par un collègue.
+  if (patch.practitioner) {
+    proofSql += `, practitioner = CASE WHEN practitioner IS NULL OR practitioner = '' THEN ?
+      WHEN (', ' || practitioner || ', ') LIKE ('%, ' || ? || ', %') THEN practitioner ELSE substr(practitioner || ', ' || ?, 1, 300) END`;
+    proofBind.push(patch.practitioner, patch.practitioner, patch.practitioner);
+  }
+  const keys = Object.keys(patch).filter((k) => k !== 'practitioner'); // whitelist garantie par validatePatch
   const row = await env.DB.prepare(
-    `UPDATE patients SET ${keys.map((k) => `${k} = ?`).join(', ')}${proofSql}, version = version + 1, updated_at = ?
+    `UPDATE patients SET ${[...keys.map((k) => `${k} = ?`), 'version = version + 1'].join(', ')}${proofSql}, updated_at = ?
      WHERE id = ? AND deleted_at IS NULL RETURNING ${COLS}`,
   )
     .bind(...keys.map((k) => patch[k]), ...proofBind, now, id)
@@ -238,7 +245,7 @@ const K_MIN = 5; // groupes de moins de 5 personnes masqués : aucune ré-identi
 const mask = (n) => (n > 0 && n < K_MIN ? '<5' : n);
 export async function eventStats(env) {
   // Jours comptés en heure belge (UTC+1 en novembre).
-  const [tot, days, ages, tri, docs, waits, leads] = await env.DB.batch([
+  const [tot, days, ages, tri, waits, leads] = await env.DB.batch([
     env.DB.prepare(`SELECT COUNT(*) n, SUM(source='self') self, SUM(source='staff') staff, SUM(doctor_consent=1) consent,
       SUM(pulse IS NOT NULL OR temp IS NOT NULL OR sys IS NOT NULL OR glucose IS NOT NULL OR weight IS NOT NULL) measured,
       SUM(stage=2) done FROM patients WHERE deleted_at IS NULL`),
@@ -247,7 +254,6 @@ export async function eventStats(env) {
       FROM (SELECT (strftime('%Y','now') - strftime('%Y', birth_date)) - (strftime('%m-%d','now') < strftime('%m-%d', birth_date)) a FROM patients WHERE deleted_at IS NULL AND birth_date != '')
       GROUP BY k ORDER BY k`),
     env.DB.prepare('SELECT triage k, COUNT(*) n FROM patients WHERE deleted_at IS NULL GROUP BY triage'),
-    env.DB.prepare('SELECT doctor k, COUNT(*) n FROM patients WHERE deleted_at IS NULL AND doctor IS NOT NULL GROUP BY doctor'),
     env.DB.prepare('SELECT ROUND(AVG((stage_at - created_at)/60000.0)) avg_wait FROM patients WHERE deleted_at IS NULL AND stage >= 1 AND stage_at IS NOT NULL'),
     env.DB.prepare("SELECT COUNT(*) n, SUM(interests LIKE '%checkup%') checkup FROM partner_leads"),
   ]);
@@ -263,7 +269,6 @@ export async function eventStats(env) {
     per_day: days.results.map((x) => ({ d: x.d, n: mask(x.n) })),
     ages: kv(ages),
     triage: kv(tri),
-    doctors: kv(docs),
     avg_wait_min: waits.results[0]?.avg_wait ?? null,
     checkup_rate: t.n ? Math.round((100 * (leads.results[0].checkup || 0)) / t.n) : 0,
   };
@@ -300,7 +305,7 @@ export async function deleteFeedback(env, id) {
 }
 
 /* ---------- Envois manuels (rôle admin) : aucun e-mail n'est envoyé par l'application ---------- */
-const TX_COLS = 'id, last_name, first_name, birth_date, gp_name, gp_contact, gp_email, gp_sent_at, doctor_consent_at, created_at';
+const TX_COLS = 'id, last_name, first_name, birth_date, no_gp, gp_name, gp_contact, gp_email, gp_sent_at, doctor_consent_at, created_at';
 /** Personnes ayant autorisé la transmission à leur médecin traitant (fiche à envoyer manuellement). */
 export async function listTransmissions(env) {
   const { results } = await env.DB.prepare(`SELECT ${TX_COLS} FROM patients WHERE doctor_consent = 1 AND deleted_at IS NULL ORDER BY gp_sent_at IS NOT NULL, last_name, first_name LIMIT 5000`).all();

@@ -24,11 +24,11 @@ test('parseVital : virgule, arrondi, bornes', () => {
 });
 
 test('patch : whitelist stricte', () => {
-  assert.ok(validatePatch({ pulse: 80, doctor: 2, notes: 'ok' }).ok);
+  assert.ok(validatePatch({ pulse: 80, practitioner: 'Inf. Sarah Mukendi', notes: 'ok' }).ok);
   assert.ok(validatePatch({ pulse: null }).ok);
   assert.ok(validatePatch({ triage: 3 }).errors.triage);
   assert.ok(validatePatch({ 'pulse = 1; --': 1 }).errors);
-  assert.ok(validatePatch({ doctor: 3 }).errors.doctor);
+  assert.ok(validatePatch({ doctor: 1 }).errors.doctor); // assignation Médecin 1 / 2 supprimée
   assert.ok(validatePatch({ pulse: '80' }).errors.pulse);
   assert.ok(!validatePatch({}).ok);
   assert.ok(!validatePatch([]).ok);

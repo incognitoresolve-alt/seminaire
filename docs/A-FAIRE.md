@@ -11,7 +11,7 @@
 > | 2 | Site officiel | `https://seminaire-triage.incognitoresolve.workers.dev/` (QR codes des affiches) | — |
 > | 3 | **Settings → Variables and Secrets** (type *Secret*) | `STAFF_PIN` (8+ car.) · `SESSION_SECRET` (32+ car. aléatoires) · `ADMIN_KEY` (16+ car., organisateur / responsable médical) · `PARTNER_KEY` (16+ car., toi seul). Sans eux : accès bloqué (sécurité) | 5 min |
 > | 4 | Navigateur | `https://seminaire-triage.incognitoresolve.workers.dev/api/health` → `{"ok":true}` | 1 min |
-> | 5 | 2 tablettes | Test réel : 2 inscriptions → *Liste des inscrits* (PIN) → fiche → tension → *Médecin 1* → visible sur l'autre tablette | 5 min |
+> | 5 | 2 tablettes | Test réel : 2 inscriptions → *Liste des inscrits* (PIN) → fiche → **nom du soignant** → tension → visible sur l'autre tablette | 5 min |
 > | 6 | `https://seminaire-triage.incognitoresolve.workers.dev/admin` + `ADMIN_KEY` | Effacer les tests : *Tout mettre à la corbeille* → *Vider* → *Effacer toutes les réponses* | 2 min |
 > | 7 | `docs/affiches/` | **Imprimer les PDF prêts** : `affiche-inscription-A4.pdf` (« Pas envie d'attendre ? »). QR codes vérifiés vers `https://seminaire-triage.incognitoresolve.workers.dev/`. Impression : A4, taille réelle (100 %), couleur. Scanner une feuille imprimée pour vérifier. (Aussi en ligne : `/affiche`) | 10 min |
 > | 8 | Envoyer à Claude | L'**e-mail de contact RGPD d'ICC Liège** (2 emplacements `[email-contact]` dans la politique de confidentialité) | 1 min |
@@ -20,7 +20,7 @@
 > | 11 | `https://seminaire-triage.incognitoresolve.workers.dev/remarques` | **Partager le lien des remarques** aux soignants, médecins, intervenants, bénévoles (WhatsApp, e-mail) + affiche `docs/affiches/affiche-remarques-intervenants-A4.pdf`. Lecture : `/admin` + `ADMIN_KEY` → onglet **Remarques** | 5 min |
 > | 12 | `/admin` → onglet **QR codes** | Tous les QR codes au même endroit : inscription sans attente, **check-up assurance-vie** (publicité), remarques des intervenants → **Copier le lien**, **Télécharger l'image (PNG)**, **Affiche A4** (`docs/affiches/affiche-checkup-assurance-A4.pdf`) | 5 min |
 >
-> Facultatif : noms des médecins (`web/shared/doctors.js`), nom de domaine (section E). **Aucun envoi automatique d'e-mail** : tout part manuellement depuis `/admin` → **Envois**.
+> Facultatif : nom de domaine (section E). **Aucun envoi automatique d'e-mail** : tout part manuellement depuis `/admin` → **Envois**.
 
 Durées indicatives. Ordre recommandé : A → B → C → D → E (aujourd'hui), F → G (avant l'ouverture), H (pendant), I (après).
 
@@ -107,7 +107,6 @@ Les secrets s'appliquent immédiatement (nouvelle version déployée automatique
 |---|---|
 | `public/confidentialite.html` | `[email-contact]` (2 fois) : envoie l'adresse à Claude |
 | `web/shared/triage.js` | **faire valider les seuils par les médecins** ; modifier les nombres si besoin (tableau dans le README) |
-| `web/shared/doctors.js` | si souhaité, nom des médecins : `name: 'Dr Dupont'`, `label: 'Dr Dupont · Mer. 11/11'` |
 | `web/shared/partner.js` | `address: ''` → ton adresse pro si tu veux l'afficher (facultatif) |
 
 Chaque commit sur `main` redéploie automatiquement (≈ 1 min).
@@ -154,7 +153,8 @@ DELETE FROM partner_leads;
 
 **Briefing soignants (5 min)**
 - Code PIN : ne jamais le donner aux participants.
-- Flux : **Liste des inscrits** → recherche par nom → saisir les mesures → si « J'autorise » : **nom, prénom et coordonnées du médecin traitant** (fiche soignant) → assigner **Médecin 1 / Médecin 2** → **Patient suivant** → **Terminé**.
+- Flux : **Liste des inscrits** → recherche par nom → **indiquer son nom (soignant / praticien)** → saisir les mesures → si « J'autorise » : **nom, prénom et coordonnées du médecin traitant**, ou cocher « pas de médecin traitant » → **Patient suivant** → **Terminé**. L'envoi au cabinet du médecin traitant est fait par l'admin (`/admin` → Envois).
+- Tablette verrouillée (🔒) = nom du soignant effacé : le suivant indique le sien.
 - Couleurs = aide indicative, le jugement clinique prime.
 - Tablette laissée sans surveillance : 🔒 **Verrouiller**.
 

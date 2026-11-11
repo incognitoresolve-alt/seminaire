@@ -142,13 +142,13 @@
 
   <!-- 4. Médecin -->
   <div class="scene" id="s4">
-    <div class="copy" style="top:150px"><div class="step"><b>4</b>Médecin</div><h2 id="h4"></h2><p>Avec l’accord du patient, la fiche<br>arrive en temps réel chez le médecin.</p></div>
+    <div class="copy" style="top:150px"><div class="step"><b>4</b>Médecin</div><h2 id="h4"></h2><p>Avec l’accord du patient, l’admin envoie<br>la fiche au cabinet du médecin traitant.</p></div>
     <div class="device glass" id="d4a" style="left:150px;top:520px;width:560px;height:420px">
       <div class="screen" style="padding-top:22px">
-        <div style="margin:0 26px;font-weight:900;font-size:24px;color:#2a0c47">Assignation</div>
+        <div style="margin:0 26px;font-weight:900;font-size:24px;color:#2a0c47">Envois · admin</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 26px 0">
-          <div id="doc1" style="height:92px;border-radius:18px;border:2.5px solid #ddd3ea;background:#fff;display:grid;place-items:center;text-align:center;font-weight:800;font-size:19px;color:#2a0c47;line-height:1.25">Médecin 1<br><span style="font-weight:600;font-size:16px">Mer. 11/11</span></div>
-          <div style="height:92px;border-radius:18px;border:2.5px solid #ddd3ea;background:#fff;display:grid;place-items:center;text-align:center;font-weight:800;font-size:19px;color:#2a0c47;line-height:1.25">Médecin 2<br><span style="font-weight:600;font-size:16px">Sam. 14/11</span></div>
+          <div id="doc1" style="height:92px;border-radius:18px;border:2.5px solid #ddd3ea;background:#fff;display:grid;place-items:center;text-align:center;font-weight:800;font-size:19px;color:#2a0c47;line-height:1.25">Préparer l’e-mail<br><span style="font-weight:600;font-size:16px">cabinet du médecin</span></div>
+          <div style="height:92px;border-radius:18px;border:2.5px solid #ddd3ea;background:#fff;display:grid;place-items:center;text-align:center;font-weight:800;font-size:19px;color:#2a0c47;line-height:1.25">Fiche PDF<br><span style="font-weight:600;font-size:16px">avec preuve d’accord</span></div>
         </div>
         <div style="margin:18px 26px 0;font-size:16px;font-weight:700;color:#047857">✓ Accord de transmission donné</div>
       </div>
@@ -157,9 +157,9 @@
     <div id="fly" class="row" style="position:absolute;left:0;top:0;width:430px;margin:0;z-index:5"><span class="bar" style="background:#f59e0b"></span><div><div class="nm">Awa Diallo</div><div class="sb">150/85 · pouls 88</div></div><span class="pill" style="background:#fef3c7;color:#78350f">Orange</span></div>
     <div class="device glass" id="d4b" style="left:1180px;top:200px;width:600px;height:720px">
       <div class="screen">
-        <div class="ui-h"><span style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#5b1f8c);display:grid;place-items:center;color:#fff;font-size:18px">Dr</span>Médecin 1</div>
+        <div class="ui-h"><span style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#5b1f8c);display:grid;place-items:center;color:#fff;font-size:18px">Dr</span>Médecin traitant</div>
         <div id="dslot" style="margin:6px 0 0"></div>
-        <div id="stage4" class="chip" style="margin:6px 26px 0;background:#5b1f8c;color:#fff">En consultation</div>
+        <div id="stage4" class="chip" style="margin:6px 26px 0;background:#5b1f8c;color:#fff">Fiche reçue ✓</div>
       </div>
     </div>
     <div id="waves" style="position:absolute;left:1180px;top:200px;width:600px;height:720px;pointer-events:none"></div>
@@ -193,7 +193,7 @@ const css = (el, o) => Object.assign(el.style, o);
 // Découpe un titre en mots animables
 function words(el, text) { el.innerHTML = text.split(' ').map((w) => `<span class="w">${w}</span>`).join(' '); return [...el.children]; }
 const W = {
-  h1: words($('h1'), 'Inscription éclair'), h2: words($('h2'), 'Liste des inscrits'), h3: words($('h3'), 'Mesures & analyse'), h4: words($('h4'), 'Transmission au médecin'),
+  h1: words($('h1'), 'Inscription éclair'), h2: words($('h2'), 'Liste des inscrits'), h3: words($('h3'), 'Mesures & analyse'), h4: words($('h4'), 'Envoi au médecin traitant'),
 };
 const letters = (el, text) => { el.innerHTML = [...text].map((c) => `<span class="w">${c === ' ' ? '&nbsp;' : c}</span>`).join(''); return [...el.children]; };
 const IT = letters($('i-title'), 'CheckSanté'); IT.slice(5).forEach((s) => (s.style.color = '#ff9a4d'));

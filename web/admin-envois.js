@@ -39,19 +39,23 @@ export function initEnvois({ toast, onAuthLost }) {
   }
 
   function render() {
-    const todo = items.filter((x) => !x.gp_sent_at).length;
-    $('e-filter').innerHTML = [['todo', `À envoyer`, todo], ['sent', 'Envoyées', items.length - todo], ['all', 'Toutes', items.length]]
+    const todo = items.filter((x) => !x.gp_sent_at && !x.no_gp).length;
+    const sent = items.filter((x) => x.gp_sent_at).length;
+    const nogp = items.filter((x) => x.no_gp && !x.gp_sent_at).length;
+    $('e-filter').innerHTML = [['todo', 'À envoyer', todo], ['sent', 'Envoyées', sent], ['nogp', 'Sans médecin traitant', nogp], ['all', 'Toutes', items.length]]
       .map(([k, l, n]) => `<button type="button" class="chip shrink-0" data-f="${k}" aria-pressed="${filter === k}">${l} <span class="font-normal">${n}</span></button>`)
       .join('');
     const q = $('e-q').value.trim().toLowerCase();
-    const rows = items.filter((x) => (filter === 'all' || (filter === 'sent') === !!x.gp_sent_at) && (!q || `${x.last_name} ${x.first_name} ${x.gp_name || ''}`.toLowerCase().includes(q)));
+    const status = (x) => (x.gp_sent_at ? 'sent' : x.no_gp ? 'nogp' : 'todo');
+    const rows = items.filter((x) => (filter === 'all' || status(x) === filter) && (!q || `${x.last_name} ${x.first_name} ${x.gp_name || ''}`.toLowerCase().includes(q)));
     $('e-list').innerHTML = rows
       .map(
         (x) => `<li class="glass-soft rounded-2xl p-4" data-id="${esc(x.id)}">
         <div class="flex flex-wrap items-start gap-2">
           <p class="mr-auto font-bold">${esc(x.last_name)} ${esc(x.first_name)} <span class="text-xs font-normal text-slate-500">· né(e) le ${esc(iso(x.birth_date))} · reçu(e) le ${esc(dDay(x.created_at))}</span></p>
-          ${x.gp_sent_at ? `<span class="rounded-lg bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-900">Envoyée le ${esc(dTime(x.gp_sent_at))}</span>` : '<span class="rounded-lg bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-900">À envoyer</span>'}
+          ${x.gp_sent_at ? `<span class="rounded-lg bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-900">Envoyée le ${esc(dTime(x.gp_sent_at))}</span>` : x.no_gp ? '<span class="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700">Pas de médecin traitant</span>' : '<span class="rounded-lg bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-900">À envoyer</span>'}
         </div>
+        ${x.no_gp ? '<p class="mt-1 text-sm text-slate-600">Le participant a indiqué ne pas avoir de médecin traitant : rien à envoyer.</p>' : `
         <p class="mt-1 text-sm text-slate-700">Médecin traitant : ${x.gp_name ? `<b>${esc(x.gp_name)}</b>` : '<span class="text-slate-500">non renseigné (fiche soignant)</span>'}${x.gp_contact ? ` · ${esc(x.gp_contact)}` : ''}</p>
         <label class="label mt-2" for="ge-${esc(x.id)}">E-mail du médecin traitant</label>
         <input id="ge-${esc(x.id)}" data-gp-email type="email" inputmode="email" autocomplete="off" maxlength="254" class="field py-2.5 text-base" placeholder="cabinet@…" value="${esc(x.gp_email || '')}">
@@ -60,7 +64,7 @@ export function initEnvois({ toast, onAuthLost }) {
           <button type="button" data-mail class="btn-primary min-h-10 px-3 py-2 text-sm" ${x.gp_email ? '' : 'disabled'}>2. Préparer l’e-mail</button>
           <button type="button" data-copy class="btn-ghost min-h-10 px-3 py-2 text-sm">Copier le message</button>
           ${x.gp_sent_at ? '<button type="button" data-sent="0" class="btn-ghost min-h-10 px-3 py-2 text-sm">Annuler « envoyée »</button>' : '<button type="button" data-sent="1" class="btn-ghost min-h-10 px-3 py-2 text-sm">3. Marquer comme envoyée</button>'}
-        </div>
+        </div>`}
       </li>`,
       )
       .join('');

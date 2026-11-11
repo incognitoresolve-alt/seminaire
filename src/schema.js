@@ -41,6 +41,9 @@ const ALTER = [
   // Envoi MANUEL de la fiche au médecin traitant : son e-mail et la date à laquelle l'envoi a été noté comme fait.
   'ALTER TABLE patients ADD COLUMN gp_email TEXT',
   'ALTER TABLE patients ADD COLUMN gp_sent_at INTEGER',
+  // Soignant(s) / praticien(s) qui ont encodé les paramètres ; « pas de médecin traitant » (colonne v1, garantie ici).
+  'ALTER TABLE patients ADD COLUMN practitioner TEXT',
+  'ALTER TABLE patients ADD COLUMN no_gp INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE partner_leads ADD COLUMN unsub_token TEXT',
   'ALTER TABLE partner_leads ADD COLUMN mailed_at INTEGER',
   "ALTER TABLE partner_leads ADD COLUMN status TEXT NOT NULL DEFAULT 'nouveau' CHECK (status IN ('nouveau','contacte','rdv','client'))",

@@ -2,7 +2,6 @@
 // Accès soignants uniquement (cookie de session) ; refus serveur si la transmission n'est pas autorisée (fail-closed).
 import { api, esc } from './api.js';
 import { formatHash } from './shared/consent.js';
-import { DOCTORS } from './shared/doctors.js';
 import { ALERTS, CONTEXTS, bmi, parseAlerts } from './shared/triage.js';
 
 const $ = (id) => document.getElementById(id);
@@ -64,7 +63,7 @@ function render({ patient: p, proof, generated_at }) {
       <p class="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-800 ring-1 ring-red-200">Confidentiel · données de santé</p>
     </header>
     <h1 class="mt-5 print:mt-3 text-2xl font-extrabold">Fiche de transmission au médecin traitant</h1>
-    <p class="mt-1 text-sm text-slate-600">À l’attention de : <b class="text-slate-900">${p.gp_name ? esc(p.gp_name) : 'médecin traitant (nom non renseigné)'}</b></p>
+    <p class="mt-1 text-sm text-slate-600">À l’attention de : <b class="text-slate-900">${p.no_gp ? 'pas de médecin traitant (indiqué par le participant)' : p.gp_name ? esc(p.gp_name) : 'médecin traitant (nom non renseigné)'}</b></p>
     ${p.gp_contact || p.gp_email || p.gp_address ? `<p class="mt-0.5 text-sm whitespace-pre-line text-slate-600">${esc([[p.gp_contact, p.gp_email].filter(Boolean).join(' · '), p.gp_address].filter(Boolean).join('\n'))}</p>` : ''}
 
     ${H('Patient')}
@@ -80,7 +79,7 @@ function render({ patient: p, proof, generated_at }) {
       ${vit.map(([k, v]) => row(k, esc(v))).join('') || row('Paramètres', 'Aucun paramètre relevé')}
       ${row('Signes d’alerte / contexte', al.length ? esc(al.join(' · ')) : '')}
       ${row('Priorité (triage indicatif)', p.triage ? esc(TRIAGE[p.triage] || '') : '')}
-      ${row('Vu(e) par', p.doctor ? esc(DOCTORS[p.doctor]?.label || '') + ' (médecin de l’événement)' : '')}
+      ${row('Paramètres relevés par', esc(p.practitioner || ''))}
     </tbody></table>
     ${p.notes ? `<p class="mt-3 text-sm font-semibold text-slate-600">Notes cliniques</p><p class="mt-1 rounded-lg bg-slate-50 p-3 text-sm whitespace-pre-line ring-1 ring-slate-200">${esc(p.notes)}</p>` : ''}
 

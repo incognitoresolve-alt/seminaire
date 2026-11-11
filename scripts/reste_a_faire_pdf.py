@@ -189,8 +189,8 @@ story.append(gap())
 story.append(Task('4', 'Faire un vrai test avec 2 tablettes', '10 min', [
     f'Tablette A : {a(SITE + "/")} → inscrire 2 personnes « Test » (les 2 accords cochés) → message « ✓ … est inscrit(e) ».',
     f'Tablettes A et B : {a(SITE + "/staff")} → taper le <b>STAFF_PIN</b> → pastille verte <b>Temps réel</b>.',
-    f'{b("Liste des inscrits")} → taper le nom → ouvrir la fiche → saisir une tension (ex. 150/85) → '
-    f'choisir {b("Médecin 1")} → la fiche change sur l’autre tablette en quelques secondes.',
+    f'{b("Liste des inscrits")} → taper le nom → ouvrir la fiche → <b>indiquer son nom (soignant)</b> → saisir une tension (ex. 150/85) '
+    '→ la fiche change sur l’autre tablette en quelques secondes.',
     f'Sur la fiche d’une personne qui a dit « J’autorise » : saisir nom et coordonnées du médecin traitant → {b("Fiche pour le médecin traitant (PDF)")} → la preuve de l’accord s’affiche (« ✓ vérifiée »).',
     f'{a(SITE + "/remarques")} → envoyer une remarque « Test » → {a(SITE + "/admin")} (ADMIN_KEY) → onglet {b("Remarques")} : elle apparaît.',
     'Mauvais PIN 11 fois de suite → « Trop d’essais, patientez une minute » (protection normale).',
@@ -228,7 +228,6 @@ story.append(Task('8', 'Faire relire par les médecins', '15 min', [
     '« <b>Seuil de prudence CheckSanté</b> » (pas de source officielle : à valider ou corriger).',
     f'Détail dans le {a(REPO + "#assistant-m%C3%A9dical-%C3%A9ducatif-fiche-soignant", "README, section Assistant médical éducatif")}. '
     'Envoie leurs remarques à Claude.',
-    'Facultatif : le nom des médecins (« Dr Dupont » au lieu de « Médecin 1 ») → envoie-les à Claude.',
 ]))
 story.append(gap())
 
@@ -237,7 +236,7 @@ story.append(Task('9', 'Préparer le jour J', '20 min', [
     '<b>Tablettes</b> : chargées + multiprises · veille d’écran désactivée (Réglages → Affichage → Verrouillage auto : Jamais) · '
     f'{a(SITE + "/staff")} ajouté à l’écran d’accueil ({b("Partager")} → {b("Sur l’écran d’accueil")}).',
     '<b>Réseau</b> : partage de connexion 4G de secours. Sans réseau, les saisies sont gardées et partent au retour du réseau.',
-    '<b>Briefing soignants (5 min)</b> : Liste des inscrits → recherche → mesures → si « J’autorise » : nom, prénom et coordonnées du médecin traitant → Médecin 1 / 2 → Patient suivant → Terminé. '
+    '<b>Briefing soignants (5 min)</b> : Liste des inscrits → recherche → <b>son nom (obligatoire)</b> → mesures → si « J’autorise » : nom, prénom et coordonnées du médecin traitant ou « pas de médecin traitant » → Patient suivant → Terminé. '
     'Couleurs = aide indicative, le jugement clinique prime. Tablette laissée seule : bouton cadenas « Verrouiller ».',
     '<b>Accueil</b> : diffuser la vidéo tutoriel en boucle ; quelques formulaires papier + bouton « Ajouter manuellement » en secours.',
 ]))

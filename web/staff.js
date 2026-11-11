@@ -2,7 +2,6 @@ import { registerSW } from './sw-register.js';
 import { ageOf, api, esc } from './api.js';
 import { bindIdentityForm, identityFieldsHtml } from './form.js';
 import { mountCredit, mountPartner } from './partner-ui.js';
-import { DOCTORS } from './shared/doctors.js';
 import { NOTE, RAPPEL, analyse } from './shared/assistant.js';
 import { ALERTS, CONTEXTS, bmi, parseAlerts, triage } from './shared/triage.js';
 import { NOTES_MAX, VITALS, normalize, parseVital, validatePatch } from './shared/validate.js';
@@ -15,7 +14,7 @@ const MAX_ROWS = 200;
 
 const $ = (id) => document.getElementById(id);
 mountCredit($('gate'));
-const filters = { stage: 'active', triage: 'all', doctor: 'all', q: '' };
+const filters = { stage: 'active', triage: 'all', q: '' };
 const STAGE = { 0: 'En attente', 1: 'En consultation', 2: 'Terminé' };
 const waitMin = (p) => Math.max(0, Math.round((Date.now() - p.created_at) / 60000));
 const fmtWait = (m) => (m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`);
@@ -72,7 +71,6 @@ function rowHtml(p, level) {
       : stage === 2
         ? '<span class="rounded-lg bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-700">Terminé</span>'
         : `<span class="text-xs font-semibold tabular-nums ${waitMin(p) >= 30 ? 'text-red-700' : 'text-slate-500'}" title="Temps d’attente">⏱ ${fmtWait(waitMin(p))}</span>`;
-  const doc = p.doctor ? `<span class="rounded-lg bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-900">${DOCTORS[p.doctor].short}</span>` : '';
   return `<li>
     <button type="button" data-id="${esc(p.id)}" class="glass-soft flex w-full items-stretch overflow-hidden rounded-2xl text-left hover:border-sky-300 ${stage === 2 ? 'opacity-60' : ''}">
       <span class="t${level} w-2 shrink-0" aria-hidden="true"></span>
@@ -82,7 +80,6 @@ function rowHtml(p, level) {
           <span class="block truncate text-sm text-slate-600">${esc([p.birth_date && ageOf(p.birth_date), vit].filter(Boolean).join(' · ')) || 'Paramètres à relever'}</span>
         </span>
         ${stageBadge}
-        ${doc}
         <span class="tb${level} rounded-lg px-2 py-0.5 text-xs font-bold">${T_LABEL[level]}</span>
         ${store.isPending(p.id) ? '<span class="spinner size-4 text-slate-400" aria-label="Enregistrement"></span>' : ''}
       </span>
@@ -110,10 +107,8 @@ function renderList() {
     return filters.stage === 'active' ? st < 2 : String(st) === filters.stage;
   });
   const counts = { 0: 0, 1: 0, 2: 0, 3: 0 };
-  const dcounts = { 1: 0, 2: 0, none: 0 };
   for (const { p, level } of items) {
     counts[level]++;
-    dcounts[p.doctor || 'none']++;
   }
 
   $('f-stage').innerHTML = chipsHtml('stage', [
@@ -130,17 +125,10 @@ function renderList() {
     ['0', 'À mesurer', counts[0]],
     ['1', 'Vert', counts[1]],
   ]);
-  $('f-doctor').innerHTML = chipsHtml('doctor', [
-    ['all', 'Tous médecins'],
-    ['1', DOCTORS[1].label, dcounts[1]],
-    ['2', DOCTORS[2].label, dcounts[2]],
-    ['none', 'Non assigné', dcounts.none],
-  ]);
 
   const visible = items
     .filter(({ p, level }) => {
       if (filters.triage !== 'all' && String(level) !== filters.triage) return false;
-      if (filters.doctor !== 'all' && String(p.doctor || 'none') !== filters.doctor) return false;
       if (!q) return true;
       return normalize(`${p.last_name} ${p.first_name}`).includes(q) || normalize(`${p.first_name} ${p.last_name}`).includes(q) ;
     })
@@ -154,7 +142,7 @@ function renderList() {
     store.state.status === 'connecting' && !all.length
       ? 'Chargement…'
       : !visible.length
-        ? q || filters.triage !== 'all' || filters.doctor !== 'all'
+        ? q || filters.triage !== 'all'
           ? 'Aucun résultat'
           : all.length
             ? 'Personne en attente 🎉'
@@ -194,6 +182,25 @@ $('next').addEventListener('click', () => {
 });
 setInterval(() => document.visibilityState === 'visible' && renderList(), 30000); // temps d'attente à jour
 
+/* ---------- Soignant / praticien qui encode (retenu le temps de la session, effacé au verrouillage) ---------- */
+const PRAC = 'cs-praticien';
+const practitioner = () => {
+  try {
+    return sessionStorage.getItem(PRAC) || '';
+  } catch {
+    return '';
+  }
+};
+const setPractitioner = (v) => {
+  try {
+    v ? sessionStorage.setItem(PRAC, v) : sessionStorage.removeItem(PRAC);
+  } catch {
+    /* stockage indisponible : le nom sera redemandé */
+  }
+};
+/** Toute saisie de paramètres est enregistrée au nom du soignant (jamais sans nom). */
+const encode = (id, fields) => practitioner() && store.patch(id, { ...fields, practitioner: practitioner() });
+
 /* ---------- Fiche patient ---------- */
 let sheetId = null;
 const VITAL_FIELDS = [
@@ -226,7 +233,14 @@ function openSheet(id) {
       <div class="grid grid-cols-3 gap-2" id="sheet-stage" role="group" aria-label="Étape du parcours">
         ${[0, 1, 2].map((st) => `<button type="button" data-stage="${st}" class="btn-ghost min-h-12 px-2 text-sm aria-pressed:border-slate-900 aria-pressed:bg-slate-900 aria-pressed:text-white">${STAGE[st]}</button>`).join('')}
       </div>
+      <section class="rounded-2xl bg-white p-4 ring-1 ring-slate-200" aria-labelledby="sheet-prac-l">
+        <label id="sheet-prac-l" class="label" for="sheet-prac">Soignant / praticien qui encode <span class="text-red-700">(obligatoire)</span></label>
+        <input id="sheet-prac" class="field py-2.5 text-base" maxlength="80" autocomplete="name" autocapitalize="words" placeholder="Votre nom et prénom" aria-describedby="sheet-prac-help" value="${esc(practitioner())}">
+        <p id="sheet-prac-help" class="mt-1 text-xs text-slate-600" aria-live="polite"></p>
+      </section>
       <div id="sheet-triage" class="rounded-2xl p-4" role="status" aria-live="polite"></div>
+      <fieldset id="sheet-enc" class="m-0 min-w-0 space-y-5 border-0 p-0 transition-opacity disabled:pointer-events-none disabled:opacity-40">
+        <legend class="sr-only">Paramètres (après avoir indiqué votre nom)</legend>
       <section aria-labelledby="h-vitals">
         <h3 id="h-vitals" class="mb-2 text-sm font-bold tracking-wide text-slate-500 uppercase">Paramètres vitaux</h3>
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -249,16 +263,11 @@ function openSheet(id) {
         </div>
       </section>
       <div id="sheet-advice"></div>
-      <section aria-labelledby="h-doc">
-        <h3 id="h-doc" class="mb-2 text-sm font-bold tracking-wide text-slate-500 uppercase">Assignation</h3>
-        <div class="grid grid-cols-2 gap-3" id="sheet-doctors">
-          ${[1, 2].map((d) => `<button type="button" data-doctor="${d}" class="btn-ghost min-h-14 aria-pressed:border-sky-700 aria-pressed:bg-sky-700 aria-pressed:text-white disabled:opacity-40">${DOCTORS[d].label}</button>`).join('')}
-        </div>
-      </section>
       <section>
         <label class="label" for="v-notes">Notes cliniques</label>
         <textarea id="v-notes" data-k="notes" rows="4" maxlength="${NOTES_MAX}" class="field text-base"></textarea>
       </section>
+      </fieldset>
       <section id="sheet-consent" class="rounded-2xl bg-white p-4 text-sm ring-1 ring-slate-200" aria-label="Transmission au médecin traitant"></section>
       <div class="flex items-center justify-between gap-3 pt-2">
         <p id="sheet-save" class="text-sm font-semibold text-slate-500" aria-live="polite"></p>
@@ -269,7 +278,8 @@ function openSheet(id) {
   refreshSheet(true);
   openDialog($('sheet'));
   loadDetail(id);
-  if (!matchMedia('(pointer: coarse)').matches) $('v-pulse').focus();
+  if (!practitioner()) $('sheet-prac').focus();
+  else if (!matchMedia('(pointer: coarse)').matches) $('v-pulse').focus();
 }
 
 let sheetDetail = null; // { gp: {gp_name, gp_contact, gp_address}, proof } : chargé à l'ouverture (jamais diffusé aux autres tablettes)
@@ -278,7 +288,7 @@ async function loadDetail(id) {
     const { patient: d, proof } = await api(`/staff/patients/${id}`);
     if (sheetId !== id) return;
     $('sheet-email').textContent = [d.email, d.phone].filter(Boolean).join(' · ');
-    sheetDetail = { gp: { gp_name: d.gp_name ?? null, gp_contact: d.gp_contact ?? null, gp_email: d.gp_email ?? null, gp_address: d.gp_address ?? null }, proof };
+    sheetDetail = { gp: { no_gp: d.no_gp ? 1 : 0, gp_name: d.gp_name ?? null, gp_contact: d.gp_contact ?? null, gp_email: d.gp_email ?? null, gp_address: d.gp_address ?? null }, proof };
     const p = store.view(id);
     if (p) renderConsent(p);
   } catch {
@@ -303,6 +313,11 @@ function renderConsent(p, force = false) {
     ? `<p class="font-bold text-slate-800">Transmission au médecin traitant : <span class="text-emerald-700">autorisée</span></p>${when}
       <fieldset class="mt-3 space-y-2">
         <legend class="text-sm font-bold text-slate-800">Médecin traitant <span class="font-normal text-slate-500">(saisi par le soignant)</span></legend>
+        <label class="flex cursor-pointer items-center gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200">
+          <input type="checkbox" id="sheet-nogp" data-nogp class="size-5 shrink-0 accent-sky-700" ${d?.gp.no_gp ? 'checked' : ''}>
+          <span class="text-sm font-semibold text-slate-800">Le participant n’a pas de médecin traitant</span>
+        </label>
+        ${d?.gp.no_gp ? '<p class="text-sm text-slate-600">Aucune fiche à envoyer : pas de médecin traitant.</p>' : `
         <div><label class="label" for="sheet-gp-name">Nom et prénom</label>
           <input id="sheet-gp-name" data-gp="gp_name" class="field py-2.5 text-base" maxlength="80" autocomplete="off" autocapitalize="words" placeholder="Dr Prénom Nom" value="${esc(d?.gp.gp_name ?? '')}"></div>
         <div class="grid gap-2 sm:grid-cols-2">
@@ -312,14 +327,14 @@ function renderConsent(p, force = false) {
             <input id="sheet-gp-email" data-gp="gp_email" type="email" inputmode="email" class="field py-2.5 text-base" maxlength="254" autocomplete="off" placeholder="cabinet@…" value="${esc(d?.gp.gp_email ?? '')}"></div>
         </div>
         <div><label class="label" for="sheet-gp-address">Adresse du cabinet</label>
-          <textarea id="sheet-gp-address" data-gp="gp_address" rows="2" maxlength="300" class="field py-2.5 text-base" autocomplete="off" placeholder="Rue, n°, code postal, commune">${esc(d?.gp.gp_address ?? '')}</textarea></div>
+          <textarea id="sheet-gp-address" data-gp="gp_address" rows="2" maxlength="300" class="field py-2.5 text-base" autocomplete="off" placeholder="Rue, n°, code postal, commune">${esc(d?.gp.gp_address ?? '')}</textarea></div>`}
       </fieldset>
       <div class="mt-3 flex flex-wrap gap-2">
-        <a class="btn-primary min-h-10 py-2 text-sm" href="/fiche?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Fiche pour le médecin traitant (PDF)</a>
+        ${d?.gp.no_gp ? '' : `<a class="btn-primary min-h-10 py-2 text-sm" href="/fiche?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Fiche pour le médecin traitant (PDF)</a>`}
         <button type="button" data-consent="0" class="btn-danger min-h-10 py-2 text-sm">Retrait de l’autorisation</button>
       </div>`
     : `<p class="font-bold text-slate-800">Transmission au médecin traitant : <span class="text-red-700">non autorisée</span></p>${when}
-      <p class="mt-1 text-slate-600">La consultation et l’assignation à un médecin de l’événement restent possibles ; aucune fiche ne peut être transmise au médecin traitant.</p>
+      <p class="mt-1 text-slate-600">La consultation reste possible ; aucune fiche ne peut être transmise au médecin traitant.</p>
       <button type="button" data-consent="1" class="btn-ghost mt-3 min-h-10 py-2 text-sm">Le participant donne son accord</button>`;
 
 }
@@ -343,9 +358,13 @@ function refreshSheet(force = false) {
   box.innerHTML = `<div class="flex items-center gap-3"><span class="t${level} size-5 rounded-full" aria-hidden="true"></span><span class="text-xl font-extrabold">${T_LABEL[level]}</span></div>${
     reasons.length ? `<p class="mt-1 text-sm font-semibold">${reasons.map((r) => esc(r.replace(/(\d)\.(\d)/g, '$1,$2'))).join(' · ')}</p>` : ''
   }`;
-  // Médecin 1 / 2 de l'événement : consultation sur place (accord de consultation), indépendante de la transmission au médecin traitant.
-  for (const b of $('sheet-doctors').children) b.setAttribute('aria-pressed', String(p.doctor === Number(b.dataset.doctor)));
   renderConsent(p, force);
+  // Saisie bloquée tant que le soignant n'a pas indiqué son nom.
+  const who = practitioner();
+  $('sheet-enc').disabled = !who;
+  $('sheet-prac-help').innerHTML = (who
+    ? `Les paramètres sont enregistrés au nom de <b>${esc(who)}</b>.`
+    : '<b class="text-red-700">Indiquez votre nom pour pouvoir encoder les paramètres.</b>') + (p.practitioner ? ` Déjà encodé par : ${esc(p.practitioner)}.` : '');
   for (const b of $('sheet-stage').children) b.setAttribute('aria-pressed', String((p.stage ?? 0) === Number(b.dataset.stage)));
   const pv = previewValues(p);
   const al = parseAlerts(p.alerts);
@@ -409,7 +428,7 @@ $('sheet').addEventListener('click', (e) => {
   const set = parseAlerts(store.view(sheetId).alerts);
   if (set.has(b.dataset.alert)) set.delete(b.dataset.alert);
   else set.add(b.dataset.alert);
-  store.patch(sheetId, { alerts: [...set].join(',') || null });
+  encode(sheetId, { alerts: [...set].join(',') || null });
   navigator.vibrate?.(40);
 });
 
@@ -430,7 +449,7 @@ $('sheet').addEventListener('input', (e) => {
   const input = e.target.closest('[data-k]');
   if (!input || !sheetId) return;
   const k = input.dataset.k;
-  if (k === 'notes') return store.patch(sheetId, { notes: input.value || null });
+  if (k === 'notes') return encode(sheetId, { notes: input.value || null });
   const n = parseVital(k, input.value);
   const err = $(`v-${k}-err`);
   if (Number.isNaN(n)) {
@@ -441,7 +460,7 @@ $('sheet').addEventListener('input', (e) => {
   }
   input.setAttribute('aria-invalid', 'false');
   err.textContent = '';
-  store.patch(sheetId, { [k]: n });
+  encode(sheetId, { [k]: n });
 });
 $('sheet').addEventListener('keydown', (e) => {
   const input = e.target.closest('input[data-k]');
@@ -451,12 +470,6 @@ $('sheet').addEventListener('keydown', (e) => {
   all[all.indexOf(input) + 1]?.focus();
 });
 $('sheet').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-doctor]');
-  if (b && sheetId) {
-    const d = Number(b.dataset.doctor);
-    store.patch(sheetId, { doctor: store.view(sheetId).doctor === d ? null : d });
-    navigator.vibrate?.(30);
-  }
   const st = e.target.closest('[data-stage]');
   if (st && sheetId) {
     const stage = Number(st.dataset.stage);
@@ -481,6 +494,31 @@ $('sheet').addEventListener('click', (e) => {
   }
 });
 // Médecin traitant (nom, coordonnées) : saisi par le soignant, validé puis enregistré comme les autres champs.
+// « Pas de médecin traitant » : coordonnées effacées, aucune fiche à envoyer.
+$('sheet').addEventListener('change', (e) => {
+  if (!e.target.matches('[data-nogp]') || !sheetId) return;
+  const v = e.target.checked ? 1 : 0;
+  if (sheetDetail) sheetDetail.gp = v ? { no_gp: 1, gp_name: null, gp_contact: null, gp_email: null, gp_address: null } : { ...sheetDetail.gp, no_gp: 0 };
+  store.patch(sheetId, { no_gp: v });
+  e.target.blur();
+  renderConsent(store.view(sheetId), true);
+  toast(v ? 'Noté : pas de médecin traitant' : 'Médecin traitant à renseigner', 'ok');
+});
+$('sheet').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.id === 'sheet-prac') e.target.blur(); // valide le nom
+});
+// Nom du soignant qui encode : validé, retenu pour la session.
+$('sheet').addEventListener('change', (e) => {
+  if (e.target.id !== 'sheet-prac') return;
+  const v = e.target.value.trim();
+  const { ok, errors, value } = validatePatch({ practitioner: v });
+  e.target.setAttribute('aria-invalid', String(!!v && !ok));
+  if (v && !ok) return toast(errors.practitioner, 'error');
+  setPractitioner(v ? value.practitioner : '');
+  e.target.value = practitioner();
+  refreshSheet(true);
+  if (practitioner() && !matchMedia('(pointer: coarse)').matches) $('v-pulse').focus();
+});
 $('sheet').addEventListener('change', (e) => {
   const k = e.target.dataset?.gp;
   if (!k || !sheetId) return;
@@ -628,6 +666,7 @@ $('lock').addEventListener('click', async () => {
     /* cookie effacé au prochain 401 de toute façon */
   }
   store.state.status = 'locked';
+  setPractitioner(''); // le prochain soignant indiquera son nom
   store.lock();
   showGate();
 });
