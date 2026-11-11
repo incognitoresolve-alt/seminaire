@@ -47,7 +47,7 @@ const STATUS = {
 /* ---------- Liste ---------- */
 function chipsHtml(group, items) {
   return items
-    .map(([v, label, n]) => `<button type="button" class="chip shrink-0" data-f="${group}" data-v="${v}" aria-pressed="${filters[group] === v}">${label}${n === undefined ? '' : ` <span class="opacity-70">${n}</span>`}</button>`)
+    .map(([v, label, n]) => `<button type="button" class="chip shrink-0" data-f="${group}" data-v="${v}" aria-pressed="${filters[group] === v}">${label}${n === undefined ? '' : ` <span class="font-normal">${n}</span>`}</button>`)
     .join('');
 }
 

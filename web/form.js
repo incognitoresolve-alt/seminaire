@@ -100,8 +100,17 @@ export function bindIdentityForm(form, send) {
     const iso = e.target.value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/); // remplissage auto au format ISO
     if (iso) return void (e.target.value = `${iso[3]}/${iso[2]}/${iso[1]}`);
     if (/[^\d/ .-]/.test(e.target.value)) return; // saisie inattendue : laissée telle quelle (validée à l'envoi)
+    // Séparateurs tapés par la personne (« 3/3/1958 », « 3.3.1958 ») : on les respecte.
+    if (/^\d{1,2}[/. -]\d{0,2}([/. -]\d{0,4})?$/.test(e.target.value)) return;
     const d = e.target.value.replace(/\D/g, '').slice(0, 8);
     e.target.value = d.length > 4 ? `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}` : d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
+  });
+
+  // À la sortie du champ : date affichée proprement (3/3/1958 → 03/03/1958).
+  form.addEventListener('focusout', (e) => {
+    if (e.target.name !== 'birth_date') return;
+    const iso = toIsoDate(e.target.value);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) e.target.value = iso.split('-').reverse().join('/');
   });
 
   // Enter = champ suivant (saisie au pouce).

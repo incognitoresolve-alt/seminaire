@@ -1,5 +1,19 @@
 # CheckSanté — ce qui reste à faire
 
+> ## ✅ Checklist premier usage (résultat de l'audit du 11/11)
+> Le code est prêt (audit : 27 tests, accessibilité 0 défaut, sécurité, saisies iPhone, hors ligne, liens, CI verte).
+> Il ne reste que des réglages dans Cloudflare et sur place :
+>
+> 1. **Cloudflare → Worker `seminaire-triage` → Deployments** : dernier déploiement = *Success*. (Sinon : *Settings → Builds* → dépôt `seminaire`, branche `main`, build `npm run build`, deploy `npx wrangler deploy`.)
+> 2. **Settings → Variables and Secrets** (type *Secret*) : `STAFF_PIN` (8+ caractères), `SESSION_SECRET` (32+ caractères aléatoires), `PARTNER_KEY` (16+ caractères). Ne pas reprendre les valeurs d'exemple de `.dev.vars.example`.
+> 3. **Ouvrir `https://<adresse>/api/health`** → `{"ok":true}` (crée aussi les tableaux de la base automatiquement).
+> 4. **Test réel (5 min)** : inscrire 2 personnes sur la tablette d'accueil → *Liste des inscrits* (PIN) → ouvrir une fiche → saisir une tension → vérifier sur une 2e tablette.
+> 5. **Effacer les tests** : D1 → `seminaire` → *Console* → `DELETE FROM patients; DELETE FROM surveys; DELETE FROM partner_leads;`
+> 6. **Envoyer à Claude l'e-mail de contact RGPD d'ICC Liège** (seul texte manquant du site : politique de confidentialité).
+> 7. Sur place : PIN donné aux soignants uniquement, tablettes chargées, veille d'écran désactivée, partage 4G de secours.
+>
+> Facultatif : e-mails automatiques Brevo (section E), nom de domaine, affiches `/affiche`, validation des seuils et conseils par les médecins.
+
 Durées indicatives. Ordre recommandé : A → B → C → D → E (aujourd'hui), F → G (avant l'ouverture), H (pendant), I (après).
 
 ---

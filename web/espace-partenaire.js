@@ -19,7 +19,7 @@ function render() {
   const counts = { all: leads.length };
   for (const l of leads) counts[l.status] = (counts[l.status] || 0) + 1;
   $('f-status').innerHTML = [['all', 'Tous'], ...Object.entries(LEAD_STATUS)]
-    .map(([k, label]) => `<button type="button" class="chip shrink-0" data-f="${k}" aria-pressed="${filter === k}">${label} <span class="opacity-70">${counts[k] || 0}</span></button>`)
+    .map(([k, label]) => `<button type="button" class="chip shrink-0" data-f="${k}" aria-pressed="${filter === k}">${label} <span class="font-normal">${counts[k] || 0}</span></button>`)
     .join('');
   const q = $('q').value.trim().toLowerCase();
   const rows = leads.filter((l) => (filter === 'all' || l.status === filter) && (!q || `${l.name} ${l.email} ${l.phone}`.toLowerCase().includes(q)));
