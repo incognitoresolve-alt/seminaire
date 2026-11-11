@@ -5,7 +5,7 @@ import { HttpError, assertSameOrigin, clientIp, json, rateLimit, readJson } from
 import { hub } from './hub.js';
 import { ensureSchema } from './schema.js';
 import { sendCheckupMail } from './mail.js';
-import { createFeedback, deleteFeedback, listFeedback, updateFeedback, alreadyMailed, createLead, deleteLead, deleteLeadByToken, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, markMailed, qualifyLead, updateLead, consentProof, createPatient, deletePatient, getDetail, listSince, purge, updatePatient } from './patients.js';
+import { createFeedback, deleteFeedback, listFeedback, updateFeedback, alreadyMailed, createLead, deleteLead, deleteLeadByToken, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, markMailed, qualifyLead, updateLead, churchReport, consentProof, createPatient, deletePatient, getDetail, listSince, purge, updatePatient } from './patients.js';
 
 export { Hub } from './hub.js';
 
@@ -195,6 +195,14 @@ async function adminRoutes(req, env, ctx, path) {
   await requireRole('admin', req, env);
   const resync = () => ctx.waitUntil(hub(env).broadcast({ t: 'resync' }).catch(() => {}));
   if (path === '/trash' && method === 'GET') return json(await listTrash(env));
+  // Rapport ICC Liège : nom, prénom, GSM des personnes reçues qui l'ont accepté (aucune donnée de santé).
+  if (path === '/report' && method === 'GET') return json(await churchReport(env));
+  if (path === '/report.csv' && method === 'GET') {
+    const r = await churchReport(env);
+    const rows = r.rows.map((x) => ({ ...x, created_at: dt(x.created_at).split(' ')[0], phone: x.phone || '' }));
+    const cols = [['last_name', 'Nom'], ['first_name', 'Prénom'], ['phone', 'GSM'], ['created_at', 'Date de passage']];
+    return csvResponse(toCsv(cols, rows), `rapport-icc-pole-sante-${new Date().toISOString().slice(0, 10)}.csv`);
+  }
   // Remarques des intervenants
   if (path === '/feedback' && method === 'GET') return json({ items: await listFeedback(env) });
   if (path === '/feedback.csv' && method === 'GET') {

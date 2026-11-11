@@ -22,3 +22,7 @@ CREATE INDEX IF NOT EXISTS idx_feedback_created ON feedback(created_at);
 -- + historique horodaté (JSON : texte versionné, moyen, empreinte SHA-256). Facultatif : appliqué automatiquement.
 ALTER TABLE patients ADD COLUMN doctor_consent_at INTEGER;
 ALTER TABLE patients ADD COLUMN consent_log TEXT;
+
+-- Accord facultatif : figurer dans le rapport nominatif d'ICC Liège (nom, prénom, GSM des personnes reçues au pôle santé).
+-- Facultatif : appliqué automatiquement par l'application.
+ALTER TABLE patients ADD COLUMN church_consent INTEGER NOT NULL DEFAULT 0 CHECK (church_consent IN (0,1));

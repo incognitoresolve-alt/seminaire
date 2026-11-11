@@ -1,2 +1,3 @@
 /espace-partenaire /admin 301
 /questionnaire / 302
+/checkup /partenaire?pour=public&interet=checkup 302

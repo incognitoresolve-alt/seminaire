@@ -206,8 +206,9 @@ story.append(Task('5', 'Effacer toutes les données de test', '2 min', [
 story.append(gap())
 
 story.append(Task('6', 'Imprimer les affiches QR', '10 min', [
-    f'Fichiers prêts : {c("affiche-inscription-A4.pdf")} (« Pas envie d’attendre ? ») '
-    f'et {c("affiche-remarques-intervenants-A4.pdf")} (salle des intervenants). '
+    f'Fichiers prêts : {c("affiche-inscription-A4.pdf")} (« Pas envie d’attendre ? »)'
+    f', {c("affiche-remarques-intervenants-A4.pdf")} (salle des intervenants) et {c("affiche-checkup-assurance-A4.pdf")} (publicité). '
+    f'Tous les QR codes sont aussi dans {a(SITE + "/admin")} → onglet {b("QR codes")} (lien, image PNG, affiche A4). '
     f'Envoyés dans la conversation, et aussi sur {a(REPO + "/tree/main/docs/affiches", "GitHub → docs/affiches")}.',
     'Imprimante : format <b>A4</b>, <b>taille réelle (100 %)</b>, <b>couleur</b>. Plusieurs exemplaires : entrée, file d’attente, chaises, salle.',
     '<b>Scanne une feuille imprimée</b> avec ton téléphone : la page d’inscription doit s’ouvrir.',
@@ -278,6 +279,7 @@ story.append(KeepTogether([P('APRÈS L’ÉVÉNEMENT', 'kick'), P('Clôturer pro
     'Une seule relance maximum ; « STOP » = effacement immédiat.',
     f'<b>Sécurité</b> : changer ou supprimer {c("STAFF_PIN")} dans Cloudflare → plus aucun accès soignants.',
     f'<b>Remarques des intervenants</b> : {b("Télécharger (Excel / CSV)")} pour le bilan de l’organisation.',
+    f'<b>Rapport ICC Liège</b> : {a(SITE + "/admin")} (ADMIN_KEY) → onglet {b("Rapport ICC")} → {b("Télécharger (Excel / CSV)")} : nom, prénom, GSM des personnes reçues qui ont accepté d’y figurer (à exporter avant l’effacement automatique).',
     '<b>Effacement automatique</b> : dossiers après 30 jours, contacts et remarques après 180 jours.'
 ])]))
 
@@ -289,7 +291,6 @@ story.append(box([
     'Journaux d’erreurs : Worker → ' + b('Observability') + ' / ' + b('Logs') + '.',
 ], RED_L, RED, 'En cas de problème'))
 
-story += [gap(4), Field('Mes notes (pas de codes secrets ici)', 'notes', h=44)]
 
 
 # ---------------------------------------------------------------- Mise en page
@@ -303,8 +304,8 @@ def deco(cv, d):
     cv.restoreState()
 
 
-doc = BaseDocTemplate(OUT, pagesize=A4, leftMargin=16 * mm, rightMargin=16 * mm, topMargin=15 * mm,
-                      bottomMargin=16 * mm, title='CheckSanté – Ce qu’il reste à faire', author='CheckSanté',
+doc = BaseDocTemplate(OUT, pagesize=A4, leftMargin=16 * mm, rightMargin=16 * mm, topMargin=12 * mm,
+                      bottomMargin=14 * mm, title='CheckSanté – Ce qu’il reste à faire', author='CheckSanté',
                       subject='Checklist interactive de mise en service')
 frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id='f')
 doc.addPageTemplates([PageTemplate('p', frames=[frame], onPage=deco)])

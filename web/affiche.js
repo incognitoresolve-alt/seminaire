@@ -1,14 +1,22 @@
 import { mountCredit } from './partner-ui.js';
 import { qrSvg } from './qr.js';
+import { PARTNER } from './shared/partner.js';
 import { OFFICIAL_SITE, isPublic, parseSite } from './shared/site.js';
 
 mountCredit();
 
-// /affiche → auto-inscription ; ?cible=remarques → remarques des intervenants.
+// /affiche → auto-inscription ; ?cible=remarques → remarques des intervenants ; ?cible=checkup → check-up assurance (publicité).
 // Le QR code pointe vers le site officiel, ou l'adresse publique saisie (jamais localhost / réseau local).
 // Adresse saisie : conservée le temps de la session (bascule entre les affiches), jamais transmise.
 const cible = new URLSearchParams(location.search).get('cible');
 const VARIANTS = {
+  ...(PARTNER.enabled && {
+    checkup: {
+      path: '/checkup', title: 'Check-up gratuit', subtitle: 'Publicité · votre assurance-vie',
+      steps: ['Scannez le QR code', 'Laissez vos coordonnées', `${PARTNER.person} vous recontacte`],
+      foot: 'Publicité · offre indépendante de la consultation de prévention',
+    },
+  }),
   remarques: {
     path: '/remarques', title: 'Vos remarques', subtitle: 'Soignants · intervenants · bénévoles',
     steps: ['Scannez le QR code', 'Écrivez votre remarque ou proposition', 'Elle arrive directement chez l’organisation'],
@@ -27,7 +35,9 @@ if (variant) {
   $('title').textContent = variant.title;
   $('subtitle').textContent = variant.subtitle;
   variant.steps.forEach((t, i) => (document.querySelector(`[data-step="${i + 1}"]`).textContent = t));
+  if (variant.foot) $('foot').textContent = variant.foot;
 }
+if (!PARTNER.enabled) document.querySelector('[data-cible="checkup"]')?.remove();
 for (const l of document.querySelectorAll('[data-cible]')) if (l.dataset.cible === (variant ? cible : '')) l.setAttribute('aria-current', 'page');
 
 const PLACEHOLDER = '<div class="grid aspect-square place-items-center rounded-[2cqw] border-[0.5cqw] border-dashed border-slate-300 p-[4cqw] text-center text-[2.8cqw] font-bold text-slate-500">Saisissez l’adresse du site au-dessus de l’affiche</div>';
