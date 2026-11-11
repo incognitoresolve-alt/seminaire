@@ -2,3 +2,4 @@
 STAFF_PIN=24681357
 SESSION_SECRET=remplacer-par-une-longue-chaine-aleatoire-de-64-caracteres-minimum
 PARTNER_KEY=cle-partenaire-de-test-123456
+ADMIN_KEY=cle-admin-de-test-1234567890

@@ -1,11 +1,11 @@
 import { LEAD_INTERESTS, PARTNER } from '../web/shared/partner.js';
 import { CONTACT_TIMES, LEAD_STATUS, validateIdentity, validateLead, validateLeadPatch, validateLeadQualify, validatePatch, validateSurvey } from '../web/shared/validate.js';
-import { checkPin, checkSecret, clearCookie, clearRoleCookie, makeCookie, requireRole, requireStaff, sessionCookie } from './auth.js';
+import { checkPin, checkSecret, clearCookie, clearRoleCookie, hasRole, makeCookie, requireRole, requireStaff, roleConfigured, sessionCookie } from './auth.js';
 import { HttpError, assertSameOrigin, clientIp, json, rateLimit, readJson } from './http.js';
 import { hub } from './hub.js';
 import { ensureSchema } from './schema.js';
 import { sendCheckupMail } from './mail.js';
-import { alreadyMailed, createLead, deleteLead, deleteLeadByToken, eventStats, listLeads, markMailed, qualifyLead, updateLead, createPatient, createSurvey, deletePatient, getDetail, listSince, purge, surveyStats, updatePatient } from './patients.js';
+import { alreadyMailed, createLead, deleteLead, deleteLeadByToken, clearSurveys, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, markMailed, qualifyLead, updateLead, createPatient, createSurvey, deletePatient, getDetail, listSince, purge, surveyStats, updatePatient } from './patients.js';
 
 export { Hub } from './hub.js';
 
@@ -152,6 +152,71 @@ async function partnerRoutes(req, env, url, path) {
   throw new HttpError(404, 'not_found');
 }
 
+/* ---------- Page /admin : une clé = un rôle (admin → corbeille ; partner → contacts) ---------- */
+async function adminRoutes(req, env, ctx, path) {
+  const method = req.method;
+  if (path === '/login' && method === 'POST') {
+    await rateLimit(env.RL_LOGIN, `a:${clientIp(req)}`);
+    await rateLimit(env.RL_LOGIN_GLOBAL, 'global');
+    const { key } = await readJson(req, 512);
+    const roles = ['admin', 'partner'].filter((r) => roleConfigured(r, env));
+    if (!roles.length) throw new HttpError(503, 'not_configured');
+    const headers = new Headers();
+    const granted = [];
+    for (const r of roles) {
+      if (await checkSecret(r, key, env)) {
+        headers.append('Set-Cookie', await makeCookie(r, env));
+        granted.push(r);
+      }
+    }
+    if (!granted.length) throw new HttpError(401, 'bad_key');
+    const res = json({ ok: true, granted });
+    for (const c of headers.getSetCookie()) res.headers.append('Set-Cookie', c);
+    return res;
+  }
+  if (path === '/logout' && method === 'POST') {
+    const res = json({ ok: true });
+    res.headers.append('Set-Cookie', clearRoleCookie('admin'));
+    res.headers.append('Set-Cookie', clearRoleCookie('partner'));
+    return res;
+  }
+  if (path === '/roles' && method === 'GET') return json({ admin: await hasRole('admin', req, env), partner: await hasRole('partner', req, env) });
+
+  // Corbeille : rôle admin uniquement (données de santé — jamais accessible avec la clé partenaire).
+  await requireRole('admin', req, env);
+  const resync = () => ctx.waitUntil(hub(env).broadcast({ t: 'resync' }).catch(() => {}));
+  if (path === '/trash' && method === 'GET') return json(await listTrash(env));
+  if (path === '/trash' && method === 'DELETE') {
+    const n = await emptyTrash(env);
+    return json({ ok: true, n });
+  }
+  if (path === '/surveys' && method === 'DELETE') {
+    const n = await clearSurveys(env); // réponses anonymes (ex. réponses de test)
+    return json({ ok: true, n });
+  }
+  if (path === '/trash-all' && method === 'POST') {
+    const n = await trashAll(env);
+    resync();
+    return json({ ok: true, n });
+  }
+  if (path === '/restore-all' && method === 'POST') {
+    const n = await restoreAll(env);
+    resync();
+    return json({ ok: true, n });
+  }
+  const m = path.match(/^\/trash\/([0-9a-f-]{36})(\/restore)?$/);
+  if (m && m[2] && method === 'POST') {
+    const row = await restorePatient(env, m[1]);
+    ctx.waitUntil(hub(env).broadcast({ t: 'upsert', p: row }).catch(() => {}));
+    return json({ ok: true });
+  }
+  if (m && !m[2] && method === 'DELETE') {
+    await eraseFromTrash(env, m[1]);
+    return json({ ok: true });
+  }
+  throw new HttpError(404, 'not_found');
+}
+
 async function route(req, env, ctx, url) {
   const path = url.pathname;
   // Désinscription : appelée depuis la page /desinscription OU en « un clic » par la messagerie
@@ -209,6 +274,7 @@ async function route(req, env, ctx, url) {
     return json({ ok: true });
   }
   if (path.startsWith('/api/partner/') && PARTNER.enabled) return partnerRoutes(req, env, url, path.slice('/api/partner'.length));
+  if (path.startsWith('/api/admin/')) return adminRoutes(req, env, ctx, path.slice('/api/admin'.length));
   if (path.startsWith('/api/staff/')) {
     if (path === '/api/staff/ws') assertSameOrigin(req, url); // anti cross-site WebSocket hijacking
     return staffRoutes(req, env, ctx, url, path.slice('/api/staff'.length));

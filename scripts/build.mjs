@@ -6,7 +6,7 @@ const root = new URL('../', import.meta.url);
 const out = new URL('public/dist/', root);
 rmSync(out, { recursive: true, force: true });
 
-const entries = ['register', 'questionnaire', 'staff', 'partenaire', 'affiche', 'credit', 'desinscription', 'espace-partenaire'];
+const entries = ['register', 'questionnaire', 'staff', 'partenaire', 'affiche', 'credit', 'desinscription', 'admin'];
 const res = await build({
   entryPoints: entries.map((e) => `web/${e}.js`),
   outdir: 'public/dist',
