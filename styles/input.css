@@ -9,16 +9,71 @@
   --color-sky-400: #c084fc; --color-sky-500: #a855f7; --color-sky-600: #8b3fc7; --color-sky-700: #6d28a8;
   --color-sky-800: #5b1f8c; --color-sky-900: #3f1466; --color-sky-950: #2a0c47;
   --color-accent: #f26b1d; --color-accent-dark: #c2410c; --color-accent-soft: #fff1e6;
+  /* Gris secondaire un peu plus foncé : contraste AA garanti sur le fond teinté */
+  --color-slate-500: #536176;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 @layer base {
   html { -webkit-tap-highlight-color: transparent; }
-  body { @apply bg-slate-50 text-slate-900 antialiased; }
+  body { @apply text-slate-900 antialiased; background: #f7f4fb; }
+  /* Fond doux aux couleurs du séminaire (fixe, sans coût de défilement sur iOS) */
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(60rem 40rem at -10% -10%, rgb(109 40 168 / .16), transparent 60%),
+      radial-gradient(50rem 35rem at 110% 10%, rgb(242 107 29 / .14), transparent 60%),
+      radial-gradient(60rem 40rem at 50% 120%, rgb(139 63 199 / .12), transparent 60%);
+  }
+  /* Téléphone : pas de zoom au double tap, défilement contenu dans les fenêtres */
+  a, button, label, summary, [role=tab] { touch-action: manipulation; }
+  dialog { overscroll-behavior: contain; }
+  body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
   input, textarea, select, button { font: inherit; }
   :focus-visible { @apply outline-3 outline-offset-2 outline-sky-600; }
   dialog::backdrop { background: rgb(15 23 42 / 0.55); }
   [hidden] { display: none !important; }
+}
+
+/* Verre dépoli léger (repli opaque si le navigateur ne gère pas le flou) */
+@utility glass {
+  background-color: rgb(255 255 255 / .74);
+  border: 1px solid rgb(255 255 255 / .7);
+  box-shadow: 0 10px 30px -12px rgb(42 12 71 / .18), inset 0 1px 0 rgb(255 255 255 / .6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  backdrop-filter: blur(16px) saturate(1.5);
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { background-color: rgb(255 255 255 / .97); }
+}
+@utility glass-soft {
+  background-color: rgb(255 255 255 / .82);
+  border: 1px solid rgb(255 255 255 / .75);
+  box-shadow: 0 4px 16px -8px rgb(42 12 71 / .14);
+}
+
+/* Accords obligatoires : scintillent tant qu'ils ne sont pas cochés (jamais la case publicitaire). */
+@keyframes attn-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgb(242 107 29 / 0); } 50% { box-shadow: 0 0 0 5px rgb(242 107 29 / .28); } }
+@keyframes attn-sheen { from { background-position: 160% 0; } to { background-position: -60% 0; } }
+@utility attn {
+  border-radius: .9rem;
+  &:not(:has(input:checked)) {
+    border: 2px solid var(--color-accent);
+    background-image: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / .85) 50%, transparent 65%), linear-gradient(var(--color-accent-soft), var(--color-accent-soft));
+    background-size: 250% 100%, 100% 100%;
+    background-repeat: no-repeat;
+    animation: attn-pulse 1.6s ease-in-out infinite, attn-sheen 2.4s linear infinite;
+  }
+  &:has(input:checked) { border: 2px solid transparent; }
+  @media (prefers-reduced-motion: reduce) { &:not(:has(input:checked)) { animation: none; } }
+}
+@utility attn-group {
+  &:not(:has(input:checked)) > label {
+    border-color: var(--color-accent);
+    background-image: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / .85) 50%, transparent 65%), linear-gradient(var(--color-accent-soft), var(--color-accent-soft));
+    background-size: 250% 100%, 100% 100%;
+    background-repeat: no-repeat;
+    animation: attn-pulse 1.6s ease-in-out infinite, attn-sheen 2.4s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) { &:not(:has(input:checked)) > label { animation: none; } }
 }
 
 @utility field {
@@ -34,7 +89,7 @@
 @utility btn-ghost { @apply btn border border-slate-300 bg-white text-slate-800 hover:bg-slate-100; }
 @utility btn-danger { @apply btn border border-red-300 bg-white text-red-700 hover:bg-red-50; }
 @utility chip {
-  @apply rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700;
+  @apply rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 pointer-coarse:min-h-11 pointer-coarse:py-2;
   &[aria-pressed="true"] { @apply border-slate-900 bg-slate-900 text-white; }
 }
 @utility spinner { @apply inline-block size-5 animate-spin rounded-full border-2 border-current border-r-transparent; }

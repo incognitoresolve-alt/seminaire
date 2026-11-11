@@ -23,13 +23,13 @@ export function identityFieldsHtml(prefix, { staff = false } = {}) {
       <input id="${prefix}-website" name="website" tabindex="-1" autocomplete="off">
     </div>
 
-    <fieldset class="mt-2 rounded-xl border border-slate-300 bg-white p-4">
+    <fieldset class="glass-soft mt-2 rounded-xl p-4">
       <legend class="px-1 text-sm font-bold text-slate-800">Accord pour la consultation de prévention</legend>
       <details class="mb-3 text-sm text-slate-600">
         <summary class="cursor-pointer font-semibold text-sky-800">Lire les explications</summary>
         <p class="mt-2">Consultation bénévole et gratuite auprès d’un professionnel de santé. Elle vise à faire le point sur votre santé, à recevoir des conseils et, si nécessaire, à être orienté(e) vers un suivi médical. Elle ne remplace pas votre suivi habituel. Vous pouvez refuser ou interrompre la consultation à tout moment.</p>
       </details>
-      <label class="flex cursor-pointer items-start gap-3">
+      <label class="attn flex cursor-pointer items-start gap-3 p-3">
         <input type="checkbox" name="consent" required class="mt-1 size-6 shrink-0 accent-sky-700" aria-describedby="${prefix}-consent-err">
         <span class="text-sm leading-snug text-slate-800">${
           staff
@@ -40,18 +40,18 @@ export function identityFieldsHtml(prefix, { staff = false } = {}) {
       <p class="err" id="${prefix}-consent-err" aria-live="polite"></p>
     </fieldset>
 
-    <fieldset class="mt-2 rounded-xl border border-slate-300 bg-white p-4" aria-describedby="${prefix}-doctor_consent-err">
+    <fieldset class="glass-soft mt-2 rounded-xl p-4" aria-describedby="${prefix}-doctor_consent-err">
       <legend class="px-1 text-sm font-bold text-slate-800">Transmission à un médecin</legend>
       <p class="mb-3 text-sm text-slate-600">${
         staff
           ? 'Le participant autorise-t-il la transmission de ses données personnelles à un médecin qui pourra suivre son dossier si nécessaire ?'
           : 'J’autorise la transmission de mes données personnelles à un médecin qui pourra suivre mon dossier si nécessaire.'
       }</p>
-      <div class="grid grid-cols-2 gap-2">
-        <label class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border border-slate-300 px-3 has-checked:border-sky-700 has-checked:bg-sky-50">
+      <div class="attn-group grid grid-cols-2 gap-2">
+        <label class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border-2 border-slate-300 px-3 has-checked:border-sky-700 has-checked:bg-sky-50">
           <input type="radio" name="doctor_consent" value="1" class="size-5 accent-sky-700"> <span class="text-sm font-semibold">J’autorise</span>
         </label>
-        <label class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border border-slate-300 px-3 has-checked:border-sky-700 has-checked:bg-sky-50">
+        <label class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border-2 border-slate-300 px-3 has-checked:border-sky-700 has-checked:bg-sky-50">
           <input type="radio" name="doctor_consent" value="0" class="size-5 accent-sky-700"> <span class="text-sm font-semibold">Je n’autorise pas</span>
         </label>
       </div>
