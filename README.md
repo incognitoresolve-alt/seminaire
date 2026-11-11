@@ -14,7 +14,7 @@ Application temps réel pour les consultations de prévention (11–14 nov. 2026
 | `/` | participants | Inscription (identité + accord consultation + transmission de ses données à un médecin qui pourra suivre son dossier) par l'accueil ; formulaire vidé aussitôt pour la personne suivante (aucun Pass, rien stocké sur la tablette) |
 | `/questionnaire` | participants | Questionnaire de prévention **anonyme** (8 sections du PDF), IMC calculé en direct, repères affichés après envoi |
 | `/staff` | soignants (PIN) | Liste temps réel triée par priorité, recherche instantanée par nom, fiche (vitaux, IMC, glycémie, périmètre abdo., notes), assignation Médecin 1 (mer. 11/11) / Médecin 2 (sam. 14/11), ajout manuel, stats questionnaire en direct |
-| `/affiche` · `/affiche?cible=questionnaire` | accueil | Affiche A4 imprimable : QR d'auto-inscription (« Pas envie d'attendre ? ») ou du questionnaire. Le QR reprend l'adresse du site ouvert |
+| `/affiche` · `/affiche?cible=questionnaire` | accueil | Affiche A4 imprimable : QR d'auto-inscription (« Pas envie d'attendre ? ») ou du questionnaire. Adresse en ligne pré-remplie (modifiable) ; localhost, réseau local et http refusés, impression bloquée sans adresse valide |
 | `/partenaire?pour=public\|pro` | tous | Page **Publicité** du partenaire assurances + formulaire de recontact (opt-in distinct) |
 
 ## Optimisations « file d'attente »
