@@ -1,25 +1,28 @@
 # CheckSanté — ce qui reste à faire
 
-> ## ✅ Checklist premier usage (résultat de l'audit du 11/11)
-> Le code est prêt (audit : 27 tests, accessibilité 0 défaut, sécurité, saisies iPhone, hors ligne, liens, CI verte).
-> Il ne reste que des réglages dans Cloudflare et sur place :
+> ## ✅ Mise à jour du 11/11 : ce qu'il te reste à faire (le code est prêt)
+> **Déjà fait** : branche `main`, base D1 (ID saisi dans `wrangler.toml`), tableaux créés automatiquement, version téléphone + glassmorphism, accords qui scintillent, affiches QR A4, vidéo tutoriel (`docs/video/CheckSante-tutoriel.mp4`).
 >
-> 1. **Cloudflare → Worker `seminaire-triage` → Deployments** : dernier déploiement = *Success*. (Sinon : *Settings → Builds* → dépôt `seminaire`, branche `main`, build `npm run build`, deploy `npx wrangler deploy`.)
-> 2. **Settings → Variables and Secrets** (type *Secret*) : `STAFF_PIN` (8+ caractères), `SESSION_SECRET` (32+ caractères aléatoires), `PARTNER_KEY` (16+ caractères, partenaire : « Mes contacts »), `ADMIN_KEY` (16+ caractères, organisateur / responsable médical : corbeille). Ne pas reprendre les valeurs d'exemple de `.dev.vars.example`.
-> 3. **Ouvrir `https://<adresse>/api/health`** → `{"ok":true}` (crée aussi les tableaux de la base automatiquement).
-> 4. **Test réel (5 min)** : inscrire 2 personnes sur la tablette d'accueil → *Liste des inscrits* (PIN) → ouvrir une fiche → saisir une tension → vérifier sur une 2e tablette.
-> 5. **Effacer les tests** : `https://<adresse>/admin` + clé `ADMIN_KEY` → *Tout mettre à la corbeille* → *Vider* → *Effacer toutes les réponses* (questionnaire). (Contacts de test : onglet *Mes contacts* avec `PARTNER_KEY` → *STOP*.)
-> 6. **Faire relire l'assistant éducatif par les médecins** (README, section « Assistant médical éducatif ») : seuils marqués « Seuil de prudence CheckSanté », textes des conseils.
-> 7. **Envoyer à Claude l'e-mail de contact RGPD d'ICC Liège** (seul texte manquant du site : politique de confidentialité).
-> 8. Sur place : PIN donné aux soignants uniquement, tablettes chargées, veille d'écran désactivée, partage 4G de secours.
+> | # | Où | Action | Durée |
+> |---|---|---|---|
+> | 1 | Cloudflare → Worker `seminaire-triage` → **Deployments** | Dernier déploiement = *Success* (sinon *Settings → Builds* : branche `main`, build `npm run build`, deploy `npx wrangler deploy`) | 2 min |
+> | 2 | **Settings → Domains & Routes** | Noter l'adresse du site (`https://seminaire-triage.<…>.workers.dev` ou ton domaine). C'est elle que le QR code imprimera | 1 min |
+> | 3 | **Settings → Variables and Secrets** (type *Secret*) | `STAFF_PIN` (8+ car.) · `SESSION_SECRET` (32+ car. aléatoires) · `ADMIN_KEY` (16+ car., organisateur / responsable médical) · `PARTNER_KEY` (16+ car., toi seul). Sans eux : accès bloqué (sécurité) | 5 min |
+> | 4 | Navigateur | `https://<adresse>/api/health` → `{"ok":true}` | 1 min |
+> | 5 | 2 tablettes | Test réel : 2 inscriptions → *Liste des inscrits* (PIN) → fiche → tension → *Médecin 1* → visible sur l'autre tablette | 5 min |
+> | 6 | `https://<adresse>/admin` + `ADMIN_KEY` | Effacer les tests : *Tout mettre à la corbeille* → *Vider* → *Effacer toutes les réponses* | 2 min |
+> | 7 | `https://<adresse>/affiche` | **Imprimer l'affiche (A4)** (inscription libre, sans attente) + `/affiche?cible=questionnaire`. **Imprimer depuis l'adresse définitive** : le QR code reprend l'adresse de la page ouverte. Scanner une feuille imprimée pour vérifier | 10 min |
+> | 8 | Envoyer à Claude | L'**e-mail de contact RGPD d'ICC Liège** (2 emplacements `[email-contact]` dans la politique de confidentialité) | 1 min |
+> | 9 | Médecins | Relire l'assistant éducatif (README) et les seuils marqués « Seuil de prudence CheckSanté » | 15 min |
+> | 10 | Sur place | PIN aux soignants uniquement · `ADMIN_KEY` à l'organisateur · tablettes chargées, veille désactivée · partage 4G de secours · diffuser la vidéo sur l'écran d'accueil | — |
 >
-> Facultatif : e-mails automatiques Brevo (section E), nom de domaine, affiches `/affiche`, validation des seuils et conseils par les médecins.
+> Facultatif : noms des médecins (`web/shared/doctors.js`), domaine + e-mails Brevo (section E).
 
 Durées indicatives. Ordre recommandé : A → B → C → D → E (aujourd'hui), F → G (avant l'ouverture), H (pendant), I (après).
 
 ---
 
-## A. GitHub — créer la branche `main` (2 min)
+## A. GitHub — créer la branche `main` ✅ FAIT
 
 Le dépôt n'a qu'une branche : `ccr-7e184915-u0pmfk`. Cloudflare déploiera depuis `main`.
 
@@ -31,7 +34,7 @@ Le dépôt n'a qu'une branche : `ccr-7e184915-u0pmfk`. Cloudflare déploiera dep
 
 ---
 
-## B. Cloudflare — base de données D1 (5 min)
+## B. Cloudflare — base de données D1 ✅ FAIT (ID `522fae40-…` dans `wrangler.toml`)
 
 1. dash.cloudflare.com → **Storage & Databases → D1 SQL Database → Create**.
 2. Nom : `seminaire` · Location : **Western Europe (WEUR)** (ou juridiction **EU** si proposée) → **Create**.
@@ -110,9 +113,9 @@ Sans Brevo : les demandes de check-up sont enregistrées quand même ; tu leur �
 
 | Fichier | À faire |
 |---|---|
-| `public/confidentialite.html` | remplacer `[adresse]` (adresse d'ICC Liège) et `[email-contact]` (2 fois) |
+| `public/confidentialite.html` | `[email-contact]` (2 fois) : envoie l'adresse à Claude |
 | `web/shared/triage.js` | **faire valider les seuils par les médecins** ; modifier les nombres si besoin (tableau dans le README) |
-| `web/staff.js` (ligne `const DOCTORS`) | si souhaité, mettre le nom des médecins : `label: 'Dr Dupont · Mer. 11/11'` |
+| `web/shared/doctors.js` | si souhaité, nom des médecins : `name: 'Dr Dupont'`, `label: 'Dr Dupont · Mer. 11/11'` |
 | `web/shared/partner.js` | `address: ''` → ton adresse pro si tu veux l'afficher (facultatif) |
 
 Chaque commit sur `main` redéploie automatiquement (≈ 1 min).

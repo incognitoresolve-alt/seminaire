@@ -3,10 +3,19 @@ import { qrSvg } from './qr.js';
 
 mountCredit();
 
-// /affiche → inscription ; /affiche?cible=questionnaire → questionnaire anonyme
+// /affiche → auto-inscription ; /affiche?cible=questionnaire → questionnaire anonyme.
+// Le QR code pointe toujours vers l'adresse exacte du site ouvert (aucune adresse codée en dur).
 const survey = new URLSearchParams(location.search).get('cible') === 'questionnaire';
 const url = `${location.origin}/${survey ? 'questionnaire' : ''}`;
-document.getElementById('title').textContent = survey ? 'Questionnaire de prévention (anonyme)' : 'Scannez pour vous inscrire';
-document.getElementById('qr').innerHTML = qrSvg(url, { label: `QR code vers ${url}` });
-document.getElementById('url').textContent = url.replace(/^https?:\/\//, '');
-document.getElementById('print').addEventListener('click', () => print());
+const $ = (id) => document.getElementById(id);
+if (survey) {
+  $('title').textContent = 'Questionnaire santé';
+  $('subtitle').textContent = 'Anonyme · 2 minutes';
+  document.querySelector('[data-step="2"]').textContent = 'Répondez aux questions';
+  document.querySelector('[data-step="3"]').textContent = 'Les bonnes réponses s’affichent à la fin';
+  $('switch').textContent = 'Affiche d’inscription';
+  $('switch').href = '/affiche';
+}
+$('qr').innerHTML = qrSvg(url, { label: `QR code vers ${url}` });
+$('url').textContent = url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+$('print').addEventListener('click', () => print());

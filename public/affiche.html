@@ -4,20 +4,54 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
-  <title>CheckSanté – Affiche QR</title>
+  <title>CheckSanté – Affiche QR (A4)</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="modulepreload" href="/dist/affiche.js">
   <link rel="stylesheet" href="/app.css">
 </head>
-<body class="bg-white">
-  <main class="mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center px-6 text-center">
-    <p class="mb-4 flex flex-wrap justify-center text-4xl font-black sm:text-5xl"><span class="inline-flex items-center gap-2"><img src="/logo.svg" alt="" class="size-16" width="64" height="64"><span>Check<span class="text-sky-700">Santé</span></span></span></p>
-    <p class="text-lg font-bold tracking-widest text-sky-800 uppercase">ICC Liège · Semaine de la santé</p>
-    <h1 id="title" class="mt-2 text-3xl font-black break-words sm:text-5xl">Scannez pour vous inscrire</h1>
-    <div id="qr" class="my-8 w-full max-w-sm"></div>
-    <p id="url" class="font-mono text-xl font-bold break-all"></p>
-    <div data-partner-credit class="mt-10"></div>
-    <button id="print" class="btn-primary mt-8 print:hidden" type="button">Imprimer</button>
+<body>
+  <nav aria-label="Actions" class="mx-auto flex max-w-[210mm] flex-wrap items-center justify-center gap-3 px-4 py-4 print:hidden">
+    <button id="print" class="btn-primary" type="button">Imprimer l’affiche (A4)</button>
+    <a id="switch" class="btn-ghost" href="/affiche?cible=questionnaire">Affiche du questionnaire</a>
+  </nav>
+
+  <!-- Feuille A4 : tailles en % de la largeur (cqw) → identique à l'écran et à l'impression -->
+  <main class="a4 @container mx-auto mb-8 aspect-[210/297] w-[min(210mm,calc(100%-2rem))] overflow-hidden rounded-[2cqw] bg-white shadow-2xl print:mb-0 print:w-[210mm] print:rounded-none print:shadow-none">
+    <div class="flex h-full flex-col">
+      <header class="relative shrink-0 overflow-hidden bg-sky-800 px-[7cqw] pt-[5cqw] pb-[5.5cqw] text-center text-white">
+        <div class="absolute -top-[14cqw] -right-[14cqw] size-[40cqw] rotate-12 rounded-[9cqw] bg-accent" aria-hidden="true"></div>
+        <div class="absolute -bottom-[18cqw] -left-[12cqw] size-[38cqw] rounded-full bg-sky-600 opacity-60" aria-hidden="true"></div>
+        <div class="relative">
+          <p class="flex items-center justify-center gap-[2cqw] text-[7cqw] leading-none font-black"><img src="/logo.svg" alt="" class="size-[9cqw] rounded-[2.4cqw] ring-[0.5cqw] ring-white/70" width="64" height="64"><span>Check<span class="text-orange-300">Santé</span></span></p>
+          <p class="mt-[2.4cqw] text-[2.2cqw] font-bold tracking-[.22em] text-sky-100 uppercase">Impact Centre Chrétien Liège · Séminaire spécial</p>
+          <h1 id="title" class="mt-[2.4cqw] text-[7.4cqw] leading-[1.02] font-black tracking-tight">Pas envie d’attendre ?</h1>
+          <p id="subtitle" class="mt-[1.6cqw] inline-block rounded-[1.4cqw] bg-accent-dark px-[3cqw] py-[1cqw] text-[3.6cqw] font-extrabold">Inscrivez-vous vous-même en 1 minute</p>
+        </div>
+      </header>
+
+      <section class="flex min-h-0 flex-1 flex-col items-center justify-center px-[8cqw] py-[3cqw]">
+        <div class="relative rounded-[3cqw] bg-white p-[2.2cqw] ring-[0.6cqw] ring-sky-800">
+          <span class="absolute -top-[1.4cqw] -left-[1.4cqw] size-[6cqw] rounded-tl-[3cqw] border-t-[1.4cqw] border-l-[1.4cqw] border-accent" aria-hidden="true"></span>
+          <span class="absolute -top-[1.4cqw] -right-[1.4cqw] size-[6cqw] rounded-tr-[3cqw] border-t-[1.4cqw] border-r-[1.4cqw] border-accent" aria-hidden="true"></span>
+          <span class="absolute -bottom-[1.4cqw] -left-[1.4cqw] size-[6cqw] rounded-bl-[3cqw] border-b-[1.4cqw] border-l-[1.4cqw] border-accent" aria-hidden="true"></span>
+          <span class="absolute -right-[1.4cqw] -bottom-[1.4cqw] size-[6cqw] rounded-br-[3cqw] border-r-[1.4cqw] border-b-[1.4cqw] border-accent" aria-hidden="true"></span>
+          <div id="qr" class="w-[37cqw]"></div>
+        </div>
+        <p class="mt-[2.6cqw] text-[2.2cqw] font-semibold text-slate-600">ou tapez l’adresse :</p>
+        <p id="url" class="font-mono text-[3.4cqw] font-extrabold break-all text-sky-900"></p>
+
+        <ol id="steps" class="mt-[3cqw] grid w-full grid-cols-3 gap-[2.4cqw] text-center">
+          <li class="rounded-[2cqw] bg-sky-50 p-[2cqw]"><span class="mx-auto grid size-[6cqw] place-items-center rounded-full bg-sky-800 text-[3.4cqw] font-black text-white">1</span><p class="mt-[1.2cqw] text-[2.4cqw] leading-tight font-bold text-slate-800" data-step="1">Scannez le QR code</p></li>
+          <li class="rounded-[2cqw] bg-sky-50 p-[2cqw]"><span class="mx-auto grid size-[6cqw] place-items-center rounded-full bg-sky-800 text-[3.4cqw] font-black text-white">2</span><p class="mt-[1.2cqw] text-[2.4cqw] leading-tight font-bold text-slate-800" data-step="2">Remplissez le formulaire</p></li>
+          <li class="rounded-[2cqw] bg-accent-soft p-[2cqw]"><span class="mx-auto grid size-[6cqw] place-items-center rounded-full bg-accent-dark text-[3.4cqw] font-black text-white">3</span><p class="mt-[1.2cqw] text-[2.4cqw] leading-tight font-bold text-slate-800" data-step="3">Présentez-vous au pôle santé avec votre nom</p></li>
+        </ol>
+      </section>
+
+      <footer class="shrink-0 border-t-[0.4cqw] border-sky-100 px-[7cqw] py-[2.4cqw] text-center">
+        <p class="text-[2.4cqw] font-extrabold text-sky-900">Consultation de prévention gratuite · 11 → 14 novembre · Herstal</p>
+        <div data-partner-credit class="mt-[1cqw] text-[1.7cqw] [&_p]:text-[1.7cqw]"></div>
+      </footer>
+    </div>
   </main>
   <script type="module" src="/dist/affiche.js"></script>
 </body>
