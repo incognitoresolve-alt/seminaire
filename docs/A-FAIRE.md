@@ -63,6 +63,7 @@ Worker `seminaire-triage` → **Settings → Variables and Secrets → Add** →
 | `SESSION_SECRET` | 32+ caractères aléatoires | Mac/Linux : `openssl rand -base64 48` ; sinon générateur de mot de passe (64 caractères) |
 | `BREVO_API_KEY` | clé API Brevo | voir étape E (facultatif) |
 | `MAIL_FROM` | ex. `checkup@checksante.be` | voir étape E (facultatif) |
+| `PARTNER_KEY` | ta clé d'accès à l'espace partenaire, **16 caractères minimum** | générateur de mot de passe ; à garder pour toi seul (les soignants n'en ont pas besoin) |
 
 Les secrets s'appliquent immédiatement (nouvelle version déployée automatiquement).
 
@@ -161,11 +162,9 @@ DELETE FROM partner_leads;
    FROM patients WHERE doctor_consent = 1 AND doctor IS NOT NULL AND deleted_at IS NULL ORDER BY doctor, triage DESC;
    ```
    `doctor` = 1 (Médecin 1, mercredi) ou 2 (Médecin 2, samedi). Transmettre **par un moyen sécurisé** (eHealthBox, messagerie santé), **jamais par Gmail**.
-2. **Contacts check-up** (toi uniquement) :
-   ```sql
-   SELECT datetime(created_at/1000,'unixepoch') AS date, name, email, phone, interests, mailed_at IS NOT NULL AS email_envoye
-   FROM partner_leads ORDER BY created_at;
-   ```
-   Une relance maximum, « STOP » = suppression (`docs/modele-email-checkup.md`).
+2. **Contacts check-up** (toi uniquement) : `https://<adresse>/espace-partenaire` + ta clé `PARTNER_KEY`.
+   Statut par contact (Nouveau → Contacté → Rendez-vous → Client), notes, bouton **Télécharger (Excel / CSV)**.
+   Une relance maximum, « STOP » = bouton d'effacement (`docs/modele-email-checkup.md`).
+   **Bilan anonyme** (rapport ICC, présentations) : espace soignants → **Bilan** → **Exporter le bilan (CSV)**.
 3. **Sécurité** : supprimer ou changer le secret `STAFF_PIN` → plus aucun accès soignants.
 4. **Effacement** : automatique (patients et questionnaires après 30 jours, contacts après 180 jours). Pour tout effacer plus tôt : mêmes `DELETE` qu'en G.

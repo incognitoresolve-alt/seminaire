@@ -140,7 +140,13 @@ Mise en place (≈ 10 min) :
 3. *SMTP & API → API keys* → créer une clé.
 4. Secrets du Worker : `BREVO_API_KEY` = la clé, `MAIL_FROM` = ex. `checkup@checksante.be`.
 
-Export pour le partenaire :
+**Espace partenaire (mini-CRM)** — `/espace-partenaire`, clé secrète `PARTNER_KEY` (16+ caractères), cloisonné des soignants :
+statut de suivi (Nouveau / Contacté / Rendez-vous / Client), notes, téléphone et e-mail cliquables, export CSV Excel (anti-injection de formules), bouton STOP = effacement.
+Après l'accord, la personne peut préciser en un geste son moment préféré et son sujet (dans le périmètre de son consentement).
+
+**Bilan anonyme** — espace soignants → *Bilan* : inscriptions par jour, tranches d'âge, triage, taux d'accord, intérêt check-up, attente moyenne ; groupes < 5 masqués (k-anonymat) ; export CSV réutilisable librement (données non personnelles).
+
+Export SQL (alternative) :
 ```bash
 npx wrangler d1 execute seminaire --remote --command "SELECT datetime(created_at/1000,'unixepoch') AS date, audience, name, email, phone, interests, message FROM partner_leads ORDER BY created_at" --json > leads.json
 ```

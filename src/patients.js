@@ -163,5 +163,70 @@ export const alreadyMailed = async (env, email) =>
 
 export const markMailed = (env, id) => env.DB.prepare('UPDATE partner_leads SET mailed_at = ? WHERE id = ?').bind(Date.now(), id).run();
 
+/* ---------- Espace partenaire (mini-CRM) ---------- */
+const LEAD_COLS = 'id,audience,name,email,phone,interests,message,contact_time,status,partner_notes,consent_at,created_at,mailed_at';
+export async function listLeads(env) {
+  const { results } = await env.DB.prepare(`SELECT ${LEAD_COLS} FROM partner_leads ORDER BY created_at DESC LIMIT 5000`).all();
+  return results;
+}
+export async function updateLead(env, id, patch) {
+  const keys = Object.keys(patch); // whitelist garantie par validateLeadPatch
+  const row = await env.DB.prepare(`UPDATE partner_leads SET ${keys.map((k) => `${k} = ?`).join(', ')}, updated_at = ? WHERE id = ? RETURNING ${LEAD_COLS}`)
+    .bind(...keys.map((k) => patch[k]), Date.now(), id)
+    .first();
+  if (!row) throw new HttpError(404, 'not_found');
+  return row;
+}
+export async function deleteLead(env, id) {
+  await env.DB.prepare('DELETE FROM partner_leads WHERE id = ?').bind(id).run();
+}
+/** Qualification par la personne elle-même (jeton secret reçu à la création de sa demande). */
+export async function qualifyLead(env, t, v) {
+  const row = await env.DB.prepare('SELECT interests FROM partner_leads WHERE unsub_token = ?').bind(t).first();
+  if (!row) throw new HttpError(404, 'not_found');
+  const interests = new Set((row.interests || '').split(',').filter(Boolean));
+  if (v.interest) interests.add(v.interest);
+  await env.DB.prepare('UPDATE partner_leads SET contact_time = COALESCE(?, contact_time), interests = ?, updated_at = ? WHERE unsub_token = ?')
+    .bind(v.contact_time ?? null, [...interests].join(',') || null, Date.now(), t)
+    .run();
+}
+
+/* ---------- Bilan anonyme de l'événement (agrégats uniquement) ---------- */
+const K_MIN = 5; // groupes de moins de 5 personnes masqués : aucune ré-identification possible
+const mask = (n) => (n > 0 && n < K_MIN ? '<5' : n);
+export async function eventStats(env) {
+  const [tot, days, ages, tri, docs, waits, leads, surveys] = await env.DB.batch([
+    env.DB.prepare(`SELECT COUNT(*) n, SUM(source='self') self, SUM(source='staff') staff, SUM(doctor_consent=1) consent,
+      SUM(pulse IS NOT NULL OR temp IS NOT NULL OR sys IS NOT NULL OR glucose IS NOT NULL OR weight IS NOT NULL) measured,
+      SUM(stage=2) done FROM patients WHERE deleted_at IS NULL`),
+    env.DB.prepare(`SELECT date(created_at/1000,'unixepoch','localtime') d, COUNT(*) n FROM patients WHERE deleted_at IS NULL GROUP BY d ORDER BY d`),
+    env.DB.prepare(`SELECT CASE WHEN a < 18 THEN '0-17' WHEN a < 40 THEN '18-39' WHEN a < 60 THEN '40-59' WHEN a < 75 THEN '60-74' ELSE '75+' END k, COUNT(*) n
+      FROM (SELECT (strftime('%Y','now') - strftime('%Y', birth_date)) - (strftime('%m-%d','now') < strftime('%m-%d', birth_date)) a FROM patients WHERE deleted_at IS NULL)
+      GROUP BY k ORDER BY k`),
+    env.DB.prepare('SELECT triage k, COUNT(*) n FROM patients WHERE deleted_at IS NULL GROUP BY triage'),
+    env.DB.prepare('SELECT doctor k, COUNT(*) n FROM patients WHERE deleted_at IS NULL AND doctor IS NOT NULL GROUP BY doctor'),
+    env.DB.prepare('SELECT ROUND(AVG((stage_at - created_at)/60000.0)) avg_wait FROM patients WHERE deleted_at IS NULL AND stage >= 1 AND stage_at IS NOT NULL'),
+    env.DB.prepare("SELECT COUNT(*) n, SUM(interests LIKE '%checkup%') checkup FROM partner_leads"),
+    env.DB.prepare('SELECT COUNT(*) n FROM surveys'),
+  ]);
+  const t = tot.results[0];
+  const kv = (r) => Object.fromEntries(r.results.map((x) => [x.k ?? 'inconnu', mask(x.n)]));
+  return {
+    total: t.n,
+    self: mask(t.self || 0),
+    staff: mask(t.staff || 0),
+    consent_rate: t.n ? Math.round((100 * (t.consent || 0)) / t.n) : 0,
+    measured: mask(t.measured || 0),
+    done: mask(t.done || 0),
+    per_day: days.results.map((x) => ({ d: x.d, n: mask(x.n) })),
+    ages: kv(ages),
+    triage: kv(tri),
+    doctors: kv(docs),
+    avg_wait_min: waits.results[0]?.avg_wait ?? null,
+    checkup_rate: t.n ? Math.round((100 * (leads.results[0].checkup || 0)) / t.n) : 0,
+    surveys: surveys.results[0].n,
+  };
+}
+
 /** Désinscription = suppression immédiate des coordonnées. */
 export const deleteLeadByToken = (env, t) => env.DB.prepare('DELETE FROM partner_leads WHERE unsub_token = ?').bind(t).run();

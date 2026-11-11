@@ -31,6 +31,10 @@ const ALTER = [
   'ALTER TABLE patients ADD COLUMN doctor_consent INTEGER NOT NULL DEFAULT 0 CHECK (doctor_consent IN (0,1))',
   'ALTER TABLE partner_leads ADD COLUMN unsub_token TEXT',
   'ALTER TABLE partner_leads ADD COLUMN mailed_at INTEGER',
+  "ALTER TABLE partner_leads ADD COLUMN status TEXT NOT NULL DEFAULT 'nouveau' CHECK (status IN ('nouveau','contacte','rdv','client'))",
+  "ALTER TABLE partner_leads ADD COLUMN contact_time TEXT CHECK (contact_time IN ('matin','apres-midi','soir'))",
+  'ALTER TABLE partner_leads ADD COLUMN partner_notes TEXT',
+  'ALTER TABLE partner_leads ADD COLUMN updated_at INTEGER',
 ];
 const AFTER = [
   'CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_unsub ON partner_leads(unsub_token)',

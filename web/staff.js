@@ -470,7 +470,7 @@ $('scan-form').addEventListener('submit', (e) => {
 });
 
 /* ---------- Statistiques questionnaire (anonyme) ---------- */
-const pct = (n, t) => (t ? Math.round((100 * (n || 0)) / t) : 0);
+const pct = (n, t) => (t && typeof n === 'number' ? Math.round((100 * n) / t) : 0);
 const pctTxt = (n, t) => (t ? `${pct(n, t)} %` : '–');
 const bar = (label, n, t, cls = 'bg-sky-700') => `
   <div class="grid grid-cols-[9rem_1fr_3rem] items-center gap-2 text-sm">
@@ -478,18 +478,40 @@ const bar = (label, n, t, cls = 'bg-sky-700') => `
     <span class="h-3 rounded-full bg-slate-100"><span class="block h-3 rounded-full ${cls}" data-w="${pct(n, t)}"></span></span>
     <span class="text-right font-bold tabular-nums">${n || 0}</span>
   </div>`;
+const TRI = { 0: ['À mesurer', 'bg-slate-400'], 1: ['Vert', 'bg-emerald-600'], 2: ['Orange', 'bg-amber-500'], 3: ['Rouge', 'bg-red-600'] };
+const tile = (label, v) => `<div class="rounded-xl bg-slate-100 p-3"><p class="text-sm text-slate-600">${label}</p><p class="text-2xl font-black">${v}</p></div>`;
+function eventHtml(e) {
+  const sum = (o) => Object.values(o).reduce((a, n) => a + (typeof n === 'number' ? n : 0), 0);
+  const at = sum(e.ages), tt = sum(e.triage), dmax = Math.max(1, ...e.per_day.map((x) => (typeof x.n === 'number' ? x.n : 0)));
+  return `<section class="space-y-4">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h3 class="text-lg font-extrabold">Bilan de l’événement <span class="text-sm font-semibold text-slate-500">(anonyme)</span></h3>
+      <a href="/api/staff/stats.csv" download class="btn-ghost min-h-10 px-3 py-2 text-sm">Exporter le bilan (CSV)</a>
+    </div>
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      ${tile('Inscriptions', e.total)}${tile('Paramètres relevés', e.measured)}${tile('Parcours terminés', e.done)}${tile('Attente moy.', e.avg_wait_min != null ? `${e.avg_wait_min} min` : '–')}
+      ${tile('Via QR / accueil', `${e.self} / ${e.staff}`)}${tile('Accord médecin', `${e.consent_rate} %`)}${tile('Intérêt check-up', `${e.checkup_rate} %`)}${tile('Questionnaires', e.surveys)}
+    </div>
+    ${e.per_day.length ? `<div class="space-y-2"><h4 class="font-bold">Inscriptions par jour</h4>${e.per_day.map((x) => bar(x.d.split('-').reverse().join('/'), x.n, dmax)).join('')}</div>` : ''}
+    ${at ? `<div class="space-y-2"><h4 class="font-bold">Tranches d’âge</h4>${Object.entries(e.ages).map(([k, n]) => bar(`${k} ans`, n, at)).join('')}</div>` : ''}
+    ${tt ? `<div class="space-y-2"><h4 class="font-bold">Triage</h4>${Object.entries(e.triage).map(([k, n]) => bar(TRI[k]?.[0] ?? k, n, tt, TRI[k]?.[1])).join('')}</div>` : ''}
+    <p class="text-xs text-slate-500">Chiffres agrégés et anonymes (groupes de moins de 5 personnes masqués « &lt;5 ») : utilisables librement pour rapports et présentations.</p>
+  </section>
+  <hr class="border-slate-200">`;
+}
+
 async function renderStats() {
   const box = $('stats-body');
   try {
-    const s = await api('/staff/survey-stats');
+    const [s, ev] = await Promise.all([api('/staff/survey-stats'), api('/staff/stats')]);
     const t = s.n || 0;
     const freq = Object.fromEntries(s.activity.map((r) => [r.k, r.n]));
     const vax = Object.fromEntries(s.vax.map((r) => [r.k, r.n]));
     const ft = s.activity.reduce((a, r) => a + r.n, 0);
     const vt = s.vax.reduce((a, r) => a + r.n, 0);
     const bt = (s.bmi_low || 0) + (s.bmi_ok || 0) + (s.bmi_over || 0) + (s.bmi_obese || 0);
-    box.innerHTML = !t
-      ? '<p class="py-10 text-center text-slate-500">Aucune réponse pour le moment</p>'
+    box.innerHTML = eventHtml(ev) + '<h3 class="text-lg font-extrabold">Questionnaire de prévention</h3>' + (!t
+      ? '<p class="py-6 text-center text-slate-500">Aucune réponse pour le moment</p>'
       : `<p class="text-4xl font-black">${t} <span class="text-base font-semibold text-slate-600">réponses anonymes</span></p>
       <section class="space-y-2"><h3 class="font-bold">IMC ${s.bmi_avg != null ? `· moyenne ${s.bmi_avg}` : ''}</h3>
         ${bar('&lt; 18,5', s.bmi_low, bt, 'bg-amber-500')}${bar('18,5 – 24,9', s.bmi_ok, bt, 'bg-emerald-600')}${bar('25 – 29,9', s.bmi_over, bt, 'bg-amber-500')}${bar('≥ 30', s.bmi_obese, bt, 'bg-red-600')}</section>
@@ -504,7 +526,7 @@ async function renderStats() {
       <section class="space-y-2"><h3 class="font-bold">Vaccinations à jour ?</h3>
         ${bar('Oui', vax[1], vt, 'bg-emerald-600')}${bar('Non', vax[0], vt, 'bg-red-600')}${bar('Ne sait pas', vax[2], vt, 'bg-slate-400')}</section>
       <section><h3 class="mb-2 font-bold">Questions posées (${s.questions.length})</h3>
-        <ul class="space-y-2">${s.questions.map((q) => `<li class="rounded-xl bg-white p-3 text-sm whitespace-pre-line ring-1 ring-slate-200">${esc(q.questions)}</li>`).join('') || '<li class="text-sm text-slate-500">Aucune</li>'}</ul></section>`;
+        <ul class="space-y-2">${s.questions.map((q) => `<li class="rounded-xl bg-white p-3 text-sm whitespace-pre-line ring-1 ring-slate-200">${esc(q.questions)}</li>`).join('') || '<li class="text-sm text-slate-500">Aucune</li>'}</ul></section>`);
     for (const el of box.querySelectorAll('[data-w]')) el.style.width = `${el.dataset.w}%`; // CSSOM : compatible CSP
   } catch {
     box.innerHTML = '<p class="py-10 text-center text-red-700">Statistiques indisponibles, réessayez.</p>';

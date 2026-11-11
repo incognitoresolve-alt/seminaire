@@ -158,6 +158,40 @@ export function validateSurvey(b) {
   return { ok: Object.keys(errors).length === 0, errors, value };
 }
 
+export const CONTACT_TIMES = { matin: 'Le matin', 'apres-midi': 'L’après-midi', soir: 'En soirée' };
+export const LEAD_STATUS = { nouveau: 'Nouveau', contacte: 'Contacté', rdv: 'Rendez-vous', client: 'Client' };
+const TOKEN_RE = /^[A-Za-z0-9_-]{20,40}$/;
+
+/** Qualification facultative juste après l'accord (moment préféré, sujet) — dans le périmètre du consentement. */
+export function validateLeadQualify(b) {
+  const errors = {};
+  const value = {};
+  if (!TOKEN_RE.test(String(b?.t ?? ''))) errors.t = 'Jeton invalide';
+  if (b?.contact_time !== undefined) {
+    if (b.contact_time in CONTACT_TIMES) value.contact_time = b.contact_time;
+    else errors.contact_time = 'Choix invalide';
+  }
+  if (b?.interest !== undefined) {
+    if (['epargne_pension', 'deces', 'obseques'].includes(b.interest)) value.interest = b.interest;
+    else errors.interest = 'Choix invalide';
+  }
+  if (!Object.keys(value).length && !errors.t) errors._ = 'Aucun champ';
+  return { ok: Object.keys(errors).length === 0, errors, value, t: b?.t };
+}
+
+/** Mise à jour par le partenaire (statut de suivi, notes). */
+export function validateLeadPatch(b) {
+  const errors = {};
+  const value = {};
+  for (const [k, v] of Object.entries(b && typeof b === 'object' && !Array.isArray(b) ? b : {})) {
+    if (k === 'status' && v in LEAD_STATUS) value.status = v;
+    else if (k === 'partner_notes' && (v === null || (typeof v === 'string' && v.length <= NOTES_MAX))) value.partner_notes = v || null;
+    else errors[k] = 'Champ invalide';
+  }
+  if (!Object.keys(value).length && !Object.keys(errors).length) errors._ = 'Aucun champ';
+  return { ok: Object.keys(errors).length === 0, errors, value };
+}
+
 /** Demande de contact partenaire (opt-in marketing distinct, aucune donnée de santé). */
 export function validateLead(b) {
   const errors = {};

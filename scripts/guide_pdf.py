@@ -362,7 +362,10 @@ story += [P('B. Les enregistrer dans Cloudflare', 'h2'),
     Step(4, f'Clique sur {btn("Add")}. Type : {btn("Secret")}. Nom : {code("STAFF_PIN")}. Valeur : ton code PIN.'),
     Step(5, f'Clique encore sur {btn("Add")}. Type : {btn("Secret")}. Nom : {code("SESSION_SECRET")}. '
             'Valeur : la clé de 64 caractères.'),
-    Step(6, f'Clique sur {btn("Deploy")} (ou « Save and deploy »).'),
+    Step(6, f'<b>Ta clé partenaire</b> (pour ton espace « Mes contacts ») : encore {btn("Add")} → {btn("Secret")} → '
+            f'nom {code("PARTNER_KEY")} → valeur : un mot de passe d’<b>au moins 16 caractères</b> (générateur ci-dessus). '
+            'Garde-le pour toi seul : les soignants n’en ont pas besoin.'),
+    Step(7, f'Clique sur {btn("Deploy")} (ou « Save and deploy »).'),
 ]
 story.append(warn('Les noms doivent être écrits <b>exactement</b> comme ici, en majuscules, avec le tiret bas _.'))
 story.append(danger('Le PIN se donne <b>uniquement aux soignants</b>, de vive voix ou par message privé. '
@@ -500,9 +503,11 @@ story += [
                '  AND deleted_at IS NULL ORDER BY doctor, triage DESC;']),
     P('<b>doctor</b> = 1 (Médecin 1, mercredi) ou 2 (Médecin 2, samedi).', 'small'),
     Step(2, 'Transmets ces informations <b>par un canal sécurisé</b> (eHealthBox, messagerie santé). <b>Jamais par Gmail.</b>'),
-    Step(3, f'<b>Tes contacts check-up</b> : D1 → {btn("Console")} → colle :'),
-    codeblock(["SELECT datetime(created_at/1000,'unixepoch') AS date, name, email, phone",
-               'FROM partner_leads ORDER BY created_at;']),
+    Step(3, '<b>Tes contacts check-up</b> : ouvre <b>ADRESSE/espace-partenaire</b> → tape ta clé PARTNER_KEY. '
+            'Pour chaque contact : statut (Nouveau → Contacté → Rendez-vous → Client), tes notes, téléphone et e-mail cliquables. '
+            f'Bouton {btn("Télécharger (Excel / CSV)")} pour tout récupérer dans Excel.'),
+    Step(7, f'<b>Bilan anonyme</b> (rapport pour ICC, présentations) : espace soignants → bouton {btn("Bilan")} → '
+            f'{btn("Exporter le bilan (CSV)")}. Ces chiffres sont anonymes : tu peux les réutiliser librement.'),
     Step(4, 'Une seule relance maximum. Une personne répond « STOP » → tu supprimes son contact et tu ne lui écris plus.'),
     Step(5, f'<b>Fermer l’accès soignants</b> : Worker → {btn("Variables and Secrets")} → supprime {code("STAFF_PIN")}.'),
     Step(6, 'Rien d’autre à faire : les données s’effacent <b>automatiquement</b> (inscriptions et questionnaires '

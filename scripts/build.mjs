@@ -8,7 +8,7 @@ rmSync(out, { recursive: true, force: true });
 mkdirSync(new URL('public/vendor/', root), { recursive: true });
 copyFileSync(new URL('node_modules/jsqr/dist/jsQR.js', root), new URL('public/vendor/jsQR.js', root)); // chargé à la demande (iOS)
 
-const entries = ['register', 'questionnaire', 'staff', 'partenaire', 'affiche', 'credit', 'desinscription'];
+const entries = ['register', 'questionnaire', 'staff', 'partenaire', 'affiche', 'credit', 'desinscription', 'espace-partenaire'];
 const res = await build({
   entryPoints: entries.map((e) => `web/${e}.js`),
   outdir: 'public/dist',
