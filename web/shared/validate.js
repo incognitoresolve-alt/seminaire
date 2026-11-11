@@ -30,6 +30,8 @@ export function toIsoDate(s) {
 }
 
 const clean = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
+// Apostrophes typographiques (clavier iPhone : ’) ramenées à « ' » : N’Diaye == N'Diaye.
+const cleanName = (s) => clean(s).replace(/[’‘ʼ`´]/g, "'");
 // Texte libre : caractères de contrôle retirés (sauf saut de ligne si multiline), longueur bornée.
 export const freeText = (s, max, multiline = false) => {
   const t = String(s ?? '').replace(multiline ? /[\u0000-\u0009\u000b-\u001f\u007f]/g : /[\u0000-\u001f\u007f]/g, ' ').trim();
@@ -40,8 +42,8 @@ const PHONE_RE = /^[+0-9 ().\/-]{6,25}$/;
 export function validateIdentity(b, now = new Date()) {
   const errors = {};
   const v = {
-    last_name: clean(b?.last_name),
-    first_name: clean(b?.first_name),
+    last_name: cleanName(b?.last_name),
+    first_name: cleanName(b?.first_name),
     birth_date: clean(b?.birth_date),
     email: clean(b?.email).toLowerCase(),
     phone: clean(b?.phone) || null,
@@ -198,7 +200,7 @@ export function validateLead(b) {
   const audience = b?.audience === 'pro' ? 'pro' : b?.audience === 'public' ? 'public' : null;
   const v = {
     audience,
-    name: clean(b?.name),
+    name: cleanName(b?.name),
     email: clean(b?.email).toLowerCase() || null,
     phone: clean(b?.phone) || null,
     interests: Array.isArray(b?.interests) ? [...new Set(b.interests.map(String))] : [],

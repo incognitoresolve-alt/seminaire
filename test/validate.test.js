@@ -86,3 +86,9 @@ test('qualification et suivi partenaire : listes fermées', () => {
   assert.ok(validateLeadPatch({ status: 'vip' }).errors.status);
   assert.ok(validateLeadPatch({ email: 'x@y.z' }).errors.email); // le partenaire ne modifie pas les coordonnées
 });
+
+test('apostrophe typographique (clavier iPhone) acceptée et normalisée', () => {
+  const r = validateIdentity({ ...ok, last_name: 'N’Diaye', first_name: 'Aïcha' });
+  assert.ok(r.ok, JSON.stringify(r.errors));
+  assert.equal(r.value.last_name, "N'Diaye");
+});

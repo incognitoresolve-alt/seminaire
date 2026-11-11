@@ -192,11 +192,12 @@ export async function qualifyLead(env, t, v) {
 const K_MIN = 5; // groupes de moins de 5 personnes masqués : aucune ré-identification possible
 const mask = (n) => (n > 0 && n < K_MIN ? '<5' : n);
 export async function eventStats(env) {
+  // Jours comptés en heure belge (UTC+1 en novembre).
   const [tot, days, ages, tri, docs, waits, leads, surveys] = await env.DB.batch([
     env.DB.prepare(`SELECT COUNT(*) n, SUM(source='self') self, SUM(source='staff') staff, SUM(doctor_consent=1) consent,
       SUM(pulse IS NOT NULL OR temp IS NOT NULL OR sys IS NOT NULL OR glucose IS NOT NULL OR weight IS NOT NULL) measured,
       SUM(stage=2) done FROM patients WHERE deleted_at IS NULL`),
-    env.DB.prepare(`SELECT date(created_at/1000,'unixepoch','localtime') d, COUNT(*) n FROM patients WHERE deleted_at IS NULL GROUP BY d ORDER BY d`),
+    env.DB.prepare(`SELECT date(created_at/1000,'unixepoch','+1 hour') d, COUNT(*) n FROM patients WHERE deleted_at IS NULL GROUP BY d ORDER BY d`),
     env.DB.prepare(`SELECT CASE WHEN a < 18 THEN '0-17' WHEN a < 40 THEN '18-39' WHEN a < 60 THEN '40-59' WHEN a < 75 THEN '60-74' ELSE '75+' END k, COUNT(*) n
       FROM (SELECT (strftime('%Y','now') - strftime('%Y', birth_date)) - (strftime('%m-%d','now') < strftime('%m-%d', birth_date)) a FROM patients WHERE deleted_at IS NULL AND birth_date != '')
       GROUP BY k ORDER BY k`),
