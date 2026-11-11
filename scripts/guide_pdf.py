@@ -297,17 +297,22 @@ story += [P('B. Indiquer cet ID au code', 'h2'),
 ]
 story.append(codeblock(['Avant : database_id = "00000000-0000-0000-0000-000000000000"',
                         'Après : database_id = "3f1c2b9a-1d2e-4f5a-9b8c-7d6e5f4a3b2c"   ← ton ID']))
-story += [P('C. Créer les tableaux de la base', 'h2'),
-    P('Il y a <b>4 fichiers</b> à exécuter, <b>dans cet ordre, une seule fois chacun</b>. Pour chacun :'),
+story += [P('C. Créer les tableaux de la base — FACULTATIF', 'h2'),
+    box(['<b>Tu peux sauter cette partie.</b> L’application crée et met à jour ses tableaux <b>toute seule</b> '
+         'dès la première visite du site. Coche directement les cases 11 à 16.',
+         'Si tu préfères le faire à la main : copie le bloc unique du fichier '
+         + link(f"{REPO}/blob/main/docs/schema-complet.sql", "docs/schema-complet.sql") +
+         ' (bouton Raw) dans l’onglet Console, puis Execute. Ou les 5 fichiers ci-dessous, dans l’ordre :'],
+        LGREEN, GREEN, '✓ Automatique', GREEN),
 ]
-for i, f in enumerate(['0001_init.sql', '0002_partner_leads.sql', '0003_lead_mail.sql', '0004_stage.sql'], start=11):
+for i, f in enumerate(['0001_init.sql', '0002_partner_leads.sql', '0003_lead_mail.sql', '0004_stage.sql', '0005_doctor_consent.sql'], start=11):
     story.append(Step(i, f'Ouvre {link(f"{REPO}/blob/main/migrations/{f}", f)} → clique sur {btn("Raw")} → '
                          f'sélectionne tout (<b>Ctrl + A</b>) → copie → dans Cloudflare, onglet {btn("Console")} '
                          f'de la base <b>seminaire</b> → colle → {btn("Execute")}.'))
 story.append(warn('Si la console affiche une erreur avec plusieurs instructions, colle et exécute les blocs '
                   'un par un (chaque bloc se termine par un point-virgule <b>;</b>).',
-                  'Si tu relances par erreur 0003 ou 0004 : « duplicate column » = déjà fait, aucun souci.'))
-story.append(Step(15, 'Vérification : dans la Console, colle cette ligne puis ' + btn('Execute') + ' :'))
+                  'Si tu relances par erreur 0003, 0004 ou 0005 : « duplicate column » = déjà fait, aucun souci.'))
+story.append(Step(16, 'Vérification : dans la Console, colle cette ligne puis ' + btn('Execute') + ' :'))
 story.append(codeblock(["SELECT name FROM sqlite_master WHERE type='table';"]))
 story.append(result('La liste contient <b>patients</b>, <b>surveys</b> et <b>partner_leads</b>.'))
 story.append(PageBreak())
@@ -473,6 +478,10 @@ story += [P('Briefing des soignants (5 minutes)', 'h2'),
     Step(7, f'Le circuit : {btn("Scanner")} (ou chercher le nom / le code de secours) → saisir les mesures → choisir '
             f'{btn("Médecin 1")} ou {btn("Médecin 2")} → {btn("Patient suivant →")} → {btn("Terminé")}.'),
     Step(8, 'Les couleurs sont une <b>aide</b> : le jugement clinique prime toujours.'),
+    Step(11, 'Personne qui a refusé la transmission au médecin : les boutons Médecin 1 / 2 sont grisés. '
+             f'Si elle change d’avis : {btn("Le participant donne son accord")} dans sa fiche.'),
+    Step(12, f'Retrouver une personne par son nom : sur l’écran d’inscription, bouton {btn("Espace soignants · liste des inscrits")}, '
+             'puis taper son nom dans la recherche.'),
     Step(9, f'Tablette laissée seule : bouton cadenas {btn("Verrouiller")}.'),
     Step(10, f'Participant sans téléphone : {btn("Ajouter manuellement")} (cocher l’accord une fois le papier signé).'),
 ]
@@ -483,12 +492,13 @@ story.append(PageBreak())
 # ---- 10. Après
 story += section('s10', '10', 'Après l’événement', '15 min')
 story += [
-    Step(1, '<b>Médecins traitants</b> (personnes qui ont autorisé la transmission, cas orange/rouge) : '
+    Step(1, '<b>Dossiers par médecin de la consultation</b> (uniquement les personnes qui ont autorisé la transmission) : '
             f'D1 → {btn("Console")} → colle :'),
-    codeblock(['SELECT last_name, first_name, birth_date, gp_name, gp_address, gp_contact,',
-               '       pulse, temp, sys, dia, glucose, weight, height, waist, notes, triage',
-               'FROM patients WHERE gp_consent = 1 AND no_gp = 0 AND triage >= 2',
-               '  AND deleted_at IS NULL;']),
+    codeblock(['SELECT doctor, last_name, first_name, birth_date, pulse, temp, sys, dia,',
+               '       glucose, weight, height, waist, notes, triage',
+               'FROM patients WHERE doctor_consent = 1 AND doctor IS NOT NULL',
+               '  AND deleted_at IS NULL ORDER BY doctor, triage DESC;']),
+    P('<b>doctor</b> = 1 (Médecin 1, mercredi) ou 2 (Médecin 2, samedi).', 'small'),
     Step(2, 'Transmets ces informations <b>par un canal sécurisé</b> (eHealthBox, messagerie santé). <b>Jamais par Gmail.</b>'),
     Step(3, f'<b>Tes contacts check-up</b> : D1 → {btn("Console")} → colle :'),
     codeblock(["SELECT datetime(created_at/1000,'unixepoch') AS date, name, email, phone",

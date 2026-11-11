@@ -3,6 +3,7 @@ import { validateIdentity, validateLead, validatePatch, validateSurvey } from '.
 import { checkPin, clearCookie, requireStaff, sessionCookie } from './auth.js';
 import { HttpError, assertSameOrigin, clientIp, json, rateLimit, readJson } from './http.js';
 import { hub } from './hub.js';
+import { ensureSchema } from './schema.js';
 import { sendCheckupMail } from './mail.js';
 import { alreadyMailed, createLead, deleteLeadByToken, markMailed, createPatient, createSurvey, deletePatient, getDetail, listSince, lookup, purge, surveyStats, updatePatient } from './patients.js';
 
@@ -151,6 +152,7 @@ export default {
     const url = new URL(req.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(req);
     try {
+      await ensureSchema(env);
       return await route(req, env, ctx, url);
     } catch (e) {
       if (e instanceof HttpError) return json({ error: e.code, ...e.extra }, e.status);

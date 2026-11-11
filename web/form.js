@@ -1,6 +1,7 @@
 // Formulaire d'identité partagé (auto-inscription & saisie manuelle staff).
 import { toIsoDate, validateIdentity } from './shared/validate.js';
 import { esc, uuid } from './api.js';
+import { doctorsSentence } from './shared/doctors.js';
 import { PARTNER } from './shared/partner.js';
 
 export function identityFieldsHtml(prefix, { staff = false } = {}) {
@@ -40,28 +41,23 @@ export function identityFieldsHtml(prefix, { staff = false } = {}) {
       <p class="err" id="${prefix}-consent-err" aria-live="polite"></p>
     </fieldset>
 
-    <fieldset class="mt-2 rounded-xl border border-slate-300 bg-white p-4" aria-describedby="${prefix}-gp_consent-err">
-      <legend class="px-1 text-sm font-bold text-slate-800">Transmission au médecin traitant</legend>
-      <p class="mb-3 text-sm text-slate-600">Si un suivi est nécessaire, j’autorise la transmission des informations utiles (observations, mesures, recommandations) à mon médecin traitant, de façon confidentielle. Un refus ne conditionne pas l’accès à la consultation.</p>
+    <fieldset class="mt-2 rounded-xl border border-slate-300 bg-white p-4" aria-describedby="${prefix}-doctor_consent-err">
+      <legend class="px-1 text-sm font-bold text-slate-800">Transmission au médecin de la consultation</legend>
+      <p class="mb-3 text-sm text-slate-600">${
+        staff
+          ? `Le participant autorise-t-il la transmission de ses informations (identité, paramètres mesurés, observations) au médecin bénévole de l’événement qui assurera sa consultation : ${esc(doctorsSentence())} ?`
+          : `J’autorise la transmission de mes informations (identité, paramètres mesurés, observations) au médecin bénévole de la Semaine de la santé qui assurera ma consultation : ${esc(doctorsSentence())}. Ce médecin n’est pas forcément mon médecin traitant. Les informations restent confidentielles et couvertes par le secret médical.`
+      }</p>
       <div class="grid grid-cols-2 gap-2">
         <label class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border border-slate-300 px-3 has-checked:border-sky-700 has-checked:bg-sky-50">
-          <input type="radio" name="gp_consent" value="1" class="size-5 accent-sky-700"> <span class="text-sm font-semibold">J’autorise</span>
+          <input type="radio" name="doctor_consent" value="1" class="size-5 accent-sky-700"> <span class="text-sm font-semibold">J’autorise</span>
         </label>
         <label class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border border-slate-300 px-3 has-checked:border-sky-700 has-checked:bg-sky-50">
-          <input type="radio" name="gp_consent" value="0" class="size-5 accent-sky-700"> <span class="text-sm font-semibold">Je n’autorise pas</span>
+          <input type="radio" name="doctor_consent" value="0" class="size-5 accent-sky-700"> <span class="text-sm font-semibold">Je n’autorise pas</span>
         </label>
       </div>
-      <p class="err" id="${prefix}-gp_consent-err" aria-live="polite"></p>
-      <div data-gp hidden class="space-y-1">
-        <label class="flex cursor-pointer items-center gap-3 py-2">
-          <input type="checkbox" name="no_gp" class="size-5 accent-sky-700"> <span class="text-sm">Je n’ai pas de médecin traitant actuellement</span>
-        </label>
-        <div data-gp-fields class="space-y-1">
-          ${f('gp_name', 'Nom et prénom du médecin traitant', 'maxlength="120" autocomplete="off" enterkeyhint="next"')}
-          ${f('gp_address', 'Cabinet ou adresse <span class="font-normal text-slate-500">(facultatif)</span>', 'maxlength="200" autocomplete="off" enterkeyhint="next"')}
-          ${f('gp_contact', 'Téléphone ou coordonnées <span class="font-normal text-slate-500">(facultatif)</span>', 'maxlength="120" autocomplete="off" enterkeyhint="done"')}
-        </div>
-      </div>
+      <p class="mt-2 text-xs text-slate-500">Sans cette autorisation, vos paramètres peuvent être relevés par l’équipe soignante, mais ils ne sont transmis à aucun médecin.</p>
+      <p class="err" id="${prefix}-doctor_consent-err" aria-live="polite"></p>
     </fieldset>${
       !staff && PARTNER.enabled
         ? `
@@ -84,30 +80,21 @@ export function bindIdentityForm(form, send) {
   let requestId = uuid(); // conservé tant que la soumission n'a pas abouti : idempotence serveur
 
   const showErrors = (errors) => {
-    for (const name of ['last_name', 'first_name', 'birth_date', 'email', 'phone', 'consent', 'gp_name']) {
+    for (const name of ['last_name', 'first_name', 'birth_date', 'email', 'phone', 'consent']) {
       const input = form.elements[name];
       const msg = errors[name] || '';
       input.setAttribute('aria-invalid', msg ? 'true' : 'false');
       const el = document.getElementById(input.getAttribute('aria-describedby'));
       if (el) el.textContent = msg;
     }
-    const gpErr = form.querySelector('[id$="-gp_consent-err"]');
-    gpErr.textContent = errors.gp_consent || '';
-    for (const r of form.querySelectorAll('[name=gp_consent]')) r.setAttribute('aria-invalid', errors.gp_consent ? 'true' : 'false');
+    form.querySelector('[id$="-doctor_consent-err"]').textContent = errors.doctor_consent || '';
+    for (const r of form.querySelectorAll('[name=doctor_consent]')) r.setAttribute('aria-invalid', errors.doctor_consent ? 'true' : 'false');
   };
 
-  // Bloc médecin traitant : affiché uniquement si la transmission est autorisée.
-  const syncGp = () => {
-    const allow = form.querySelector('[name=gp_consent]:checked')?.value === '1';
-    form.querySelector('[data-gp]').hidden = !allow;
-    form.querySelector('[data-gp-fields]').hidden = form.elements.no_gp.checked;
-  };
   form.addEventListener('change', (e) => {
-    if (e.target.name === 'gp_consent' || e.target.name === 'no_gp') syncGp();
-    if (e.target.name === 'gp_consent') form.querySelector('[id$="-gp_consent-err"]').textContent = '';
+    if (e.target.name === 'doctor_consent') form.querySelector('[id$="-doctor_consent-err"]').textContent = '';
     if (e.target.name === 'consent' && e.target.checked) form.querySelector('[id$="-consent-err"]').textContent = '';
   });
-  form.addEventListener('reset', () => setTimeout(syncGp));
 
   // Date : clavier numérique, « / » insérés automatiquement (bien plus rapide que le sélecteur iOS).
   form.addEventListener('input', (e) => {
@@ -141,11 +128,7 @@ export function bindIdentityForm(form, send) {
       email: fd.get('email'),
       phone: fd.get('phone') || undefined,
       consent: fd.get('consent') === 'on',
-      gp_consent: fd.get('gp_consent') === '1' ? true : fd.get('gp_consent') === '0' ? false : undefined,
-      no_gp: fd.get('no_gp') === 'on',
-      gp_name: fd.get('gp_name') || undefined,
-      gp_address: fd.get('gp_address') || undefined,
-      gp_contact: fd.get('gp_contact') || undefined,
+      doctor_consent: fd.get('doctor_consent') === '1' ? true : fd.get('doctor_consent') === '0' ? false : undefined,
       checkup: fd.get('checkup') === 'on', // opt-in partenaire, retiré avant l'appel /register
       website: fd.get('website') || undefined,
       request_id: requestId,

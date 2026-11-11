@@ -3,8 +3,8 @@ import { HttpError } from './http.js';
 
 // Colonnes exposées au staff (sans email ni request_id : minimisation).
 const COLS =
-  'id,token,short_code,last_name,first_name,birth_date,source,gp_consent,no_gp,stage,stage_at,pulse,temp,weight,height,waist,glucose,sys,dia,notes,triage,doctor,version,created_at,updated_at,deleted_at';
-const DETAIL_COLS = `${COLS},email,phone,gp_name,gp_address,gp_contact,consent_at`;
+  'id,token,short_code,last_name,first_name,birth_date,source,doctor_consent,stage,stage_at,pulse,temp,weight,height,waist,glucose,sys,dia,notes,triage,doctor,version,created_at,updated_at,deleted_at';
+const DETAIL_COLS = `${COLS},email,phone,consent_at`;
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // sans 0/O/1/I/L
 
 const randomToken = () => {
@@ -26,12 +26,12 @@ export async function createPatient(env, v, source) {
     try {
       const row = await env.DB.prepare(
         `INSERT INTO patients (id,token,short_code,request_id,last_name,first_name,birth_date,email,phone,consent_at,
-           gp_consent,no_gp,gp_name,gp_address,gp_contact,source,created_at,updated_at)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING ${COLS}`,
+           doctor_consent,source,created_at,updated_at)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING ${COLS}`,
       )
         .bind(
           crypto.randomUUID(), randomToken(), shortCode(), v.request_id, v.last_name, v.first_name, v.birth_date, v.email, v.phone, now,
-          v.gp_consent ? 1 : 0, v.no_gp ? 1 : 0, v.gp_name, v.gp_address, v.gp_contact, source, now, now,
+          v.doctor_consent ? 1 : 0, source, now, now,
         )
         .first();
       return { row, created: true };
@@ -62,14 +62,21 @@ export const lookup = (env, q) =>
 export async function updatePatient(env, id, patch) {
   const now = Date.now();
   if ('stage' in patch) patch = { ...patch, stage_at: now }; // horodatage serveur de l'étape
+  if (patch.doctor_consent === 0) patch = { ...patch, doctor: null }; // retrait : plus d'assignation à un médecin
+  // Consentement exigé côté serveur pour toute assignation à un médecin.
+  const needConsent = patch.doctor != null && patch.doctor_consent !== 1;
   const keys = Object.keys(patch); // whitelist garantie par validatePatch
   const row = await env.DB.prepare(
     `UPDATE patients SET ${keys.map((k) => `${k} = ?`).join(', ')}, version = version + 1, updated_at = ?
-     WHERE id = ? AND deleted_at IS NULL RETURNING ${COLS}`,
+     WHERE id = ? AND deleted_at IS NULL${needConsent ? ' AND doctor_consent = 1' : ''} RETURNING ${COLS}`,
   )
     .bind(...keys.map((k) => patch[k]), now, id)
     .first();
-  if (!row) throw new HttpError(404, 'not_found');
+  if (!row) {
+    if (needConsent && (await env.DB.prepare('SELECT 1 FROM patients WHERE id = ? AND deleted_at IS NULL').bind(id).first()))
+      throw new HttpError(409, 'consent_required');
+    throw new HttpError(404, 'not_found');
+  }
   const level = triage(row).level;
   if (level === row.triage) return row;
   // Conditionnel sur la version : si une écriture plus récente est passée, c'est elle qui fait foi.
@@ -82,7 +89,7 @@ export async function deletePatient(env, id) {
   const now = Date.now();
   const row = await env.DB.prepare(
     `UPDATE patients SET last_name='', first_name='', birth_date='', email='', phone=NULL, notes=NULL,
-       gp_consent=0, no_gp=0, gp_name=NULL, gp_address=NULL, gp_contact=NULL,
+       gp_consent=0, no_gp=0, gp_name=NULL, gp_address=NULL, gp_contact=NULL, doctor_consent=0,
        pulse=NULL, temp=NULL, weight=NULL, height=NULL, waist=NULL, glucose=NULL, sys=NULL, dia=NULL, doctor=NULL, triage=0,
        deleted_at = ?1, updated_at = ?1, version = version + 1
      WHERE id = ?2 AND deleted_at IS NULL RETURNING id, version, updated_at, deleted_at`,

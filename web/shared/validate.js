@@ -46,11 +46,7 @@ export function validateIdentity(b, now = new Date()) {
     email: clean(b?.email).toLowerCase(),
     phone: clean(b?.phone) || null,
     consent: b?.consent === true,
-    gp_consent: b?.gp_consent,
-    no_gp: b?.no_gp === true,
-    gp_name: freeText(b?.gp_name, 120),
-    gp_address: freeText(b?.gp_address, 200),
-    gp_contact: freeText(b?.gp_contact, 120),
+    doctor_consent: b?.doctor_consent,
     request_id: b?.request_id ? String(b.request_id) : null,
   };
   if (!NAME_RE.test(v.last_name)) errors.last_name = 'Nom invalide';
@@ -65,9 +61,7 @@ export function validateIdentity(b, now = new Date()) {
   if (v.email.length > 254 || !EMAIL_RE.test(v.email)) errors.email = 'E-mail invalide';
   if (v.phone && !PHONE_RE.test(v.phone)) errors.phone = 'Téléphone invalide';
   if (!v.consent) errors.consent = 'Accord obligatoire pour la consultation';
-  if (v.gp_consent !== true && v.gp_consent !== false) errors.gp_consent = 'Choisissez une option';
-  if (v.gp_consent === true && !v.no_gp && !v.gp_name) errors.gp_name = 'Nom du médecin traitant requis (ou cochez « pas de médecin traitant »)';
-  if (v.gp_consent !== true) v.gp_name = v.gp_address = v.gp_contact = null; // minimisation
+  if (v.doctor_consent !== true && v.doctor_consent !== false) errors.doctor_consent = 'Choisissez une option';
   if (v.request_id && !UUID_RE.test(v.request_id)) errors.request_id = 'Identifiant invalide';
   return { ok: Object.keys(errors).length === 0, errors, value: v };
 }
@@ -101,9 +95,9 @@ export function validatePatch(b) {
     } else if (k === 'stage') {
       if (raw === 0 || raw === 1 || raw === 2) value.stage = raw;
       else errors.stage = 'Étape invalide';
-    } else if (k === 'gp_consent') {
-      if (raw === 0 || raw === 1) value.gp_consent = raw;
-      else errors.gp_consent = 'Valeur invalide';
+    } else if (k === 'doctor_consent') {
+      if (raw === 0 || raw === 1) value.doctor_consent = raw;
+      else errors.doctor_consent = 'Valeur invalide';
     } else if (k === 'doctor') {
       if (raw === null || raw === 1 || raw === 2) value.doctor = raw;
       else errors.doctor = 'Médecin invalide';

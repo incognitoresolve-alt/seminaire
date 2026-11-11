@@ -4,11 +4,11 @@ import { bindIdentityForm, identityFieldsHtml, passCardHtml } from './form.js';
 import { mountCredit, mountPartner } from './partner-ui.js';
 import { passUrl, qrSvg } from './qr.js';
 import { parsePassCode, startScanner } from './scanner.js';
+import { DOCTORS } from './shared/doctors.js';
 import { bmi, triage } from './shared/triage.js';
 import { NOTES_MAX, VITALS, normalize, parseVital } from './shared/validate.js';
 import * as store from './store.js';
 
-const DOCTORS = { 1: { short: 'Dr 1', label: 'Médecin 1 · Mer. 11/11' }, 2: { short: 'Dr 2', label: 'Médecin 2 · Sam. 14/11' } };
 const T_LABEL = { 0: 'À mesurer', 1: 'Vert', 2: 'Orange', 3: 'Rouge' };
 const T_RANK = { 3: 0, 2: 1, 0: 2, 1: 3 };
 const MAX_ROWS = 200;
@@ -241,14 +241,14 @@ function openSheet(id) {
       <section aria-labelledby="h-doc">
         <h3 id="h-doc" class="mb-2 text-sm font-bold tracking-wide text-slate-500 uppercase">Assignation</h3>
         <div class="grid grid-cols-2 gap-3" id="sheet-doctors">
-          ${[1, 2].map((d) => `<button type="button" data-doctor="${d}" class="btn-ghost min-h-14 aria-pressed:border-sky-700 aria-pressed:bg-sky-700 aria-pressed:text-white">${DOCTORS[d].label}</button>`).join('')}
+          ${[1, 2].map((d) => `<button type="button" data-doctor="${d}" class="btn-ghost min-h-14 aria-pressed:border-sky-700 aria-pressed:bg-sky-700 aria-pressed:text-white disabled:opacity-40">${DOCTORS[d].label}</button>`).join('')}
         </div>
       </section>
       <section>
         <label class="label" for="v-notes">Notes cliniques</label>
         <textarea id="v-notes" data-k="notes" rows="4" maxlength="${NOTES_MAX}" class="field text-base"></textarea>
       </section>
-      <section id="sheet-gp" class="rounded-2xl bg-white p-4 text-sm ring-1 ring-slate-200" aria-label="Médecin traitant"></section>
+      <section id="sheet-consent" class="rounded-2xl bg-white p-4 text-sm ring-1 ring-slate-200" aria-label="Transmission au médecin de la consultation" aria-live="polite"></section>
       <div class="flex items-center justify-between gap-3 pt-2">
         <p id="sheet-save" class="text-sm font-semibold text-slate-500" aria-live="polite"></p>
         <button type="button" id="sheet-delete" class="btn-danger min-h-11 text-sm">Supprimer (effacement RGPD)</button>
@@ -265,14 +265,6 @@ async function loadDetail(id) {
     const { patient: d } = await api(`/staff/patients/${id}`);
     if (sheetId !== id) return;
     $('sheet-email').textContent = [d.email, d.phone].filter(Boolean).join(' · ');
-    const gp = $('sheet-gp');
-    if (!d.gp_consent) {
-      gp.innerHTML = '<p class="font-bold text-slate-800">Transmission au médecin traitant : <span class="text-red-700">non autorisée</span></p>';
-      return;
-    }
-    gp.innerHTML = `<p class="font-bold text-slate-800">Transmission au médecin traitant : <span class="text-emerald-700">autorisée</span></p>
-      ${d.no_gp ? '<p class="mt-1 text-slate-600">Pas de médecin traitant actuellement.</p>' : `<p class="mt-1 text-slate-700">${esc(d.gp_name)}${d.gp_address ? ` · ${esc(d.gp_address)}` : ''}${d.gp_contact ? ` · ${esc(d.gp_contact)}` : ''}</p>`}
-      <button type="button" id="gp-withdraw" class="btn-danger mt-3 min-h-10 py-2 text-sm">Retrait de l’autorisation</button>`;
   } catch {
     /* détail non critique */
   }
@@ -297,7 +289,17 @@ function refreshSheet(force = false) {
   box.innerHTML = `<div class="flex items-center gap-3"><span class="t${level} size-5 rounded-full" aria-hidden="true"></span><span class="text-xl font-extrabold">${T_LABEL[level]}</span></div>${
     reasons.length ? `<p class="mt-1 text-sm font-semibold">${reasons.map((r) => esc(r.replace(/(\d)\.(\d)/g, '$1,$2'))).join(' · ')}</p>` : ''
   }`;
-  for (const b of $('sheet-doctors').children) b.setAttribute('aria-pressed', String(p.doctor === Number(b.dataset.doctor)));
+  for (const b of $('sheet-doctors').children) {
+    b.setAttribute('aria-pressed', String(p.doctor === Number(b.dataset.doctor)));
+    b.disabled = !p.doctor_consent; // pas d'assignation sans accord de transmission
+  }
+  const consentHtml = p.doctor_consent
+    ? '<p class="font-bold text-slate-800">Transmission au médecin de la consultation : <span class="text-emerald-700">autorisée</span></p><button type="button" data-consent="0" class="btn-danger mt-3 min-h-10 py-2 text-sm">Retrait de l’autorisation</button>'
+    : '<p class="font-bold text-slate-800">Transmission au médecin de la consultation : <span class="text-red-700">non autorisée</span></p><p class="mt-1 text-slate-600">Paramètres relevables, mais aucune assignation à un médecin possible.</p><button type="button" data-consent="1" class="btn-ghost mt-3 min-h-10 py-2 text-sm">Le participant donne son accord</button>';
+  if ($('sheet-consent').dataset.state !== String(p.doctor_consent)) {
+    $('sheet-consent').innerHTML = consentHtml;
+    $('sheet-consent').dataset.state = String(p.doctor_consent);
+  }
   for (const b of $('sheet-stage').children) b.setAttribute('aria-pressed', String((p.stage ?? 0) === Number(b.dataset.stage)));
   const pv = previewValues(p);
   const b = bmi(pv.weight, pv.height);
@@ -359,9 +361,13 @@ $('sheet').addEventListener('click', (e) => {
     }
   }
   if (e.target.closest('#sheet-delete') && sheetId) deleteCurrent();
-  if (e.target.closest('#gp-withdraw') && sheetId && confirm('Confirmer le retrait de l’autorisation de transmission ?')) {
-    store.patch(sheetId, { gp_consent: 0 });
-    $('sheet-gp').innerHTML = '<p class="font-bold text-slate-800">Transmission au médecin traitant : <span class="text-red-700">retirée</span></p>';
+  const c = e.target.closest('[data-consent]');
+  if (c && sheetId) {
+    const v = Number(c.dataset.consent);
+    const msg = v
+      ? 'Le participant autorise-t-il la transmission de ses informations au médecin de la consultation (formulaire signé ou accord explicite) ?'
+      : 'Confirmer le retrait de l’autorisation ? L’assignation au médecin sera annulée.';
+    if (confirm(msg)) store.patch(sheetId, v ? { doctor_consent: 1 } : { doctor_consent: 0, doctor: null });
   }
 });
 $('sheet').addEventListener('close', () => {
@@ -388,7 +394,7 @@ async function deleteCurrent() {
 }
 
 store.state.onRejected = (id, e) => {
-  toast(e.status === 404 ? 'Dossier supprimé entre-temps' : 'Valeur refusée par le serveur', 'error');
+  toast(e.status === 404 ? 'Dossier supprimé entre-temps' : e.status === 409 ? 'Accord de transmission au médecin requis' : 'Valeur refusée par le serveur', 'error');
 };
 
 /* ---------- Ajout manuel ---------- */
