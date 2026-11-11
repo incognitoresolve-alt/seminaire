@@ -146,7 +146,7 @@ pied de l'inscription, bas de la liste staff (version « soignants », masquable
 **Jamais** dans une fiche patient, un résultat de triage ou les stats. Aucun ciblage selon les données de santé.
 
 Demandes de contact : table `partner_leads` isolée (aucune jointure possible avec patients), purge à 180 j.
-Check-up couverture : case facultative (non pré-cochée, distincte du consentement médical) dans le formulaire d’inscription ; cochée = demande de contact (nom/e-mail/téléphone uniquement). Modèle d'e-mail conforme : `docs/modele-email-checkup.md`.
+Check-up couverture : case facultative (non pré-cochée, distincte du consentement médical) dans le formulaire d’inscription, mise en avant en **violet « Au choix »** (clignotement limité à ≈ 13 s, arrêté dès qu'elle est cochée ; jamais l'orange des accords obligatoires, pour ne pas paraître requise) ; cochée = demande de contact (nom/e-mail/téléphone uniquement). Modèle d'e-mail conforme : `docs/modele-email-checkup.md`.
 
 **Aucun envoi automatique d'e-mail.** Les demandes de check-up sont recontactées manuellement par le partenaire (onglet *Mes contacts*, modèle : `docs/modele-email-checkup.md`) ; les fiches des médecins traitants partent manuellement depuis `/admin` → **Envois** (voir ci-dessous).
 
