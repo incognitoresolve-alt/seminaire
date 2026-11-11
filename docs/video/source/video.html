@@ -39,11 +39,12 @@
   .chk { margin: 14px 30px 0; border-radius: 16px; padding: 16px 18px; display: flex; gap: 14px; align-items: center; font-size: 19px; font-weight: 600; color: #2a1d40; border: 2.5px solid #ddd3ea; background: #fff; position: relative; overflow: hidden; }
   .box { width: 32px; height: 32px; border-radius: 9px; border: 2.5px solid #9d8db5; flex: none; display: grid; place-items: center; background: #fff; }
   .box svg { width: 22px; height: 22px; }
-  .chk.opt { margin-top: 12px; padding: 12px 16px; font-size: 18px; font-weight: 500; color: #64748b; border: 2px dashed #cbd5e1; background: #fff; align-items: flex-start; line-height: 1.3; }
-  .chk.opt .box { width: 26px; height: 26px; border-radius: 7px; border-color: #94a3b8; }
-  .chk.opt b { color: #475569; font-weight: 700; }
-  .optag { margin-top: 30px; display: inline-flex; align-items: center; gap: 14px; border-radius: 18px; padding: 14px 22px; background: rgba(242,107,29,.16); border: 2px solid rgba(255,163,102,.7); color: #fff; font-size: 27px; font-weight: 700; }
-  .optag i { font-style: normal; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--or2); color: #2a0c47; font-weight: 900; font-size: 26px; }
+  .chk.opt { margin-top: 12px; padding: 12px 16px; font-size: 18px; font-weight: 500; color: #475569; border: 2px solid #d8b4fe; background: #faf5ff; align-items: flex-start; line-height: 1.3; }
+  .chk.opt .box { width: 26px; height: 26px; border-radius: 7px; border-color: #a78bfa; }
+  .chk.opt b { color: #334155; font-weight: 700; }
+  .chk.opt .tag { display: inline-block; margin-right: 6px; border-radius: 6px; background: #ede9fe; color: #5b1f8c; font-size: 12px; font-weight: 800; letter-spacing: .06em; padding: 2px 7px; vertical-align: 2px; }
+  .optag { margin-top: 30px; display: inline-flex; align-items: center; gap: 14px; border-radius: 18px; padding: 14px 22px; background: rgba(168,85,247,.2); border: 2px solid rgba(216,180,254,.75); color: #fff; font-size: 27px; font-weight: 700; }
+  .optag i { font-style: normal; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: #d8b4fe; color: #2a0c47; font-weight: 900; font-size: 26px; }
   .btn { margin: 22px 30px 0; height: 70px; border-radius: 18px; background: var(--v700); color: #fff; display: grid; place-items: center; font-size: 25px; font-weight: 800; box-shadow: 0 16px 30px -12px rgba(91,31,140,.7); }
   .toast { position: absolute; left: 30px; right: 30px; top: 92px; border-radius: 18px; background: #ecfdf5; border: 2px solid #6ee7b7; color: #065f46; font-weight: 800; font-size: 23px; padding: 18px 20px; }
   .row { margin: 0 26px 12px; height: 84px; border-radius: 18px; background: #fff; border: 1.5px solid #e9e2f3; display: flex; align-items: center; gap: 16px; padding-right: 18px; overflow: hidden; box-shadow: 0 6px 18px -12px rgba(42,12,71,.35); }
@@ -95,7 +96,7 @@
         <div class="lbl">E-mail</div><div class="inp" id="f-mail"></div>
         <div class="chk" id="c1"><span class="box" id="b1"></span>J’accepte la consultation de prévention</div>
         <div class="chk" id="c2"><span class="box" id="b2"></span>J’autorise la transmission à mon médecin traitant</div>
-        <div class="chk opt" id="c3"><span class="box" id="b3"></span><span><b>Publicité —</b> Oui, je souhaite un check-up gratuit et sans engagement de ma couverture assurance-vie</span></div>
+        <div class="chk opt" id="c3"><span class="box" id="b3"></span><span><span class="tag">AU CHOIX</span><b>Publicité —</b> Oui, je souhaite un check-up gratuit et sans engagement de ma couverture assurance-vie</span></div>
         <div class="btn" id="btn1">Enregistrer l’inscription</div>
         <div class="toast" id="toast1">✓ Awa Diallo est inscrite</div>
       </div>
@@ -122,12 +123,14 @@
 
   <!-- 3. Paramètres -->
   <div class="scene" id="s3">
-    <div class="copy"><div class="step"><b>3</b>Paramètres</div><h2 id="h3"></h2><p>Triage automatique selon l’âge,<br>et une analyse indicative sourcée.</p></div>
+    <div class="copy"><div class="step"><b>3</b>Paramètres</div><h2 id="h3"></h2><p>Le soignant indique son nom, puis encode :<br>triage selon l’âge, analyse indicative sourcée.</p></div>
     <div class="device glass" id="d3" style="left:1080px;top:70px;width:660px;height:900px">
       <div class="screen">
         <div class="ui-h" style="padding-bottom:6px">Awa Diallo<span style="font-size:17px;color:#6b5b84;font-weight:600">· 41 ans</span></div>
-        <div id="tri" style="margin:8px 26px 0;border-radius:18px;padding:16px 20px;font-weight:900;font-size:26px;display:flex;align-items:center;gap:14px"><span id="tdot" style="width:22px;height:22px;border-radius:50%"></span><span id="tlab"></span></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 26px 0">
+        <div class="lbl" style="margin-top:2px">Soignant qui encode <span style="color:#be123c">(obligatoire)</span></div>
+        <div class="inp" id="f-prac" style="height:54px;padding:11px 18px;font-size:22px"></div>
+        <div id="tri" style="margin:12px 26px 0;border-radius:18px;padding:16px 20px;font-weight:900;font-size:26px;display:flex;align-items:center;gap:14px"><span id="tdot" style="width:22px;height:22px;border-radius:50%"></span><span id="tlab"></span></div>
+        <div id="vgrid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 26px 0">
           <div class="vit"><div class="k">Tension</div><div class="v" id="v-ta">–</div></div>
           <div class="vit"><div class="k">Pouls</div><div class="v" id="v-p">–</div></div>
           <div class="vit"><div class="k">SpO2</div><div class="v" id="v-s">–</div></div>
@@ -208,7 +211,7 @@ const PEOPLE = [['Martin Léa', '36 ans', '#10b981', 'Vert'], ['Diallo Awa', '41
 const PILL = { Vert: ['#d1fae5', '#065f46'], 'À mesurer': ['#f1f5f9', '#334155'], Orange: ['#fef3c7', '#78350f'], Rouge: ['#ffe4e6', '#9f1239'] };
 $('rows').innerHTML = PEOPLE.map(([n, a, c, l], i) => `<div class="row" id="r${i}"><span class="bar" style="background:${c}"></span><div><div class="nm">${n}</div><div class="sb">${a}</div></div><span class="pill" style="background:${PILL[l][0]};color:${PILL[l][1]}">${l}</span></div>`).join('');
 $('dots').innerHTML = Array.from({ length: 8 }, (_, i) => `<span id="dt${i}" style="width:26px;height:26px;border-radius:50%;border:3px solid #6d28a8"></span>`).join('');
-$('pillars').innerHTML = [['⚡', 'Rapide', 'inscription en 20 s'], ['⟲', 'Temps réel', 'toutes les tablettes'], ['🔒', 'Conforme RGPD', 'accords explicites']].map(([ic, t, s], i) => `<div class="glass" id="pl${i}" style="width:380px;border-radius:30px;padding:30px 34px"><div style="font-size:44px">${ic}</div><div style="font-size:40px;font-weight:900;margin-top:10px">${t}</div><div style="font-size:24px;color:rgba(255,255,255,.7);margin-top:6px;font-weight:600">${s}</div></div>`).join('');
+$('pillars').innerHTML = [['⚡', 'Rapide', 'inscription en 20 s'], ['⟲', 'Temps réel', 'toutes les tablettes'], ['🔒', 'Conforme RGPD', 'accords prouvés']].map(([ic, t, s], i) => `<div class="glass" id="pl${i}" style="width:380px;border-radius:30px;padding:30px 34px"><div style="font-size:44px">${ic}</div><div style="font-size:40px;font-weight:900;margin-top:10px">${t}</div><div style="font-size:24px;color:rgba(255,255,255,.7);margin-top:6px;font-weight:600">${s}</div></div>`).join('');
 
 const CHECK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function typed(el, text, k, focus) { const n = Math.round(text.length * clamp(k)); el.innerHTML = text.slice(0, n) + (focus ? '<span class="caret"></span>' : ''); el.classList.toggle('focus', !!focus); }
@@ -262,10 +265,10 @@ window.render = function (t) {
       css(c, checked ? { borderColor: '#6d28a8', boxShadow: 'none', background: '#faf5ff' } : { borderColor: '#f26b1d', boxShadow: `0 0 0 ${3 + pulse * 6}px rgba(242,107,29,${0.12 + pulse * 0.2})`, background: '#fff6ef' });
       b.innerHTML = checked ? CHECK : ''; css(b, checked ? { background: '#6d28a8', borderColor: '#6d28a8', transform: `scale(${eBack(seg(t, tc, tc + 0.3))})` } : { background: '#fff', borderColor: '#f26b1d', transform: 'none' });
     });
-    // Case facultative : jamais de scintillement ; mise en avant (halo + pastille) au moment où elle est cochée
-    const c3on = t >= 7.25 && !reset, hl = seg(t, 6.95, 7.2) * (1 - seg(t, 7.9, 8.3));
-    css($('c3'), { borderColor: c3on ? '#64748b' : '#cbd5e1', borderStyle: c3on ? 'solid' : 'dashed', background: c3on ? '#f8fafc' : '#fff', boxShadow: `0 0 0 ${hl * 8}px rgba(242,107,29,${hl * 0.35})` });
-    $('b3').innerHTML = c3on ? CHECK : ''; css($('b3'), c3on ? { background: '#475569', borderColor: '#475569', transform: `scale(${eBack(seg(t, 7.25, 7.55))})` } : { background: '#fff', borderColor: '#94a3b8', transform: 'none' });
+    // Case facultative (publicité) : violet « Au choix », clignotement doux tant qu'elle n'est pas cochée (comme l'application)
+    const c3on = t >= 7.25 && !reset, p3 = 0.5 + 0.5 * Math.sin(t * 9 + 3);
+    css($('c3'), c3on ? { borderColor: '#7c3aed', background: '#faf5ff', boxShadow: 'none' } : { borderColor: '#c4b5fd', background: '#fdfaff', boxShadow: `0 0 0 ${2 + p3 * 5}px rgba(109,40,168,${0.08 + p3 * 0.14})` });
+    $('b3').innerHTML = c3on ? CHECK : ''; css($('b3'), c3on ? { background: '#6d28a8', borderColor: '#6d28a8', transform: `scale(${eBack(seg(t, 7.25, 7.55))})` } : { background: '#fff', borderColor: '#a78bfa', transform: 'none' });
     const ok = eBack(seg(t, 6.95, 7.45)); css($('optag'), { opacity: seg(t, 6.95, 7.2), transform: `translateY(${(1 - ok) * 24}px) scale(${0.92 + 0.08 * ok})` });
     const press = seg(t, 7.75, 7.95) * (1 - seg(t, 7.95, 8.15));
     css($('btn1'), { transform: `scale(${1 - press * 0.05})`, boxShadow: `0 0 0 ${press * 14}px rgba(124,47,208,.25)` });
@@ -298,17 +301,20 @@ window.render = function (t) {
   if (k3 > 0) {
     inWords(W.h3, t, 14.6); deviceIn($('d3'), t, 14.55);
     const cnt = (a, b, from, to, dec = 0) => { const k = eOut(seg(t, a, b)); return k <= 0 ? '–' : (from + (to - from) * k).toFixed(dec).replace('.', ','); };
-    $('v-ta').textContent = t < 15.0 ? '–' : `${cnt(15.0, 15.8, 90, 150)}/${cnt(15.0, 15.8, 60, 85)}`;
-    $('v-p').textContent = cnt(15.6, 16.2, 50, 88);
-    $('v-s').textContent = t < 16.0 ? '–' : `${cnt(16.0, 16.6, 90, 97)} %`;
-    $('v-t').textContent = t < 16.3 ? '–' : `${cnt(16.3, 16.9, 35, 37.1, 1)} °C`;
-    const orange = t >= 17.0;
-    const g = Math.max(0, 1 - Math.abs(t - 17.15) * 3);
+    // Nom du soignant d'abord : paramètres grisés tant qu'il n'est pas indiqué
+    typed($('f-prac'), 'Inf. Sarah Mukendi', seg(t, 14.95, 15.45), t > 14.9 && t < 15.5);
+    css($('vgrid'), { opacity: t < 15.5 ? 0.4 : 0.4 + 0.6 * seg(t, 15.5, 15.7) });
+    $('v-ta').textContent = t < 15.7 ? '–' : `${cnt(15.7, 16.4, 90, 150)}/${cnt(15.7, 16.4, 60, 85)}`;
+    $('v-p').textContent = t < 16.1 ? '–' : cnt(16.1, 16.6, 50, 88);
+    $('v-s').textContent = t < 16.4 ? '–' : `${cnt(16.4, 16.9, 90, 97)} %`;
+    $('v-t').textContent = t < 16.6 ? '–' : `${cnt(16.6, 17.1, 35, 37.1, 1)} °C`;
+    const orange = t >= 17.2;
+    const g = Math.max(0, 1 - Math.abs(t - 17.35) * 3);
     css($('tri'), { background: orange ? '#fef3c7' : '#f1f5f9', color: orange ? '#78350f' : '#334155', boxShadow: `0 0 ${g * 60}px ${g * 10}px rgba(245,158,11,.45)` });
     css($('tdot'), { background: orange ? '#f59e0b' : '#94a3b8', transform: `scale(${1 + g * 0.6})` });
     $('tlab').textContent = orange ? 'Orange · tension élevée' : 'À mesurer';
-    const bk = eBack(seg(t, 17.4, 17.85)); css($('ban3'), { opacity: seg(t, 17.4, 17.6), transform: `translateY(${(1 - bk) * 30}px) scale(${0.94 + 0.06 * bk})` });
-    css($('src3'), { opacity: seg(t, 18.0, 18.4) });
+    const bk = eBack(seg(t, 17.55, 18.0)); css($('ban3'), { opacity: seg(t, 17.55, 17.75), transform: `translateY(${(1 - bk) * 30}px) scale(${0.94 + 0.06 * bk})` });
+    css($('src3'), { opacity: seg(t, 18.1, 18.5) });
     const ak = eBack(seg(t, 19.1, 19.55)) * (1 - seg(t, 20.4, 20.8));
     css($('alert3'), { opacity: Math.min(1, ak * 1.4), transform: `translateY(${(1 - ak) * 26}px)`, boxShadow: `0 0 ${30 + 20 * Math.sin(t * 12)}px rgba(225,29,72,.55)` });
   }

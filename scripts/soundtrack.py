@@ -88,7 +88,7 @@ for c, g in [(1.0, 1.0), (27.6, 0.9)]:
 
 # Clochette douce sur les validations (2 accords, option check-up, inscription, orange, arrivée chez le médecin)
 bell = np.zeros_like(t)
-for c, n in [(6.4, 12), (6.75, 15), (7.25, 17), (8.1, 19), (17.0, 14), (23.4, 19), (24.0, 24)]:
+for c, n in [(6.4, 12), (6.75, 15), (7.25, 17), (8.1, 19), (17.2, 14), (23.4, 19), (24.0, 24)]:
     m = t >= c
     dt = t[m] - c
     f = note(n)
