@@ -201,7 +201,7 @@ export async function eventStats(env) {
       SUM(stage=2) done FROM patients WHERE deleted_at IS NULL`),
     env.DB.prepare(`SELECT date(created_at/1000,'unixepoch','localtime') d, COUNT(*) n FROM patients WHERE deleted_at IS NULL GROUP BY d ORDER BY d`),
     env.DB.prepare(`SELECT CASE WHEN a < 18 THEN '0-17' WHEN a < 40 THEN '18-39' WHEN a < 60 THEN '40-59' WHEN a < 75 THEN '60-74' ELSE '75+' END k, COUNT(*) n
-      FROM (SELECT (strftime('%Y','now') - strftime('%Y', birth_date)) - (strftime('%m-%d','now') < strftime('%m-%d', birth_date)) a FROM patients WHERE deleted_at IS NULL)
+      FROM (SELECT (strftime('%Y','now') - strftime('%Y', birth_date)) - (strftime('%m-%d','now') < strftime('%m-%d', birth_date)) a FROM patients WHERE deleted_at IS NULL AND birth_date != '')
       GROUP BY k ORDER BY k`),
     env.DB.prepare('SELECT triage k, COUNT(*) n FROM patients WHERE deleted_at IS NULL GROUP BY triage'),
     env.DB.prepare('SELECT doctor k, COUNT(*) n FROM patients WHERE deleted_at IS NULL AND doctor IS NOT NULL GROUP BY doctor'),

@@ -79,7 +79,7 @@ function rowHtml(p, level) {
       <span class="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
         <span class="min-w-0 flex-1">
           <span class="block truncate text-base font-bold">${esc(p.last_name)} ${esc(p.first_name)}</span>
-          <span class="block truncate text-sm text-slate-600">${esc(ageOf(p.birth_date))} · <span class="font-mono">${esc(p.short_code)}</span>${vit ? ` · ${esc(vit)}` : ''}</span>
+          <span class="block truncate text-sm text-slate-600">${p.birth_date ? `${esc(ageOf(p.birth_date))} · ` : ''}<span class="font-mono">${esc(p.short_code)}</span>${vit ? ` · ${esc(vit)}` : ''}</span>
         </span>
         ${stageBadge}
         ${doc}
@@ -214,7 +214,7 @@ function openSheet(id) {
     <div class="sticky top-0 z-10 flex items-start gap-3 border-b border-slate-200 bg-white px-4 py-3">
       <div class="min-w-0 flex-1">
         <h2 id="sheet-name" class="truncate text-xl font-extrabold">${esc(p.last_name)} ${esc(p.first_name)}</h2>
-        <p class="text-sm text-slate-600">${esc(ageOf(p.birth_date))} · né(e) le ${esc(p.birth_date.split('-').reverse().join('/'))} · <span class="font-mono font-bold">${esc(p.short_code)}</span></p>
+        <p class="text-sm text-slate-600">${p.birth_date ? `${esc(ageOf(p.birth_date))} · né(e) le ${esc(p.birth_date.split('-').reverse().join('/'))} · ` : ''}<span class="font-mono font-bold">${esc(p.short_code)}</span></p>
         <p id="sheet-email" class="truncate text-sm text-slate-500"></p>
       </div>
       <button class="btn-ghost min-h-11 px-3" type="button" data-close aria-label="Fermer">✕</button>

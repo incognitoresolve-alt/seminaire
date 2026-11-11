@@ -41,10 +41,10 @@ Ne plus recevoir de message (vos coordonnées seront supprimées) : ${unsubPage}
 <p style="margin:0 0 16px">Merci pour votre participation à la Semaine de la santé d’ICC Liège et pour votre intérêt pour le <strong>check-up gratuit de votre couverture</strong>.</p>
 <p style="margin:0 0 8px">Je vous propose un échange d’environ 20 minutes, gratuit et sans engagement, par téléphone ou en rendez-vous, pour faire le point ensemble sur :</p>
 <ul style="margin:0 0 16px;padding-left:20px"><li>votre épargne-pension et la préparation de votre retraite ;</li><li>la protection de vos proches en cas de décès ;</li><li>l’assurance obsèques, si le sujet vous concerne.</li></ul>
-<p style="margin:0 0 20px">Pour choisir un moment, répondez simplement à cet e-mail ou appelez-moi au <a href="tel:${esc(PARTNER.phoneHref)}" style="color:#0369a1">${esc(PARTNER.phone)}</a>.</p>
+<p style="margin:0 0 20px">Pour choisir un moment, répondez simplement à cet e-mail ou appelez-moi au <a href="tel:${esc(PARTNER.phoneHref)}" style="color:#5b1f8c">${esc(PARTNER.phone)}</a>.</p>
 <p style="margin:0 0 4px">Bien à vous,</p>
 <p style="margin:0;font-weight:bold">${esc(PARTNER.person)}</p>
-<p style="margin:0;font-size:13px;color:#475569">${esc(status)} pour ${esc(PARTNER.principal)} · FSMA n° ${esc(PARTNER.fsma)}<br>${esc(PARTNER.phone)} · <a href="mailto:${esc(PARTNER.email)}" style="color:#0369a1">${esc(PARTNER.email)}</a></p>
+<p style="margin:0;font-size:13px;color:#475569">${esc(status)} pour ${esc(PARTNER.principal)} · FSMA n° ${esc(PARTNER.fsma)}<br>${esc(PARTNER.phone)} · <a href="mailto:${esc(PARTNER.email)}" style="color:#5b1f8c">${esc(PARTNER.email)}</a></p>
 </td></tr>
 <tr><td style="padding:16px 28px 24px;font-size:11px;line-height:1.5;color:#64748b;border-top:1px solid #e2e8f0">
 Publicité · ${esc(legal)}<br>${esc(footer)}<br>

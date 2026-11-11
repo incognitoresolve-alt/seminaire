@@ -34,8 +34,8 @@ test('patch : whitelist stricte', () => {
   assert.ok(!validatePatch([]).ok);
 });
 
-test('transmission au médecin de la consultation (choix obligatoire)', () => {
-  assert.ok(validateIdentity({ ...ok, doctor_consent: undefined }).errors.doctor_consent);
+test('accord unique : collecte + transmission à un médecin', () => {
+  assert.equal(validateIdentity({ ...ok, doctor_consent: undefined }).value.doctor_consent, true); // accord unique
   assert.ok(validateIdentity({ ...ok, doctor_consent: 'oui' }).errors.doctor_consent);
   assert.ok(validateIdentity({ ...ok, doctor_consent: true }).ok);
   assert.ok(validatePatch({ doctor_consent: 0 }).ok);
@@ -85,4 +85,12 @@ test('qualification et suivi partenaire : listes fermées', () => {
   assert.ok(validateLeadPatch({ status: 'rdv', partner_notes: 'rappeler mardi' }).ok);
   assert.ok(validateLeadPatch({ status: 'vip' }).errors.status);
   assert.ok(validateLeadPatch({ email: 'x@y.z' }).errors.email); // le partenaire ne modifie pas les coordonnées
+});
+
+test('inscription minimale : nom, prénom, e-mail suffisent', () => {
+  const r = validateIdentity({ last_name: 'Dupont', first_name: 'Anne', email: 'a@b.be', consent: true });
+  assert.ok(r.ok, JSON.stringify(r.errors));
+  assert.equal(r.value.birth_date, '');
+  assert.equal(r.value.doctor_consent, true);
+  assert.ok(validateIdentity({ last_name: 'Dupont', first_name: 'Anne', email: 'a@b.be' }).errors.consent);
 });

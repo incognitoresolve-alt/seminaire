@@ -23,7 +23,7 @@ Inscription **strictement individuelle** : un formulaire vierge par personne, un
 
 | Point de friction | Solution |
 |---|---|
-| Date de naissance (sélecteur iOS à faire défiler) | Champ JJ/MM/AAAA au clavier numérique, « / » automatiques, remplissage auto accepté |
+| Formulaire trop long | **Inscription minimale** : nom, prénom, e-mail, téléphone (facultatif), 1 accord obligatoire (collecte + transmission à un médecin) et 1 case check-up facultative — rien d'autre |
 | Soignants qui appellent le même patient | Étapes **En attente → En consultation → Terminé** synchronisées en temps réel ; bouton **Patient suivant** = le plus prioritaire en attente (rouge > orange > à mesurer > vert, puis ancienneté), marqué « En consultation » pour tous |
 | File qui ne se vide jamais | Vue « À traiter » par défaut ; « Terminé » ferme la fiche et retire le patient ; recherche toujours globale |
 | Pilotage | Temps d'attente par patient (rouge ≥ 30 min), nombre en attente et attente moyenne en tête |

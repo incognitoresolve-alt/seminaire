@@ -11,8 +11,6 @@ const CHECKUP_KEY = 'sem-checkup';
 const form = document.getElementById('reg');
 const passEl = document.getElementById('pass');
 let contact = null; // coordonnées pour la demande check-up en cours (mémoire uniquement)
-let qualifyToken = null; // jeton de la demande créée : permet de la préciser (mémoire uniquement)
-const picked = {};
 
 const store = {
   get: (k, s = localStorage) => {
@@ -43,18 +41,9 @@ if (Array.isArray(legacy)) {
 function renderCheckup(state) {
   if (state) store.set(CHECKUP_KEY, state);
   const s = state || store.get(CHECKUP_KEY);
-  const chip = (k, v, label) =>
-    `<button type="button" data-q="${k}" data-v="${v}" aria-pressed="${picked[k] === v}" class="rounded-full border border-slate-300 px-2.5 py-1 text-xs text-slate-600 aria-pressed:border-sky-700 aria-pressed:bg-sky-50 aria-pressed:text-sky-900">${label}</button>`;
-  const qualify = qualifyToken
-    ? `<div class="mt-2 space-y-1.5 text-center text-xs text-slate-500">
-        <p>Pour mieux vous recontacter :</p>
-        <div class="flex flex-wrap justify-center gap-1.5">${chip('contact_time', 'matin', 'Le matin')}${chip('contact_time', 'apres-midi', 'L’après-midi')}${chip('contact_time', 'soir', 'En soirée')}</div>
-        <div class="flex flex-wrap justify-center gap-1.5">${chip('interest', 'epargne_pension', 'Épargne-pension')}${chip('interest', 'deces', 'Protection des proches')}${chip('interest', 'obseques', 'Obsèques')}</div>
-      </div>`
-    : '';
   document.getElementById('checkup').innerHTML =
     s === 'yes'
-      ? `<p class="text-center text-xs text-slate-500">Check-up couverture : c’est noté, vous serez recontacté(e).</p>${qualify}`
+      ? '<p class="text-center text-xs text-slate-500">Check-up couverture : c’est noté, vous serez recontacté(e).</p>'
       : s === 'failed' && contact
         ? '<p class="text-center text-xs text-slate-500">La demande de check-up n’a pas pu partir. <button type="button" data-ck-retry class="font-semibold text-sky-800 underline">Réessayer</button></p>'
         : '';
@@ -62,7 +51,7 @@ function renderCheckup(state) {
 
 async function sendCheckup() {
   try {
-    const res = await api('/partner/lead', {
+    await api('/partner/lead', {
       method: 'POST',
       body: {
         audience: 'public',
@@ -75,19 +64,12 @@ async function sendCheckup() {
       },
     });
     contact = null;
-    qualifyToken = res?.t || null;
     renderCheckup('yes');
   } catch {
     renderCheckup('failed');
   }
 }
 document.getElementById('checkup').addEventListener('click', (e) => {
-  const q = e.target.closest('[data-q]');
-  if (q && qualifyToken) {
-    picked[q.dataset.q] = q.dataset.v;
-    renderCheckup();
-    api('/partner/qualify', { method: 'POST', body: { t: qualifyToken, [q.dataset.q]: q.dataset.v } }).catch(() => {});
-  }
   if (e.target.closest('[data-ck-retry]') && contact) {
     e.target.disabled = true;
     sendCheckup();
@@ -108,8 +90,6 @@ function showPass() {
 /** Nouvelle inscription individuelle : formulaire vierge, aucun préremplissage. */
 function showForm() {
   contact = null;
-  qualifyToken = null;
-  for (const k of Object.keys(picked)) delete picked[k];
   passEl.hidden = true;
   form.hidden = false;
   form.reset();
