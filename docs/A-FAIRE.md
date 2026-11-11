@@ -9,8 +9,9 @@
 > 3. **Ouvrir `https://<adresse>/api/health`** → `{"ok":true}` (crée aussi les tableaux de la base automatiquement).
 > 4. **Test réel (5 min)** : inscrire 2 personnes sur la tablette d'accueil → *Liste des inscrits* (PIN) → ouvrir une fiche → saisir une tension → vérifier sur une 2e tablette.
 > 5. **Effacer les tests** : D1 → `seminaire` → *Console* → `DELETE FROM patients; DELETE FROM surveys; DELETE FROM partner_leads;`
-> 6. **Envoyer à Claude l'e-mail de contact RGPD d'ICC Liège** (seul texte manquant du site : politique de confidentialité).
-> 7. Sur place : PIN donné aux soignants uniquement, tablettes chargées, veille d'écran désactivée, partage 4G de secours.
+> 6. **Faire relire l'assistant éducatif par les médecins** (README, section « Assistant médical éducatif ») : seuils marqués « Seuil de prudence CheckSanté », textes des conseils.
+> 7. **Envoyer à Claude l'e-mail de contact RGPD d'ICC Liège** (seul texte manquant du site : politique de confidentialité).
+> 8. Sur place : PIN donné aux soignants uniquement, tablettes chargées, veille d'écran désactivée, partage 4G de secours.
 >
 > Facultatif : e-mails automatiques Brevo (section E), nom de domaine, affiches `/affiche`, validation des seuils et conseils par les médecins.
 

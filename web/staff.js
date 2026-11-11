@@ -3,7 +3,8 @@ import { ageOf, api, esc } from './api.js';
 import { bindIdentityForm, identityFieldsHtml } from './form.js';
 import { mountCredit, mountPartner } from './partner-ui.js';
 import { DOCTORS } from './shared/doctors.js';
-import { advice, bmi, triage } from './shared/triage.js';
+import { NOTE, RAPPEL, analyse } from './shared/assistant.js';
+import { ALERTS, CONTEXTS, bmi, parseAlerts, triage } from './shared/triage.js';
 import { NOTES_MAX, VITALS, normalize, parseVital } from './shared/validate.js';
 import * as store from './store.js';
 
@@ -196,6 +197,8 @@ setInterval(() => document.visibilityState === 'visible' && renderList(), 30000)
 let sheetId = null;
 const VITAL_FIELDS = [
   ['pulse', 'Pouls', 'bpm', 'numeric'],
+  ['rr', 'Respiration', '/min', 'numeric'],
+  ['spo2', 'SpO2', '%', 'numeric'],
   ['temp', 'Température', '°C', 'decimal'],
   ['sys', 'Tension sys.', 'mmHg', 'numeric'],
   ['dia', 'Tension dia.', 'mmHg', 'numeric'],
@@ -223,7 +226,6 @@ function openSheet(id) {
         ${[0, 1, 2].map((st) => `<button type="button" data-stage="${st}" class="btn-ghost min-h-12 px-2 text-sm aria-pressed:border-slate-900 aria-pressed:bg-slate-900 aria-pressed:text-white">${STAGE[st]}</button>`).join('')}
       </div>
       <div id="sheet-triage" class="rounded-2xl p-4" role="status" aria-live="polite"></div>
-      <div id="sheet-advice" aria-live="polite"></div>
       <section aria-labelledby="h-vitals">
         <h3 id="h-vitals" class="mb-2 text-sm font-bold tracking-wide text-slate-500 uppercase">Paramètres vitaux</h3>
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -238,6 +240,14 @@ function openSheet(id) {
         </div>
       </section>
       <p id="sheet-bmi" class="-mt-2 text-sm font-semibold text-slate-700" aria-live="polite"></p>
+      <section aria-labelledby="h-alerts">
+        <h3 id="h-alerts" class="mb-2 text-sm font-bold tracking-wide text-red-700 uppercase">Signes d’alerte → 112</h3>
+        <div class="flex flex-wrap gap-2" id="sheet-alerts">
+          ${Object.entries(ALERTS).map(([k, label]) => `<button type="button" data-alert="${k}" aria-pressed="false" class="rounded-full border border-red-300 bg-white px-3 py-2 text-sm font-semibold text-red-800 aria-pressed:border-red-700 aria-pressed:bg-red-700 aria-pressed:text-white">${esc(label)}</button>`).join('')}
+          ${Object.entries(CONTEXTS).map(([k, label]) => `<button type="button" data-alert="${k}" aria-pressed="false" class="rounded-full border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 aria-pressed:border-slate-900 aria-pressed:bg-slate-900 aria-pressed:text-white">${esc(label)}</button>`).join('')}
+        </div>
+      </section>
+      <div id="sheet-advice"></div>
       <section aria-labelledby="h-doc">
         <h3 id="h-doc" class="mb-2 text-sm font-bold tracking-wide text-slate-500 uppercase">Assignation</h3>
         <div class="grid grid-cols-2 gap-3" id="sheet-doctors">
@@ -302,18 +312,70 @@ function refreshSheet(force = false) {
   }
   for (const b of $('sheet-stage').children) b.setAttribute('aria-pressed', String((p.stage ?? 0) === Number(b.dataset.stage)));
   const pv = previewValues(p);
-  const tips = advice(pv);
-  const ICON = { red: '●', orange: '●', info: '›' };
-  const COLOR = { red: 'text-red-700', orange: 'text-amber-700', info: 'text-slate-500' };
-  $('sheet-advice').innerHTML = tips.length
-    ? `<div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200"><p class="mb-1 text-xs font-bold tracking-wide text-slate-500 uppercase">Conseils automatiques (indicatifs)</p><ul class="space-y-1 text-sm">${tips
-        .map((t) => `<li class="flex gap-2"><span class="${COLOR[t.tone]}" aria-hidden="true">${ICON[t.tone]}</span><span class="${t.tone === 'info' ? 'text-slate-700' : 'font-semibold text-slate-900'}">${esc(t.text)}</span></li>`)
-        .join('')}</ul></div>`
-    : '';
+  const al = parseAlerts(p.alerts);
+  for (const btn of $('sheet-alerts').children) btn.setAttribute('aria-pressed', String(al.has(btn.dataset.alert)));
+  const an = analyse(pv);
+  renderAnalysis(an);
+  if (an.level !== 'incomplet')
+    $('sheet-triage').insertAdjacentHTML('beforeend', `<p class="mt-2 text-sm font-extrabold">${esc(an.label)} <a href="#sheet-advice" class="font-semibold underline">voir l’analyse ↓</a></p>`);
   const b = bmi(pv.weight, pv.height);
   $('sheet-bmi').textContent = b == null ? '' : `IMC : ${String(b).replace('.', ',')} kg/m² (normal 18,5–24,9)`;
   $('sheet-save').textContent = store.isPending(sheetId) ? (store.state.status === 'offline' ? 'Hors ligne : sera envoyé…' : 'Enregistrement…') : 'Enregistré ✓';
 }
+
+/* ---------- Analyse indicative (assistant éducatif) ---------- */
+const TONE = {
+  red: 'bg-red-700 text-white',
+  orange: 'bg-amber-100 text-amber-950 ring-1 ring-amber-300',
+  green: 'bg-emerald-100 text-emerald-950 ring-1 ring-emerald-300',
+  grey: 'bg-slate-100 text-slate-800',
+};
+const DOT = { urgence: 'text-red-700', urgence_medicale: 'text-red-700', consultation: 'text-amber-700', surveillance: 'text-amber-700', rassurant: 'text-emerald-700' };
+const cite = (ids, all) =>
+  ids.map((id) => `<a href="#src-${id}" data-cite="${id}" class="ml-1 text-xs font-semibold whitespace-nowrap text-sky-800 underline">[${esc(all.find((x) => x.id === id)?.short ?? id)}]</a>`).join('');
+const H = (n, t) => `<h4 class="mt-4 mb-1 text-sm font-bold text-slate-900">${n}. ${t}</h4>`;
+function renderAnalysis(a) {
+  const box = $('sheet-advice');
+  const open = box.querySelector('details')?.open ?? false;
+  box.innerHTML = `<section class="rounded-2xl bg-white p-4 ring-1 ring-slate-200" aria-label="Analyse indicative">
+    <p class="text-xs font-bold tracking-wide text-slate-500 uppercase">Analyse indicative (assistant éducatif)</p>
+    ${H(1, 'Note importante')}<p class="text-xs leading-snug text-slate-600">${esc(NOTE)}</p>
+    ${H(2, 'Niveau d’urgence')}<p class="rounded-xl px-4 py-3 text-base font-extrabold ${TONE[a.tone]}">${esc(a.label)}</p>
+    ${H(3, 'Ce que j’ai compris')}<p class="text-sm text-slate-700">${esc(a.understood)}</p>
+    ${H(4, 'Interprétation indicative')}
+    ${a.findings.length ? `<ul class="space-y-1.5 text-sm">${a.findings.map((f) => `<li class="flex gap-2"><span class="${DOT[f.lvl] ?? 'text-slate-500'}" aria-hidden="true">●</span><span>${esc(f.text)}${cite(f.src, a.sources)}</span></li>`).join('')}</ul>` : '<p class="text-sm text-slate-600">Aucune valeur en dehors des repères parmi les paramètres mesurés.</p>'}
+    ${a.news2 ? `<p class="mt-1 text-xs text-slate-600">Score NEWS2 partiel : ${a.news2.score} (sur ${a.news2.n} paramètres disponibles)${cite(['NEWS2'], a.sources)}</p>` : ''}
+    <p class="mt-2 text-xs text-slate-600">Une mesure isolée ne permet pas de conclure : elle doit être confirmée par une nouvelle mesure ou par un professionnel de santé. Les valeurs varient selon l’âge, les médicaments, le stress, l’effort, la fièvre et la méthode de mesure.</p>
+    ${a.questions.length ? `<p class="mt-2 text-sm font-semibold text-slate-800">À préciser :</p><ul class="list-disc pl-5 text-sm text-slate-700">${a.questions.map((q) => `<li>${esc(q)}</li>`).join('')}</ul>` : ''}
+    ${H(5, 'Ce qu’il faut faire maintenant')}<ol class="list-decimal space-y-1 pl-5 text-sm">${a.actions.map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
+    ${a.tips.length ? `<p class="mt-2 text-sm font-semibold text-slate-800">Bien refaire la mesure :</p><ul class="list-disc space-y-1 pl-5 text-sm text-slate-700">${a.tips.map((t) => `<li>${esc(t.text)}${cite(t.src, a.sources)}</li>`).join('')}</ul>` : ''}
+    ${a.prevention.length ? `<p class="mt-2 text-sm font-semibold text-slate-800">Prévention selon l’âge :</p><ul class="list-disc space-y-1 pl-5 text-sm text-slate-700">${a.prevention.map((t) => `<li>${esc(t.text)}${cite(t.src, a.sources)}</li>`).join('')}</ul>` : ''}
+    ${H(6, 'Quand contacter un professionnel')}<ul class="list-disc space-y-1 pl-5 text-sm text-slate-700">${a.when.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+    <details class="mt-4" ${open ? 'open' : ''}><summary class="cursor-pointer text-sm font-bold text-slate-900">7. Sources utilisées (${a.sources.length})</summary>
+      <ul class="mt-2 space-y-2 text-xs text-slate-700">${a.sources
+        .map((x) => `<li id="src-${x.id}" class="rounded-lg bg-slate-50 p-2"><b>${esc(x.institution)}</b> — ${esc(x.title)}${x.date ? ` — ${esc(x.date)}` : ''}${x.url ? `<br><a class="break-all text-sky-800 underline" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">${esc(x.url)}</a>` : ''}<br><span class="text-slate-600">${esc(x.info)}</span>${x.tier === 'INT' ? '<br><span class="text-slate-500">Référence internationale (aucune source belge officielle équivalente trouvée).</span>' : ''}</li>`)
+        .join('')}</ul>
+    </details>
+    ${H(8, 'Rappel final')}<p class="text-xs leading-snug text-slate-600">${esc(RAPPEL)}</p>
+  </section>`;
+}
+$('sheet').addEventListener('click', (e) => {
+  const c = e.target.closest('[data-cite]');
+  if (!c) return;
+  e.preventDefault();
+  const d = $('sheet-advice').querySelector('details');
+  d.open = true;
+  document.getElementById(`src-${c.dataset.cite}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+$('sheet').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-alert]');
+  if (!b || !sheetId) return;
+  const set = parseAlerts(store.view(sheetId).alerts);
+  if (set.has(b.dataset.alert)) set.delete(b.dataset.alert);
+  else set.add(b.dataset.alert);
+  store.patch(sheetId, { alerts: [...set].join(',') || null });
+  navigator.vibrate?.(40);
+});
 
 /** Triage instantané avec les valeurs en cours de frappe (avant même l'envoi). */
 function previewValues(p) {

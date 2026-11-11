@@ -111,6 +111,17 @@ Le pire paramètre l'emporte ; aucune mesure = « À mesurer ». **Seuils indica
 **Adaptation à l'âge** (date de naissance) : seuils pédiatriques pour le pouls et la tension (1–5 ans, 6–11 ans) ; IMC adulte non appliqué avant 18 ans.
 **Conseils automatiques** (fiche soignant, indicatifs) selon les valeurs ET l'âge : tension, pouls, fièvre, hypo/hyperglycémie, IMC, périmètre abdominal ; prévention selon l'âge (glycémie dès 45 ans, cholestérol dès 40 ans, dépistage colorectal 50–74 ans, vaccins dès 65 ans).
 
+## Assistant médical éducatif (fiche soignant)
+
+Moteur de règles **déterministe** (`web/shared/assistant.js`) — aucune IA générative, aucune donnée envoyée à un tiers.
+Format imposé : 1. Note importante · 2. Niveau d'urgence (112 / urgence médicale / consultation 24–72 h / surveillance / probablement rassurant) · 3. Ce que j'ai compris · 4. Interprétation indicative · 5. Ce qu'il faut faire · 6. Quand contacter un professionnel · 7. Sources · 8. Rappel final.
+
+- Paramètres : pouls, **respiration**, **SpO2**, température, tension, glycémie, IMC, périmètre abdominal ; **signes d'alerte** cochables (douleur thoracique, essoufflement, malaise, confusion, AVC, saignement → 112) ; contexte **grossesse**.
+- Âge : nourrisson (mois), enfant 1–5 / 6–11 ans, adulte ; **score NEWS2** (RCP 2017) chez l'adulte.
+- Sources (`web/shared/sources.js`, vérifiées le 11/11/2026) : RCP NEWS2, ESC 2024, NHS (SpO2), NICE NG143 et NG133, ADA 2025, OMS (diabète, IMC), Ligue Cardiologique Belge, 112.be, 1733, CCRef/Bruprev, CSS (grippe), vaccination-info.be. Références internationales signalées comme telles.
+- Seuils **sans source officielle** marqués « Seuil de prudence CheckSanté » (tension de l'enfant, glycémie ≥ 300, fièvre adulte ≥ 39,5) : **à valider par les médecins**.
+- Aucune prescription ni dose (test automatique).
+
 ## Sécurité & conformité
 
 - **Accès staff** : PIN d'événement → cookie `__Host-` HttpOnly/Secure/SameSite=Strict signé HMAC (14 h). Changer `STAFF_PIN` ou `SESSION_SECRET` révoque toutes les sessions et ferme les WebSockets. Fail-closed si secrets absents (503).
