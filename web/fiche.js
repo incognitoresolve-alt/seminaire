@@ -1,5 +1,5 @@
 // Fiche de transmission au médecin traitant : identité, mesures, notes et PREUVE de l'accord du participant.
-// Accès soignants uniquement (cookie de session) ; refus serveur si la transmission n'est pas autorisée (fail-closed).
+// Accès ADMINISTRATION uniquement (clé ADMIN_KEY, page /admin → Envois) ; refus serveur sans accord de transmission (fail-closed).
 import { api, esc } from './api.js';
 import { formatHash } from './shared/consent.js';
 import { ALERTS, CONTEXTS, bmi, parseAlerts } from './shared/triage.js';
@@ -63,7 +63,7 @@ function render({ patient: p, proof, generated_at }) {
       <p class="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-800 ring-1 ring-red-200">Confidentiel · données de santé</p>
     </header>
     <h1 class="mt-5 print:mt-3 text-2xl font-extrabold">Fiche de transmission au médecin traitant</h1>
-    <p class="mt-1 text-sm text-slate-600">À l’attention de : <b class="text-slate-900">${p.no_gp ? 'pas de médecin traitant (indiqué par le participant)' : p.gp_name ? esc(p.gp_name) : 'médecin traitant (nom non renseigné)'}</b></p>
+    <p class="mt-1 text-sm text-slate-600">À l’attention de : <b class="text-slate-900">${p.gp_name ? esc(p.gp_name) : p.no_gp ? 'médecin destinataire (le participant a indiqué ne pas avoir de médecin traitant)' : 'médecin traitant (nom non renseigné)'}</b></p>
     ${p.gp_contact || p.gp_email || p.gp_address ? `<p class="mt-0.5 text-sm whitespace-pre-line text-slate-600">${esc([[p.gp_contact, p.gp_email].filter(Boolean).join(' · '), p.gp_address].filter(Boolean).join('\n'))}</p>` : ''}
 
     ${H('Patient')}
@@ -106,7 +106,7 @@ function render({ patient: p, proof, generated_at }) {
 }
 
 function fail(msg) {
-  doc.innerHTML = `<div class="py-12 text-center"><p class="text-lg font-bold text-slate-900">${msg}</p><p class="mt-4"><a class="btn-primary" href="/staff">Espace soignants</a></p></div>`;
+  doc.innerHTML = `<div class="py-12 text-center"><p class="text-lg font-bold text-slate-900">${msg}</p><p class="mt-4"><a class="btn-primary" href="/admin">Administration</a></p></div>`;
 }
 
 $('print').addEventListener('click', () => print());
@@ -114,13 +114,12 @@ $('close').addEventListener('click', () => (history.length > 1 ? history.back() 
 
 if (!/^[0-9a-f-]{36}$/.test(id)) fail('Fiche introuvable.');
 else
-  api(`/staff/patients/${id}/fiche`)
-    .catch((e) => (e.status === 401 ? api(`/admin/patients/${id}/fiche`) : Promise.reject(e))) // depuis /admin → Envois
+  api(`/admin/patients/${id}/fiche`)
     .then(render)
     .catch((e) =>
       fail(
         e.status === 401
-          ? 'Accès réservé : connectez-vous dans l’espace soignants ou dans l’administration (clé ADMIN_KEY), puis rouvrez la fiche.'
+          ? 'Accès réservé à l’administration : connectez-vous sur /admin (clé ADMIN_KEY), onglet « Envois », puis rouvrez la fiche.'
           : e.status === 403
             ? 'Le participant n’a pas autorisé la transmission à son médecin traitant : aucune fiche ne peut être produite.'
             : e.status === 404

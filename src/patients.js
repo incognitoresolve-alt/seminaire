@@ -5,7 +5,7 @@ import { HttpError } from './http.js';
 // Colonnes exposées au staff (sans email ni request_id : minimisation).
 const COLS =
   'id,token,short_code,last_name,first_name,birth_date,source,doctor_consent,stage,stage_at,alerts,pulse,rr,spo2,temp,weight,height,waist,glucose,sys,dia,notes,triage,practitioner,version,created_at,updated_at,deleted_at';
-const DETAIL_COLS = `${COLS},email,phone,consent_at,no_gp,gp_name,gp_contact,gp_address,gp_email,gp_sent_at,doctor_consent_at,consent_log`;
+const DETAIL_COLS = `${COLS},email,phone,consent_at,no_gp,gp_name,gp_contact,gp_address,gp_email,gp_sent_at,staff_remark,doctor_consent_at,consent_log`;
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // sans 0/O/1/I/L
 
 const randomToken = () => {
@@ -305,7 +305,7 @@ export async function deleteFeedback(env, id) {
 }
 
 /* ---------- Envois manuels (rôle admin) : aucun e-mail n'est envoyé par l'application ---------- */
-const TX_COLS = 'id, last_name, first_name, birth_date, no_gp, gp_name, gp_contact, gp_email, gp_sent_at, doctor_consent_at, created_at';
+const TX_COLS = 'id, last_name, first_name, birth_date, no_gp, gp_name, gp_contact, gp_email, gp_sent_at, staff_remark, doctor_consent_at, created_at';
 /** Personnes ayant autorisé la transmission à leur médecin traitant (fiche à envoyer manuellement). */
 export async function listTransmissions(env) {
   const { results } = await env.DB.prepare(`SELECT ${TX_COLS} FROM patients WHERE doctor_consent = 1 AND deleted_at IS NULL ORDER BY gp_sent_at IS NOT NULL, last_name, first_name LIMIT 5000`).all();

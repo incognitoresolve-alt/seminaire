@@ -129,6 +129,10 @@ export function validatePatch(b) {
       const n = typeof raw === 'string' ? cleanName(raw) : '';
       if (n.length >= 2 && NAME_RE.test(n)) value.practitioner = n;
       else errors.practitioner = 'Nom du soignant invalide';
+    } else if (k === 'staff_remark') {
+      if (raw === null || (typeof raw === 'string' && !raw.trim())) value.staff_remark = null;
+      else if (typeof raw === 'string' && raw.length <= 1000) value.staff_remark = freeText(raw, 1000, true);
+      else errors.staff_remark = 'Remarque trop longue (1000 caractères max.)';
     } else if (k === 'no_gp') {
       if (raw === 0 || raw === 1) value.no_gp = raw;
       else errors.no_gp = 'Valeur invalide';

@@ -288,7 +288,7 @@ async function loadDetail(id) {
     const { patient: d, proof } = await api(`/staff/patients/${id}`);
     if (sheetId !== id) return;
     $('sheet-email').textContent = [d.email, d.phone].filter(Boolean).join(' · ');
-    sheetDetail = { gp: { no_gp: d.no_gp ? 1 : 0, gp_name: d.gp_name ?? null, gp_contact: d.gp_contact ?? null, gp_email: d.gp_email ?? null, gp_address: d.gp_address ?? null }, proof };
+    sheetDetail = { gp: { no_gp: d.no_gp ? 1 : 0, gp_name: d.gp_name ?? null, gp_contact: d.gp_contact ?? null, gp_email: d.gp_email ?? null, gp_address: d.gp_address ?? null }, remark: d.staff_remark ?? '', proof };
     const p = store.view(id);
     if (p) renderConsent(p);
   } catch {
@@ -302,7 +302,7 @@ function renderConsent(p, force = false) {
   const box = $('sheet-consent');
   const d = sheetDetail;
   const t = d?.proof?.transmission;
-  const key = `${p.doctor_consent}|${t ? `${t.at}|${t.v}` : ''}|${d ? JSON.stringify(d.gp) : ''}`;
+  const key = `${p.doctor_consent}|${t ? `${t.at}|${t.v}` : ''}|${d ? JSON.stringify(d.gp) + d.remark : ''}`;
   if (!force && box.dataset.state === key) return;
   if (box.contains(document.activeElement) && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return; // saisie en cours
   box.dataset.state = key;
@@ -317,7 +317,7 @@ function renderConsent(p, force = false) {
           <input type="checkbox" id="sheet-nogp" data-nogp class="size-5 shrink-0 accent-sky-700" ${d?.gp.no_gp ? 'checked' : ''}>
           <span class="text-sm font-semibold text-slate-800">Le participant n’a pas de médecin traitant</span>
         </label>
-        ${d?.gp.no_gp ? '<p class="text-sm text-slate-600">Aucune fiche à envoyer : pas de médecin traitant.</p>' : `
+        ${d?.gp.no_gp ? '<p class="text-sm text-slate-600">Pas de médecin traitant : notez dans la remarque ci-dessous le médecin choisi par le participant, le cas échéant.</p>' : `
         <div><label class="label" for="sheet-gp-name">Nom et prénom</label>
           <input id="sheet-gp-name" data-gp="gp_name" class="field py-2.5 text-base" maxlength="80" autocomplete="off" autocapitalize="words" placeholder="Dr Prénom Nom" value="${esc(d?.gp.gp_name ?? '')}"></div>
         <div class="grid gap-2 sm:grid-cols-2">
@@ -330,12 +330,20 @@ function renderConsent(p, force = false) {
           <textarea id="sheet-gp-address" data-gp="gp_address" rows="2" maxlength="300" class="field py-2.5 text-base" autocomplete="off" placeholder="Rue, n°, code postal, commune">${esc(d?.gp.gp_address ?? '')}</textarea></div>`}
       </fieldset>
       <div class="mt-3 flex flex-wrap gap-2">
-        ${d?.gp.no_gp ? '' : `<a class="btn-primary min-h-10 py-2 text-sm" href="/fiche?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Fiche pour le médecin traitant (PDF)</a>`}
         <button type="button" data-consent="0" class="btn-danger min-h-10 py-2 text-sm">Retrait de l’autorisation</button>
       </div>`
     : `<p class="font-bold text-slate-800">Transmission au médecin traitant : <span class="text-red-700">non autorisée</span></p>${when}
       <p class="mt-1 text-slate-600">La consultation reste possible ; aucune fiche ne peut être transmise au médecin traitant.</p>
       <button type="button" data-consent="1" class="btn-ghost mt-3 min-h-10 py-2 text-sm">Le participant donne son accord</button>`;
+  // Remarque du soignant sur le dossier (lue par l'administration, qui envoie la fiche au médecin depuis /admin).
+  box.insertAdjacentHTML(
+    'beforeend',
+    `<div class="mt-4 border-t border-slate-200 pt-3">
+      <label class="label" for="sheet-remark">Remarque sur le dossier <span class="font-normal text-slate-500">(pour l’administration)</span></label>
+      <textarea id="sheet-remark" data-remark rows="3" maxlength="1000" class="field text-base" placeholder="Ex. : souhaite que la fiche soit envoyée au Dr …, à rappeler, information utile…">${esc(d?.remark ?? '')}</textarea>
+      <p class="mt-1 text-xs text-slate-500">La fiche pour le médecin traitant est envoyée par l’administration.</p>
+    </div>`,
+  );
 
 }
 
@@ -494,7 +502,17 @@ $('sheet').addEventListener('click', (e) => {
   }
 });
 // Médecin traitant (nom, coordonnées) : saisi par le soignant, validé puis enregistré comme les autres champs.
-// « Pas de médecin traitant » : coordonnées effacées, aucune fiche à envoyer.
+// Remarque du soignant : enregistrée à la sortie du champ.
+$('sheet').addEventListener('change', (e) => {
+  if (!e.target.matches('[data-remark]') || !sheetId) return;
+  const { ok, errors, value } = validatePatch({ staff_remark: e.target.value });
+  e.target.setAttribute('aria-invalid', String(!ok));
+  if (!ok) return toast(errors.staff_remark, 'error');
+  if (sheetDetail) sheetDetail.remark = value.staff_remark ?? '';
+  store.patch(sheetId, { staff_remark: value.staff_remark });
+  toast('Remarque enregistrée ✓', 'ok');
+});
+// « Pas de médecin traitant » : coordonnées effacées (la fiche reste disponible côté administration).
 $('sheet').addEventListener('change', (e) => {
   if (!e.target.matches('[data-nogp]') || !sheetId) return;
   const v = e.target.checked ? 1 : 0;
