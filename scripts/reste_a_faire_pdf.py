@@ -191,7 +191,8 @@ story.append(Task('4', 'Faire un vrai test avec 2 tablettes', '10 min', [
     f'Tablettes A et B : {a(SITE + "/staff")} → taper le <b>STAFF_PIN</b> → pastille verte <b>Temps réel</b>.',
     f'{b("Liste des inscrits")} → taper le nom → ouvrir la fiche → <b>indiquer son nom (soignant)</b> → saisir une tension (ex. 150/85) '
     '→ la fiche change sur l’autre tablette en quelques secondes.',
-    f'Sur la fiche d’une personne qui a dit « J’autorise » : saisir nom et coordonnées du médecin traitant → {b("Fiche pour le médecin traitant (PDF)")} → la preuve de l’accord s’affiche (« ✓ vérifiée »).',
+    f'Sur la fiche d’une personne qui a dit « J’autorise » : saisir nom et coordonnées du médecin traitant (ou « pas de médecin traitant ») et, si besoin, une remarque. '
+    f'Puis {a(SITE + "/admin")} (ADMIN_KEY) → {b("Envois")} → {b("1. Fiche PDF")} : la preuve de l’accord s’affiche (« ✓ vérifiée »).',
     f'{a(SITE + "/remarques")} → envoyer une remarque « Test » → {a(SITE + "/admin")} (ADMIN_KEY) → onglet {b("Remarques")} : elle apparaît.',
     'Mauvais PIN 11 fois de suite → « Trop d’essais, patientez une minute » (protection normale).',
 ], prio=True))

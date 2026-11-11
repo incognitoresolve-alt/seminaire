@@ -67,3 +67,10 @@ test('soignant qui encode (obligatoire côté tablette) et « pas de médecin tr
   assert.deepEqual(validatePatch({ no_gp: 1 }).value, { no_gp: 1 });
   assert.ok(validatePatch({ no_gp: true }).errors.no_gp);
 });
+
+test('remarque du soignant sur le dossier : facultative, bornée', () => {
+  assert.deepEqual(validatePatch({ staff_remark: '  Souhaite envoi au Dr Y\n(cabinet Herstal) ' }).value, { staff_remark: 'Souhaite envoi au Dr Y\n(cabinet Herstal)' });
+  assert.deepEqual(validatePatch({ staff_remark: '' }).value, { staff_remark: null });
+  assert.ok(validatePatch({ staff_remark: 'x'.repeat(1001) }).errors.staff_remark);
+  assert.ok(validatePatch({ staff_remark: 3 }).errors.staff_remark);
+});

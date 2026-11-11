@@ -167,8 +167,9 @@ DELETE FROM partner_leads;
 
 ## I. Après l'événement
 
-1. **Fiches pour les médecins traitants** (uniquement les personnes qui ont autorisé la transmission) : espace soignants → ouvrir la fiche →
-   bouton **Fiche pour le médecin traitant (PDF)** → **Imprimer / Enregistrer en PDF** → envoyer le PDF au médecin traitant (nom indiqué sur la fiche).
+1. **Fiches pour les médecins traitants** (uniquement les personnes qui ont autorisé la transmission ; **uniquement depuis l'administration**) :
+   `/admin` + `ADMIN_KEY` → **Envois** → **Fiche PDF** → **Imprimer / Enregistrer en PDF** → envoyer le PDF au cabinet (la remarque du soignant s'affiche).
+   Personne sans médecin traitant : la fiche est aussi disponible ; l'envoyer uniquement au médecin qu'elle a choisi.
    **Le plus simple** : `/admin` + `ADMIN_KEY` → onglet **Envois** → pour chaque personne : e-mail du médecin → *1. Fiche PDF* → *2. Préparer l'e-mail* (joindre le PDF) → *3. Marquer comme envoyée*.
    La fiche contient la **preuve de l'accord** (texte exact, date et heure, moyen, empreinte vérifiée). Envoi **de préférence par messagerie sécurisée**
    (eHealthBox) ; par e-mail classique, seulement à l'adresse du cabinet, en vérifiant le destinataire. Liste des personnes concernées — D1 Console :

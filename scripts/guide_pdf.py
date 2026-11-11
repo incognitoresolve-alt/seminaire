@@ -481,7 +481,7 @@ story.append(PageBreak())
 story += section('s10', '10', 'Après l’événement', '15 min')
 story += [
     Step(1, '<b>Fiches pour les médecins traitants</b> (uniquement les personnes qui ont autorisé la transmission) : '
-            f'espace soignants → fiche → {btn("Fiche pour le médecin traitant (PDF)")} → {btn("Imprimer / Enregistrer en PDF")}. '
+            f'ADRESSE/admin (clé ADMIN_KEY) → onglet {btn("Envois")} → {btn("1. Fiche PDF")} → {btn("Imprimer / Enregistrer en PDF")}. '
             'La fiche contient la preuve de l’accord (texte exact, date et heure, empreinte vérifiée).'),
     Step(2, 'Envoie le PDF au médecin traitant indiqué <b>de préférence par messagerie sécurisée</b> (eHealthBox) ; '
             'par e-mail classique, seulement à l’adresse du cabinet, en vérifiant le destinataire.'),

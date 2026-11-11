@@ -71,15 +71,6 @@ async function staffRoutes(req, env, ctx, url, path) {
   }
 
 
-  // Fiche de transmission au médecin traitant (document à imprimer / enregistrer en PDF).
-  const fm = path.match(/^\/patients\/([0-9a-f-]{36})\/fiche$/);
-  if (fm && method === 'GET') {
-    const row = await getDetail(env, fm[1]);
-    if (!row) throw new HttpError(404, 'not_found');
-    if (row.doctor_consent !== 1) throw new HttpError(403, 'consent_required'); // fail-closed : jamais sans accord du participant
-    const { consent_log: _log, token: _token, ...patient } = row;
-    return json({ patient, proof: await consentProof(row), generated_at: Date.now() });
-  }
   const m = path.match(/^\/patients\/([^/]+)$/);
   if (m) {
     const id = m[1];
@@ -212,6 +203,7 @@ async function adminRoutes(req, env, ctx, path) {
     resync();
     return json({ item: row });
   }
+  // Fiche pour le médecin traitant : UNIQUEMENT côté administration (envoi manuel au cabinet).
   const af = path.match(/^\/patients\/([0-9a-f-]{36})\/fiche$/);
   if (af && method === 'GET') {
     const row = await getDetail(env, af[1]);

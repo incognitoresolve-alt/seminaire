@@ -43,6 +43,8 @@ const ALTER = [
   'ALTER TABLE patients ADD COLUMN gp_sent_at INTEGER',
   // Soignant(s) / praticien(s) qui ont encodé les paramètres ; « pas de médecin traitant » (colonne v1, garantie ici).
   'ALTER TABLE patients ADD COLUMN practitioner TEXT',
+  // Remarque du soignant sur le dossier (lue par l'administration au moment de l'envoi).
+  'ALTER TABLE patients ADD COLUMN staff_remark TEXT',
   'ALTER TABLE patients ADD COLUMN no_gp INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE partner_leads ADD COLUMN unsub_token TEXT',
   'ALTER TABLE partner_leads ADD COLUMN mailed_at INTEGER',
