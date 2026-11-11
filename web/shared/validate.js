@@ -119,54 +119,7 @@ export function validatePatch(b) {
   return { ok: Object.keys(errors).length === 0, errors, value };
 }
 
-const TXT = 120;
-const int = (raw, min, max) => {
-  if (raw === null || raw === undefined || raw === '') return null;
-  const n = Number(String(raw).replace(',', '.'));
-  return Number.isFinite(n) && n >= min && n <= max ? n : NaN;
-};
 
-/** Questionnaire anonyme de prévention (tous champs facultatifs). */
-export function validateSurvey(b) {
-  const errors = {};
-  const num = (k, min, max, dec = 0) => {
-    const n = int(b?.[k], min, max);
-    if (Number.isNaN(n)) {
-      errors[k] = `Valeur attendue entre ${min} et ${max}`;
-      return null;
-    }
-    return n === null ? null : Math.round(n * 10 ** dec) / 10 ** dec;
-  };
-  const pick = (k, allowed) => {
-    const v = b?.[k];
-    if (v === null || v === undefined || v === '') return null;
-    const n = Number(v);
-    if (!allowed.includes(n)) errors[k] = 'Choix invalide';
-    return allowed.includes(n) ? n : null;
-  };
-  let height = num('height', 0.5, 250, 2);
-  if (height && height > 3) height = Math.round(height) / 100; // saisie en cm acceptée
-  const value = {
-    weight: num('weight', 1, 400, 1),
-    height,
-    bmi_normal: freeText(b?.bmi_normal, TXT),
-    waist: num('waist', 30, 250),
-    waist_normal_f: freeText(b?.waist_normal_f, TXT),
-    waist_normal_m: freeText(b?.waist_normal_m, TXT),
-    activity_freq: pick('activity_freq', [0, 1, 2, 3, 4]),
-    activity_minutes: num('activity_minutes', 0, 3000),
-    glucose_tested: pick('glucose_tested', [0, 1]),
-    glucose_normal: freeText(b?.glucose_normal, TXT),
-    chol_known: pick('chol_known', [0, 1]),
-    vax_status: pick('vax_status', [0, 1, 2]),
-    tetanus: freeText(b?.tetanus, TXT),
-    screen_hours: num('screen_hours', 0, 24, 1),
-    questions: freeText(b?.questions, NOTES_MAX, true),
-    request_id: b?.request_id ? String(b.request_id) : null,
-  };
-  if (value.request_id && !UUID_RE.test(value.request_id)) errors.request_id = 'Identifiant invalide';
-  return { ok: Object.keys(errors).length === 0, errors, value };
-}
 
 export const CONTACT_TIMES = { matin: 'Le matin', 'apres-midi': 'L’après-midi', soir: 'En soirée' };
 export const LEAD_STATUS = { nouveau: 'Nouveau', contacte: 'Contacté', rdv: 'Rendez-vous', client: 'Client' };

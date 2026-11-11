@@ -100,8 +100,6 @@ function renderTrash() {
   $('t-active').textContent = trash.active;
   $('t-count').textContent = trash.items.length;
   $('t-days').textContent = trash.trash_days;
-  $('t-surveys').textContent = trash.surveys ?? 0;
-  $('t-clear-surveys').disabled = !trash.surveys;
   $('t-trash-all').disabled = !trash.active;
   $('t-restore-all').disabled = $('t-empty').disabled = !trash.items.length;
   const q = $('t-q').value.trim().toLowerCase();
@@ -152,9 +150,6 @@ $('t-list').addEventListener('click', (e) => {
     act(`/admin/trash/${li.dataset.id}`, 'DELETE', 'Supprimé définitivement', `Supprimer DÉFINITIVEMENT le dossier de ${name} ? Cette action est irréversible.`);
 });
 $('t-q').addEventListener('input', renderTrash);
-$('t-clear-surveys').addEventListener('click', () =>
-  act('/admin/surveys', 'DELETE', (r) => `${r.n} réponse(s) effacée(s)`, `Effacer DÉFINITIVEMENT les ${trash.surveys} réponse(s) au questionnaire anonyme (par exemple des réponses de test) ?`),
-);
 $('t-trash-all').addEventListener('click', () =>
   act('/admin/trash-all', 'POST', (r) => `${r.n} inscription(s) mise(s) à la corbeille`, `Mettre TOUTE la liste des inscrits (${trash.active}) à la corbeille ? Elle disparaîtra des tablettes des soignants (restaurable pendant ${trash.trash_days} jours).`),
 );

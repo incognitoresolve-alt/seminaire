@@ -13,7 +13,7 @@
 > | 4 | Navigateur | `https://seminaire-triage.incognitoresolve.workers.dev/api/health` → `{"ok":true}` | 1 min |
 > | 5 | 2 tablettes | Test réel : 2 inscriptions → *Liste des inscrits* (PIN) → fiche → tension → *Médecin 1* → visible sur l'autre tablette | 5 min |
 > | 6 | `https://seminaire-triage.incognitoresolve.workers.dev/admin` + `ADMIN_KEY` | Effacer les tests : *Tout mettre à la corbeille* → *Vider* → *Effacer toutes les réponses* | 2 min |
-> | 7 | `docs/affiches/` | **Imprimer les PDF prêts** : `affiche-inscription-A4.pdf` (« Pas envie d'attendre ? ») et `affiche-questionnaire-A4.pdf`. QR codes vérifiés vers `https://seminaire-triage.incognitoresolve.workers.dev/`. Impression : A4, taille réelle (100 %), couleur. Scanner une feuille imprimée pour vérifier. (Aussi en ligne : `/affiche`) | 10 min |
+> | 7 | `docs/affiches/` | **Imprimer les PDF prêts** : `affiche-inscription-A4.pdf` (« Pas envie d'attendre ? »). QR codes vérifiés vers `https://seminaire-triage.incognitoresolve.workers.dev/`. Impression : A4, taille réelle (100 %), couleur. Scanner une feuille imprimée pour vérifier. (Aussi en ligne : `/affiche`) | 10 min |
 > | 8 | Envoyer à Claude | L'**e-mail de contact RGPD d'ICC Liège** (2 emplacements `[email-contact]` dans la politique de confidentialité) | 1 min |
 > | 9 | Médecins | Relire l'assistant éducatif (README) et les seuils marqués « Seuil de prudence CheckSanté » | 15 min |
 > | 10 | Sur place | PIN aux soignants uniquement · `ADMIN_KEY` à l'organisateur · tablettes chargées, veille désactivée · partage 4G de secours · diffuser la vidéo sur l'écran d'accueil | — |
@@ -51,7 +51,7 @@ Le dépôt n'a qu'une branche : `ccr-7e184915-u0pmfk`. Cloudflare déploiera dep
    - GitHub → ouvrir le fichier → bouton **Raw** → tout copier → coller dans la console → **Execute**.
    - Si la console refuse plusieurs instructions d'un coup : exécuter les blocs `CREATE …;` / `ALTER …;` un par un.
    - Ne lancer chaque fichier **qu'une fois** (relancer 0003/0004 donne « duplicate column » : sans gravité, déjà fait).
-7. Vérifier : `SELECT name FROM sqlite_master WHERE type='table';` → doit lister `patients`, `surveys`, `partner_leads`.
+7. Vérifier : `SELECT name FROM sqlite_master WHERE type='table';` → doit lister `patients`, `partner_leads`, `feedback`.
 
 ---
 
@@ -136,7 +136,7 @@ Chaque commit sur `main` redéploie automatiquement (≈ 1 min).
 | 5 | Saisir pouls 135 sur une tablette | **Rouge** immédiat, visible sur l'autre tablette |
 | 6 | **Patient suivant** sur A, puis sur B | A et B ouvrent deux patients différents |
 | 7 | **Terminé** | la fiche se ferme, le patient quitte « À traiter » |
-| 8 | Remplir `/questionnaire` | bouton **Questionnaire** côté soignants : réponse comptée |
+| 8 | Envoyer une remarque sur `/remarques` | `/admin` (ADMIN_KEY) → onglet **Remarques** : elle apparaît |
 | 9 | S'inscrire en cochant le check-up (si Brevo) | e-mail reçu (vérifier les spams) ; le lien « Ne plus recevoir » fonctionne |
 | 10 | Mauvais PIN 11 fois | « Trop d'essais, patientez une minute » |
 | 11 | Couper le Wi-Fi d'une tablette, saisir, rallumer | « Enregistré ✓ » après retour du réseau |
@@ -144,13 +144,13 @@ Chaque commit sur `main` redéploie automatiquement (≈ 1 min).
 **Puis effacer toutes les données de test** (D1 → Console) :
 ```sql
 DELETE FROM patients;
-DELETE FROM surveys;
+DELETE FROM feedback;
 DELETE FROM partner_leads;
 ```
 
 ### Impression
 - Ouvrir `https://seminaire-triage.incognitoresolve.workers.dev/affiche` → **Imprimer** (A4 ou A3, plusieurs exemplaires : entrée, file d'attente, chaises).
-- Idem `https://seminaire-triage.incognitoresolve.workers.dev/affiche?cible=questionnaire` (salle de présentation).
+- Idem `https://seminaire-triage.incognitoresolve.workers.dev/affiche?cible=remarques` (salle des intervenants).
 - **Scanner une affiche imprimée** avec un téléphone pour vérifier.
 
 ---
@@ -189,4 +189,4 @@ DELETE FROM partner_leads;
    Une relance maximum, « STOP » = bouton d'effacement (`docs/modele-email-checkup.md`).
    **Bilan anonyme** (rapport ICC, présentations) : espace soignants → **Bilan** → **Exporter le bilan (CSV)**.
 3. **Sécurité** : supprimer ou changer le secret `STAFF_PIN` → plus aucun accès soignants.
-4. **Effacement** : automatique (patients et questionnaires après 30 jours, contacts après 180 jours). Pour tout effacer plus tôt : mêmes `DELETE` qu'en G.
+4. **Effacement** : automatique (patients après 30 jours, contacts et remarques après 180 jours). Pour tout effacer plus tôt : mêmes `DELETE` qu'en G.

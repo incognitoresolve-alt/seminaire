@@ -1,11 +1,11 @@
 import { LEAD_INTERESTS, PARTNER } from '../web/shared/partner.js';
-import { CONTACT_TIMES, FEEDBACK_KINDS, FEEDBACK_ROLES, FEEDBACK_STATUS, LEAD_STATUS, validateFeedback, validateFeedbackPatch, validateIdentity, validateLead, validateLeadPatch, validateLeadQualify, validatePatch, validateSurvey } from '../web/shared/validate.js';
+import { CONTACT_TIMES, FEEDBACK_KINDS, FEEDBACK_ROLES, FEEDBACK_STATUS, LEAD_STATUS, validateFeedback, validateFeedbackPatch, validateIdentity, validateLead, validateLeadPatch, validateLeadQualify, validatePatch } from '../web/shared/validate.js';
 import { checkPin, checkSecret, clearCookie, clearRoleCookie, hasRole, makeCookie, requireRole, requireStaff, roleConfigured, sessionCookie } from './auth.js';
 import { HttpError, assertSameOrigin, clientIp, json, rateLimit, readJson } from './http.js';
 import { hub } from './hub.js';
 import { ensureSchema } from './schema.js';
 import { sendCheckupMail } from './mail.js';
-import { createFeedback, deleteFeedback, listFeedback, updateFeedback, alreadyMailed, createLead, deleteLead, deleteLeadByToken, clearSurveys, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, markMailed, qualifyLead, updateLead, createPatient, createSurvey, deletePatient, getDetail, listSince, purge, surveyStats, updatePatient } from './patients.js';
+import { createFeedback, deleteFeedback, listFeedback, updateFeedback, alreadyMailed, createLead, deleteLead, deleteLeadByToken, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, markMailed, qualifyLead, updateLead, createPatient, deletePatient, getDetail, listSince, purge, updatePatient } from './patients.js';
 
 export { Hub } from './hub.js';
 
@@ -57,14 +57,13 @@ async function staffRoutes(req, env, ctx, url, path) {
   }
   if (path === '/patients' && method === 'POST') return register(req, env, ctx, 'staff');
 
-  if (path === '/survey-stats' && method === 'GET') return json(await surveyStats(env));
   if (path === '/stats' && method === 'GET') return json(await eventStats(env));
   if (path === '/stats.csv' && method === 'GET') {
     const s = await eventStats(env);
     const rows = [
       ['Inscriptions', s.total], ['Inscrites en autonomie (QR)', s.self], ['Inscrites à l’accueil', s.staff], ['Paramètres relevés', s.measured],
       ['Parcours terminés', s.done], ['Accord transmission médecin (%)', s.consent_rate], ['Attente moyenne avant appel (min)', s.avg_wait_min ?? ''],
-      ['Intérêt check-up couverture (%)', s.checkup_rate], ['Questionnaires remplis', s.surveys],
+      ['Intérêt check-up couverture (%)', s.checkup_rate],
       ...s.per_day.map((x) => [`Inscriptions le ${x.d}`, x.n]),
       ...Object.entries(s.ages).map(([k, n]) => [`Âge ${k} ans`, n]),
       ...Object.entries(s.triage).map(([k, n]) => [`Triage ${['à mesurer', 'vert', 'orange', 'rouge'][k] ?? k}`, n]),
@@ -214,10 +213,6 @@ async function adminRoutes(req, env, ctx, path) {
     const n = await emptyTrash(env);
     return json({ ok: true, n });
   }
-  if (path === '/surveys' && method === 'DELETE') {
-    const n = await clearSurveys(env); // réponses anonymes (ex. réponses de test)
-    return json({ ok: true, n });
-  }
   if (path === '/trash-all' && method === 'POST') {
     const n = await trashAll(env);
     resync();
@@ -262,16 +257,6 @@ async function route(req, env, ctx, url) {
   if (path === '/api/register' && req.method === 'POST') {
     await rateLimit(env.RL_REGISTER, `reg:${clientIp(req)}`);
     return register(req, env, ctx, 'self');
-  }
-  if (path === '/api/survey' && req.method === 'POST') {
-    await rateLimit(env.RL_REGISTER, `survey:${clientIp(req)}`);
-    const body = await readJson(req, 16384);
-    if (body?.website) throw new HttpError(400, 'invalid');
-    const { ok, errors, value } = validateSurvey(body);
-    if (!ok) throw new HttpError(422, 'validation', { errors });
-    const created = await createSurvey(env, value);
-    if (created) broadcast(env, ctx, { t: 'survey' });
-    return json({ ok: true }, created ? 201 : 200);
   }
   if (path === '/api/feedback' && req.method === 'POST') {
     // Lien public partagé aux intervenants : anti-spam (honeypot + limite par IP), validation stricte, rejeu idempotent.

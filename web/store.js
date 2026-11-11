@@ -160,7 +160,6 @@ function connect() {
     try {
       const msg = JSON.parse(e.data);
       if (msg.t === 'upsert' || msg.t === 'delete') merge(msg.p);
-      else if (msg.t === 'survey') state.onSurvey?.();
       else if (msg.t === 'resync') sync(); // corbeille : changements en masse depuis /admin
     } catch {
       /* message invalide ignoré */

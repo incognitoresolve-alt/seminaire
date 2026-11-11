@@ -6,8 +6,6 @@ CREATE TABLE IF NOT EXISTS patients (id TEXT PRIMARY KEY, token TEXT NOT NULL UN
 CREATE INDEX IF NOT EXISTS idx_patients_updated ON patients(updated_at);
 CREATE INDEX IF NOT EXISTS idx_patients_created ON patients(created_at);
 CREATE INDEX IF NOT EXISTS idx_patients_triage ON patients(triage DESC, updated_at DESC) WHERE deleted_at IS NULL;
-CREATE TABLE IF NOT EXISTS surveys (id TEXT PRIMARY KEY, request_id TEXT UNIQUE, weight REAL, height REAL, bmi REAL, bmi_normal TEXT, waist INTEGER, waist_normal_f TEXT, waist_normal_m TEXT, activity_freq INTEGER CHECK (activity_freq BETWEEN 0 AND 4), activity_minutes INTEGER, glucose_tested INTEGER CHECK (glucose_tested IN (0,1)), glucose_normal TEXT, chol_known INTEGER CHECK (chol_known IN (0,1)), vax_status INTEGER CHECK (vax_status IN (0,1,2)), tetanus TEXT, screen_hours REAL, questions TEXT, created_at INTEGER NOT NULL);
-CREATE INDEX IF NOT EXISTS idx_surveys_created ON surveys(created_at);
 CREATE TABLE IF NOT EXISTS partner_leads (id TEXT PRIMARY KEY, request_id TEXT UNIQUE, audience TEXT NOT NULL CHECK (audience IN ('public','pro')), name TEXT NOT NULL, email TEXT, phone TEXT, interests TEXT, message TEXT, consent_at INTEGER NOT NULL, created_at INTEGER NOT NULL, unsub_token TEXT, mailed_at INTEGER);
 CREATE INDEX IF NOT EXISTS idx_leads_created ON partner_leads(created_at);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_unsub ON partner_leads(unsub_token);
