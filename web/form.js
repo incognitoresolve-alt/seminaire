@@ -1,7 +1,6 @@
 // Formulaire d'identité partagé (auto-inscription & saisie manuelle staff).
 import { toIsoDate, validateIdentity } from './shared/validate.js';
 import { esc, uuid } from './api.js';
-import { doctorsSentence } from './shared/doctors.js';
 import { PARTNER } from './shared/partner.js';
 
 export function identityFieldsHtml(prefix, { staff = false } = {}) {
@@ -42,11 +41,11 @@ export function identityFieldsHtml(prefix, { staff = false } = {}) {
     </fieldset>
 
     <fieldset class="mt-2 rounded-xl border border-slate-300 bg-white p-4" aria-describedby="${prefix}-doctor_consent-err">
-      <legend class="px-1 text-sm font-bold text-slate-800">Transmission au médecin de la consultation</legend>
+      <legend class="px-1 text-sm font-bold text-slate-800">Transmission à un médecin</legend>
       <p class="mb-3 text-sm text-slate-600">${
         staff
-          ? `Le participant autorise-t-il la transmission de ses informations (identité, paramètres mesurés, observations) au médecin bénévole de l’événement qui assurera sa consultation : ${esc(doctorsSentence())} ?`
-          : `J’autorise la transmission de mes informations (identité, paramètres mesurés, observations) au médecin bénévole de la Semaine de la santé qui assurera ma consultation : ${esc(doctorsSentence())}. Ce médecin n’est pas forcément mon médecin traitant. Les informations restent confidentielles et couvertes par le secret médical.`
+          ? 'Le participant autorise-t-il la transmission de ses données personnelles à un médecin qui pourra suivre son dossier si nécessaire ?'
+          : 'J’autorise la transmission de mes données personnelles à un médecin qui pourra suivre mon dossier si nécessaire.'
       }</p>
       <div class="grid grid-cols-2 gap-2">
         <label class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border border-slate-300 px-3 has-checked:border-sky-700 has-checked:bg-sky-50">
@@ -56,14 +55,13 @@ export function identityFieldsHtml(prefix, { staff = false } = {}) {
           <input type="radio" name="doctor_consent" value="0" class="size-5 accent-sky-700"> <span class="text-sm font-semibold">Je n’autorise pas</span>
         </label>
       </div>
-      <p class="mt-2 text-xs text-slate-500">Sans cette autorisation, vos paramètres peuvent être relevés par l’équipe soignante, mais ils ne sont transmis à aucun médecin.</p>
       <p class="err" id="${prefix}-doctor_consent-err" aria-live="polite"></p>
     </fieldset>${
       !staff && PARTNER.enabled
         ? `
     <label data-checkup class="mt-3 flex cursor-pointer items-start gap-2 px-1">
       <input type="checkbox" name="checkup" class="mt-0.5 size-4 shrink-0 accent-slate-600">
-      <span class="text-xs leading-snug text-slate-500"><span class="font-semibold">Facultatif · Publicité —</span> Oui, je souhaite aussi un check-up gratuit et sans engagement de ma couverture assurance-vie et j’accepte que mes nom, e-mail et téléphone (jamais mes données de santé) soient transmis à cette fin à ${esc(PARTNER.person)}, ${esc(PARTNER.status.charAt(0).toLowerCase() + PARTNER.status.slice(1))} pour ${esc(PARTNER.principal)} (FSMA n° ${esc(PARTNER.fsma)}), partenaire de l’événement, retrait à tout moment via ${esc(PARTNER.email)}.</span>
+      <span class="text-xs leading-snug text-slate-500"><span class="font-semibold">Publicité —</span> Oui, je souhaite aussi un check-up gratuit et sans engagement de ma couverture assurance-vie et j’accepte que mes nom, e-mail et téléphone (jamais mes données de santé) soient transmis à cette fin à ${esc(PARTNER.person)}, ${esc(PARTNER.status.charAt(0).toLowerCase() + PARTNER.status.slice(1))} pour ${esc(PARTNER.principal)} (FSMA n° ${esc(PARTNER.fsma)}), retrait à tout moment via ${esc(PARTNER.email)}.</span>
     </label>`
         : ''
     }`;

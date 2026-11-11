@@ -11,7 +11,7 @@ Application temps réel pour les consultations de prévention (11–14 nov. 2026
 
 | URL | Public | Rôle |
 |---|---|---|
-| `/` | participants | Inscription (identité + accord consultation + transmission au médecin de la consultation, Médecin 1 ou 2) → **Pass Patient** (QR + code de secours 6 car.) |
+| `/` | participants | Inscription (identité + accord consultation + transmission de ses données à un médecin qui pourra suivre son dossier) → **Pass Patient** (QR + code de secours 6 car.) |
 | `/questionnaire` | participants | Questionnaire de prévention **anonyme** (8 sections du PDF), IMC calculé en direct, repères affichés après envoi |
 | `/staff` | soignants (PIN) | Liste temps réel triée par priorité, recherche instantanée, scanner QR, fiche (vitaux, IMC, glycémie, périmètre abdo., notes), assignation Médecin 1 (mer. 11/11) / Médecin 2 (sam. 14/11), ajout manuel, stats questionnaire en direct |
 | `/affiche` · `/affiche?cible=questionnaire` | accueil | Affiche imprimable avec QR d'entrée |

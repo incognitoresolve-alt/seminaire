@@ -492,7 +492,7 @@ story.append(PageBreak())
 # ---- 10. Après
 story += section('s10', '10', 'Après l’événement', '15 min')
 story += [
-    Step(1, '<b>Dossiers par médecin de la consultation</b> (uniquement les personnes qui ont autorisé la transmission) : '
+    Step(1, '<b>Dossiers par médecin</b> (uniquement les personnes qui ont autorisé la transmission) : '
             f'D1 → {btn("Console")} → colle :'),
     codeblock(['SELECT doctor, last_name, first_name, birth_date, pulse, temp, sys, dia,',
                '       glucose, weight, height, waist, notes, triage',

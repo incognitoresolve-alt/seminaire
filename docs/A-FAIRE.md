@@ -155,7 +155,7 @@ DELETE FROM partner_leads;
 
 ## I. Après l'événement
 
-1. **Dossiers par médecin de la consultation** (uniquement les personnes qui ont autorisé la transmission) — D1 Console :
+1. **Dossiers par médecin** (uniquement les personnes qui ont autorisé la transmission) — D1 Console :
    ```sql
    SELECT doctor, last_name, first_name, birth_date, pulse, temp, sys, dia, glucose, weight, height, waist, notes, triage
    FROM patients WHERE doctor_consent = 1 AND doctor IS NOT NULL AND deleted_at IS NULL ORDER BY doctor, triage DESC;

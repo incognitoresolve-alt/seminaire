@@ -248,7 +248,7 @@ function openSheet(id) {
         <label class="label" for="v-notes">Notes cliniques</label>
         <textarea id="v-notes" data-k="notes" rows="4" maxlength="${NOTES_MAX}" class="field text-base"></textarea>
       </section>
-      <section id="sheet-consent" class="rounded-2xl bg-white p-4 text-sm ring-1 ring-slate-200" aria-label="Transmission au médecin de la consultation" aria-live="polite"></section>
+      <section id="sheet-consent" class="rounded-2xl bg-white p-4 text-sm ring-1 ring-slate-200" aria-label="Transmission à un médecin" aria-live="polite"></section>
       <div class="flex items-center justify-between gap-3 pt-2">
         <p id="sheet-save" class="text-sm font-semibold text-slate-500" aria-live="polite"></p>
         <button type="button" id="sheet-delete" class="btn-danger min-h-11 text-sm">Supprimer (effacement RGPD)</button>
@@ -294,8 +294,8 @@ function refreshSheet(force = false) {
     b.disabled = !p.doctor_consent; // pas d'assignation sans accord de transmission
   }
   const consentHtml = p.doctor_consent
-    ? '<p class="font-bold text-slate-800">Transmission au médecin de la consultation : <span class="text-emerald-700">autorisée</span></p><button type="button" data-consent="0" class="btn-danger mt-3 min-h-10 py-2 text-sm">Retrait de l’autorisation</button>'
-    : '<p class="font-bold text-slate-800">Transmission au médecin de la consultation : <span class="text-red-700">non autorisée</span></p><p class="mt-1 text-slate-600">Paramètres relevables, mais aucune assignation à un médecin possible.</p><button type="button" data-consent="1" class="btn-ghost mt-3 min-h-10 py-2 text-sm">Le participant donne son accord</button>';
+    ? '<p class="font-bold text-slate-800">Transmission à un médecin : <span class="text-emerald-700">autorisée</span></p><button type="button" data-consent="0" class="btn-danger mt-3 min-h-10 py-2 text-sm">Retrait de l’autorisation</button>'
+    : '<p class="font-bold text-slate-800">Transmission à un médecin : <span class="text-red-700">non autorisée</span></p><p class="mt-1 text-slate-600">Paramètres relevables, mais aucune assignation à un médecin possible.</p><button type="button" data-consent="1" class="btn-ghost mt-3 min-h-10 py-2 text-sm">Le participant donne son accord</button>';
   if ($('sheet-consent').dataset.state !== String(p.doctor_consent)) {
     $('sheet-consent').innerHTML = consentHtml;
     $('sheet-consent').dataset.state = String(p.doctor_consent);
@@ -365,7 +365,7 @@ $('sheet').addEventListener('click', (e) => {
   if (c && sheetId) {
     const v = Number(c.dataset.consent);
     const msg = v
-      ? 'Le participant autorise-t-il la transmission de ses informations au médecin de la consultation (formulaire signé ou accord explicite) ?'
+      ? 'Le participant autorise-t-il la transmission de ses données personnelles à un médecin qui pourra suivre son dossier si nécessaire (formulaire signé ou accord explicite) ?'
       : 'Confirmer le retrait de l’autorisation ? L’assignation au médecin sera annulée.';
     if (confirm(msg)) store.patch(sheetId, v ? { doctor_consent: 1 } : { doctor_consent: 0, doctor: null });
   }
