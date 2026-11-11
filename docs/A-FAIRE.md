@@ -11,7 +11,7 @@
 > | 4 | Navigateur | `https://<adresse>/api/health` → `{"ok":true}` | 1 min |
 > | 5 | 2 tablettes | Test réel : 2 inscriptions → *Liste des inscrits* (PIN) → fiche → tension → *Médecin 1* → visible sur l'autre tablette | 5 min |
 > | 6 | `https://<adresse>/admin` + `ADMIN_KEY` | Effacer les tests : *Tout mettre à la corbeille* → *Vider* → *Effacer toutes les réponses* | 2 min |
-> | 7 | `https://<adresse>/affiche` | **Imprimer l'affiche (A4)** (inscription libre, sans attente) + `/affiche?cible=questionnaire`. **Imprimer depuis l'adresse définitive** : le QR code reprend l'adresse de la page ouverte. Scanner une feuille imprimée pour vérifier | 10 min |
+> | 7 | `https://<adresse>/affiche` | Vérifier l'adresse dans le champ au-dessus de l'affiche (remplie toute seule sur le site en ligne) → **Imprimer l'affiche (A4)** (inscription libre, sans attente) → **Affiche du questionnaire** → imprimer. Les adresses locales (localhost) sont refusées. Scanner une feuille imprimée pour vérifier | 10 min |
 > | 8 | Envoyer à Claude | L'**e-mail de contact RGPD d'ICC Liège** (2 emplacements `[email-contact]` dans la politique de confidentialité) | 1 min |
 > | 9 | Médecins | Relire l'assistant éducatif (README) et les seuils marqués « Seuil de prudence CheckSanté » | 15 min |
 > | 10 | Sur place | PIN aux soignants uniquement · `ADMIN_KEY` à l'organisateur · tablettes chargées, veille désactivée · partage 4G de secours · diffuser la vidéo sur l'écran d'accueil | — |

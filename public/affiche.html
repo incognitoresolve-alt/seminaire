@@ -10,9 +10,14 @@
   <link rel="stylesheet" href="/app.css">
 </head>
 <body>
-  <nav aria-label="Actions" class="mx-auto flex max-w-[210mm] flex-wrap items-center justify-center gap-3 px-4 py-4 print:hidden">
+  <nav aria-label="Actions" class="glass mx-auto my-4 flex w-[min(210mm,calc(100%-2rem))] flex-wrap items-end gap-3 rounded-2xl p-4 print:hidden">
+    <div class="min-w-0 flex-1 basis-64">
+      <label class="label" for="site">Adresse en ligne du site</label>
+      <input id="site" class="field font-mono text-base" type="text" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" maxlength="200" placeholder="seminaire-triage.….workers.dev" aria-describedby="site-help">
+    </div>
     <button id="print" class="btn-primary" type="button">Imprimer l’affiche (A4)</button>
     <a id="switch" class="btn-ghost" href="/affiche?cible=questionnaire">Affiche du questionnaire</a>
+    <p id="site-help" class="w-full text-sm text-slate-600" aria-live="polite"></p>
   </nav>
 
   <!-- Feuille A4 : tailles en % de la largeur (cqw) → identique à l'écran et à l'impression -->
@@ -37,7 +42,7 @@
           <span class="absolute -right-[1.4cqw] -bottom-[1.4cqw] size-[6cqw] rounded-br-[3cqw] border-r-[1.4cqw] border-b-[1.4cqw] border-accent" aria-hidden="true"></span>
           <div id="qr" class="w-[37cqw]"></div>
         </div>
-        <p class="mt-[2.6cqw] text-[2.2cqw] font-semibold text-slate-600">ou tapez l’adresse :</p>
+        <p id="url-label" class="mt-[2.6cqw] text-[2.2cqw] font-semibold text-slate-600">ou tapez l’adresse :</p>
         <p id="url" class="font-mono text-[3.4cqw] font-extrabold break-all text-sky-900"></p>
 
         <ol id="steps" class="mt-[3cqw] grid w-full grid-cols-3 gap-[2.4cqw] text-center">
