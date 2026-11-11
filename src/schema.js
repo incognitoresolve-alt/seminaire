@@ -18,6 +18,8 @@ const CREATE = [
     name TEXT NOT NULL, email TEXT, phone TEXT, interests TEXT, message TEXT, consent_at INTEGER NOT NULL, created_at INTEGER NOT NULL,
     unsub_token TEXT, mailed_at INTEGER)`,
   'CREATE INDEX IF NOT EXISTS idx_leads_created ON partner_leads(created_at)',
+  // Réglages de l'administration (ex. e-mail d'ICC Liège pour l'envoi manuel du rapport).
+  'CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT, updated_at INTEGER NOT NULL)',
   `CREATE TABLE IF NOT EXISTS feedback (id TEXT PRIMARY KEY, request_id TEXT UNIQUE, name TEXT, role TEXT NOT NULL, kind TEXT NOT NULL,
     message TEXT NOT NULL, contact TEXT, status TEXT NOT NULL DEFAULT 'nouveau' CHECK (status IN ('nouveau','lu','traite')), admin_notes TEXT,
     created_at INTEGER NOT NULL, updated_at INTEGER)`,
@@ -40,6 +42,9 @@ const ALTER = [
   'ALTER TABLE patients ADD COLUMN gp_contact TEXT',
   // Accord facultatif : figurer dans le rapport nominatif d'ICC Liège (nom, prénom, GSM).
   'ALTER TABLE patients ADD COLUMN church_consent INTEGER NOT NULL DEFAULT 0 CHECK (church_consent IN (0,1))',
+  // Envoi MANUEL de la fiche au médecin traitant : son e-mail et la date à laquelle l'envoi a été noté comme fait.
+  'ALTER TABLE patients ADD COLUMN gp_email TEXT',
+  'ALTER TABLE patients ADD COLUMN gp_sent_at INTEGER',
   'ALTER TABLE partner_leads ADD COLUMN unsub_token TEXT',
   'ALTER TABLE partner_leads ADD COLUMN mailed_at INTEGER',
   "ALTER TABLE partner_leads ADD COLUMN status TEXT NOT NULL DEFAULT 'nouveau' CHECK (status IN ('nouveau','contacte','rdv','client'))",

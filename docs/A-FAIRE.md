@@ -20,7 +20,7 @@
 > | 11 | `https://seminaire-triage.incognitoresolve.workers.dev/remarques` | **Partager le lien des remarques** aux soignants, médecins, intervenants, bénévoles (WhatsApp, e-mail) + affiche `docs/affiches/affiche-remarques-intervenants-A4.pdf`. Lecture : `/admin` + `ADMIN_KEY` → onglet **Remarques** | 5 min |
 > | 12 | `/admin` → onglet **QR codes** | Tous les QR codes au même endroit : inscription sans attente, **check-up assurance-vie** (publicité), remarques des intervenants → **Copier le lien**, **Télécharger l'image (PNG)**, **Affiche A4** (`docs/affiches/affiche-checkup-assurance-A4.pdf`) | 5 min |
 >
-> Facultatif : noms des médecins (`web/shared/doctors.js`), domaine + e-mails Brevo (section E).
+> Facultatif : noms des médecins (`web/shared/doctors.js`), nom de domaine (section E). **Aucun envoi automatique d'e-mail** : tout part manuellement depuis `/admin` → **Envois**.
 
 Durées indicatives. Ordre recommandé : A → B → C → D → E (aujourd'hui), F → G (avant l'ouverture), H (pendant), I (après).
 
@@ -83,33 +83,21 @@ Worker `seminaire-triage` → **Settings → Variables and Secrets → Add** →
 |---|---|---|
 | `STAFF_PIN` | code d'accès soignants, **8 caractères minimum** | ex. 8 chiffres aléatoires (pas une date de naissance). À donner **uniquement** aux soignants |
 | `SESSION_SECRET` | 32+ caractères aléatoires | Mac/Linux : `openssl rand -base64 48` ; sinon générateur de mot de passe (64 caractères) |
-| `BREVO_API_KEY` | clé API Brevo | voir étape E (facultatif) |
-| `MAIL_FROM` | ex. `checkup@checksante.be` | voir étape E (facultatif) |
-| `ADMIN_KEY` | clé de la **corbeille** sur `/admin` (organisateur / responsable médical — **pas** le partenaire : la corbeille contient des données de santé), **16 caractères minimum** | générateur de mot de passe |
+| `ADMIN_KEY` | clé de `/admin` : corbeille, remarques, rapport ICC, **envois** (fiches des médecins traitants = données de santé) → **responsable médical** de préférence, **jamais** le partenaire ; **16 caractères minimum** | générateur de mot de passe |
 | `PARTNER_KEY` | ta clé d'accès à « Mes contacts » sur `/admin`, **16 caractères minimum** | générateur de mot de passe ; à garder pour toi seul (les soignants n'en ont pas besoin) |
 
 Les secrets s'appliquent immédiatement (nouvelle version déployée automatiquement).
 
 ---
 
-## E. Domaine + e-mails Brevo (20–30 min, facultatif mais recommandé)
+## E. Nom de domaine (facultatif)
 
-### E1. Domaine (à décider AVANT d'imprimer les affiches)
+À décider **avant** d'imprimer de nouvelles affiches (les QR codes contiennent l'adresse du site).
 1. Acheter `checksante.be` (ou autre) : Cloudflare **Domain Registration**, ou chez un registrar puis **Add a site** dans Cloudflare.
 2. Worker → **Settings → Domains & Routes → Add → Custom domain** → `checksante.be`.
 3. **SSL/TLS → Edge Certificates** : *Always Use HTTPS* = ON · *Minimum TLS* = 1.2.
 
-> Sans domaine : l'adresse `workers.dev` fonctionne, mais les e-mails automatiques ne sont pas possibles (Brevo exige un domaine à soi).
-
-### E2. Brevo (e-mail automatique « check-up couverture »)
-1. Créer un compte sur brevo.com (gratuit, 300 e-mails/jour). **Faire la demande aujourd'hui** : l'activation de l'envoi peut demander une validation du compte.
-2. **Senders, Domains & Dedicated IPs → Domains → Add a domain** → `checksante.be` → Brevo affiche des enregistrements DNS (code Brevo, DKIM, DMARC).
-3. Cloudflare → domaine → **DNS → Records → Add record** : recopier **chacun** (type, nom, valeur), proxy **désactivé** (nuage gris) → revenir dans Brevo → **Verify** (vert partout).
-4. **Senders → Add a sender** : nom `Boris Y. AKOE · CheckSanté`, e-mail `checkup@checksante.be`.
-5. **SMTP & API → API Keys → Generate** → copier la clé.
-6. Secrets (étape D) : `BREVO_API_KEY` = la clé · `MAIL_FROM` = `checkup@checksante.be`.
-
-Sans Brevo : les demandes de check-up sont enregistrées quand même ; tu leur écris toi-même (modèle : `docs/modele-email-checkup.md`).
+> **Aucun envoi automatique d'e-mail** (plus de Brevo) : les personnes intéressées par le check-up sont recontactées à la main (onglet *Mes contacts*, modèle : `docs/modele-email-checkup.md`).
 
 ---
 
@@ -138,7 +126,7 @@ Chaque commit sur `main` redéploie automatiquement (≈ 1 min).
 | 6 | **Patient suivant** sur A, puis sur B | A et B ouvrent deux patients différents |
 | 7 | **Terminé** | la fiche se ferme, le patient quitte « À traiter » |
 | 8 | Envoyer une remarque sur `/remarques` | `/admin` (ADMIN_KEY) → onglet **Remarques** : elle apparaît |
-| 9 | S'inscrire en cochant le check-up (si Brevo) | e-mail reçu (vérifier les spams) ; le lien « Ne plus recevoir » fonctionne |
+| 9 | S'inscrire en cochant le check-up | le contact apparaît dans `/admin` → *Mes contacts* (aucun e-mail automatique) |
 | 10 | Mauvais PIN 11 fois | « Trop d'essais, patientez une minute » |
 | 11 | Couper le Wi-Fi d'une tablette, saisir, rallumer | « Enregistré ✓ » après retour du réseau |
 
@@ -181,13 +169,14 @@ DELETE FROM partner_leads;
 
 1. **Fiches pour les médecins traitants** (uniquement les personnes qui ont autorisé la transmission) : espace soignants → ouvrir la fiche →
    bouton **Fiche pour le médecin traitant (PDF)** → **Imprimer / Enregistrer en PDF** → envoyer le PDF au médecin traitant (nom indiqué sur la fiche).
+   **Le plus simple** : `/admin` + `ADMIN_KEY` → onglet **Envois** → pour chaque personne : e-mail du médecin → *1. Fiche PDF* → *2. Préparer l'e-mail* (joindre le PDF) → *3. Marquer comme envoyée*.
    La fiche contient la **preuve de l'accord** (texte exact, date et heure, moyen, empreinte vérifiée). Envoi **de préférence par messagerie sécurisée**
    (eHealthBox) ; par e-mail classique, seulement à l'adresse du cabinet, en vérifiant le destinataire. Liste des personnes concernées — D1 Console :
    ```sql
    SELECT last_name, first_name, birth_date, gp_name, doctor_consent_at FROM patients
    WHERE doctor_consent = 1 AND deleted_at IS NULL ORDER BY last_name;
    ```
-2. **Rapport ICC Liège** : `/admin` + `ADMIN_KEY` → onglet **Rapport ICC** → **Télécharger (Excel / CSV)** (nom, prénom, GSM des personnes reçues qui ont accepté d'y figurer). À exporter avant l'effacement automatique (30 jours).
+2. **Rapport ICC Liège** : `/admin` + `ADMIN_KEY` → onglet **Envois** → enregistrer l'**e-mail d'ICC Liège** (une fois) → *1. Télécharger le rapport (CSV)* → *2. Préparer l'e-mail à ICC Liège* (joindre le CSV, envoyer). Nom, prénom, GSM des personnes reçues qui ont accepté d'y figurer. À faire avant l'effacement automatique (30 jours).
 3. **Contacts check-up** (toi uniquement) : `https://seminaire-triage.incognitoresolve.workers.dev/admin` + ta clé `PARTNER_KEY` → onglet *Mes contacts*.
    Statut par contact (Nouveau → Contacté → Rendez-vous → Client), notes, bouton **Télécharger (Excel / CSV)**.
    Une relance maximum, « STOP » = bouton d'effacement (`docs/modele-email-checkup.md`).

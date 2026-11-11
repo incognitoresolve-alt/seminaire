@@ -5,7 +5,7 @@ import { HttpError } from './http.js';
 // Colonnes exposées au staff (sans email ni request_id : minimisation).
 const COLS =
   'id,token,short_code,last_name,first_name,birth_date,source,doctor_consent,church_consent,stage,stage_at,alerts,pulse,rr,spo2,temp,weight,height,waist,glucose,sys,dia,notes,triage,doctor,version,created_at,updated_at,deleted_at';
-const DETAIL_COLS = `${COLS},email,phone,consent_at,gp_name,gp_contact,gp_address,doctor_consent_at,consent_log`;
+const DETAIL_COLS = `${COLS},email,phone,consent_at,gp_name,gp_contact,gp_address,gp_email,gp_sent_at,doctor_consent_at,consent_log`;
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // sans 0/O/1/I/L
 
 const randomToken = () => {
@@ -105,7 +105,7 @@ export async function updatePatient(env, id, patch) {
   const entries = [];
   if ('doctor_consent' in patch) {
     entries.push(await makeEntry(id, 'transmission', patch.doctor_consent, 'sheet', CURRENT.transmission.staff, now));
-    if (!patch.doctor_consent) patch = { ...patch, gp_name: null, gp_contact: null, gp_address: null }; // retrait : coordonnées du médecin traitant effacées
+    if (!patch.doctor_consent) patch = { ...patch, gp_name: null, gp_contact: null, gp_address: null, gp_email: null }; // retrait : coordonnées du médecin traitant effacées
   }
   if ('church_consent' in patch) entries.push(await makeEntry(id, 'eglise', patch.church_consent, 'sheet', CURRENT.eglise.staff, now));
   let proofSql = '';
@@ -118,7 +118,7 @@ export async function updatePatient(env, id, patch) {
     proofSql += `, consent_log = json_insert(COALESCE(consent_log, '[]')${entries.map(() => ", '$[#]', json(?)").join('')})`;
     proofBind.push(...entries.map((e) => JSON.stringify(e)));
   }
-  if (['gp_name', 'gp_contact', 'gp_address'].some((k) => patch[k]) && !('doctor_consent' in patch)) {
+  if (['gp_name', 'gp_contact', 'gp_address', 'gp_email'].some((k) => patch[k]) && !('doctor_consent' in patch)) {
     // Médecin traitant (nom, coordonnées) enregistré seulement si la transmission est autorisée (contrôle serveur).
     const ok = await env.DB.prepare('SELECT doctor_consent FROM patients WHERE id = ? AND deleted_at IS NULL').bind(id).first();
     if (ok && ok.doctor_consent !== 1) throw new HttpError(409, 'consent_required');
@@ -206,11 +206,6 @@ export async function createLead(env, v) {
     .first();
 }
 
-/** Anti-doublon : un seul e-mail par adresse sur 7 jours (familles inscrites avec le même e-mail). */
-export const alreadyMailed = async (env, email) =>
-  !!(await env.DB.prepare('SELECT 1 FROM partner_leads WHERE email = ? AND mailed_at > ? LIMIT 1').bind(email, Date.now() - 7 * 86400e3).first());
-
-export const markMailed = (env, id) => env.DB.prepare('UPDATE partner_leads SET mailed_at = ? WHERE id = ?').bind(Date.now(), id).run();
 
 /* ---------- Espace partenaire (mini-CRM) ---------- */
 const LEAD_COLS = 'id,audience,name,email,phone,interests,message,contact_time,status,partner_notes,consent_at,created_at,mailed_at';
@@ -318,4 +313,40 @@ export async function churchReport(env) {
   ]);
   const t = tot.results[0];
   return { registered: t.registered || 0, received: t.received || 0, consented: t.consented || 0, rows: rows.results };
+}
+
+/* ---------- Envois manuels (rôle admin) : aucun e-mail n'est envoyé par l'application ---------- */
+export const getSetting = async (env, key) => (await env.DB.prepare('SELECT value FROM settings WHERE key = ?').bind(key).first())?.value ?? null;
+export const setSetting = (env, key, value) =>
+  value === null
+    ? env.DB.prepare('DELETE FROM settings WHERE key = ?').bind(key).run()
+    : env.DB.prepare('INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at')
+        .bind(key, value, Date.now())
+        .run();
+
+const TX_COLS = 'id, last_name, first_name, birth_date, gp_name, gp_contact, gp_email, gp_sent_at, doctor_consent_at, created_at';
+/** Personnes ayant autorisé la transmission à leur médecin traitant (fiche à envoyer manuellement). */
+export async function listTransmissions(env) {
+  const { results } = await env.DB.prepare(`SELECT ${TX_COLS} FROM patients WHERE doctor_consent = 1 AND deleted_at IS NULL ORDER BY gp_sent_at IS NOT NULL, last_name, first_name LIMIT 5000`).all();
+  return results;
+}
+/** E-mail du médecin traitant et/ou envoi noté comme fait (refusé sans accord de transmission). */
+export async function updateTransmission(env, id, { gp_email, sent }) {
+  const sets = [];
+  const bind = [];
+  if (gp_email !== undefined) {
+    sets.push('gp_email = ?');
+    bind.push(gp_email);
+  }
+  if (sent !== undefined) {
+    sets.push('gp_sent_at = ?');
+    bind.push(sent ? Date.now() : null);
+  }
+  const row = await env.DB.prepare(
+    `UPDATE patients SET ${sets.join(', ')}, version = version + 1, updated_at = ? WHERE id = ? AND deleted_at IS NULL AND doctor_consent = 1 RETURNING ${TX_COLS}`,
+  )
+    .bind(...bind, Date.now(), id)
+    .first();
+  if (!row) throw new HttpError(409, 'consent_required');
+  return row;
 }

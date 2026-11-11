@@ -60,14 +60,14 @@ navigateur ──HTTPS──► Worker (src/index.js) ──► D1 (patients, pa
 5. **Secrets** : Worker → *Settings → Variables and Secrets* → type **Secret** :
    - `STAFF_PIN` : **8 caractères minimum** (sinon l'accès staff est refusé, par sécurité)
    - `SESSION_SECRET` : 32+ caractères aléatoires (ex. `openssl rand -base64 48`)
-   - `BREVO_API_KEY` + `MAIL_FROM` : e-mail automatique « check-up couverture » (voir ci-dessous). Sans eux, aucun e-mail n'est envoyé ; les demandes restent enregistrées.
+   - `ADMIN_KEY` (16+ caractères, responsable médical / organisateur) et `PARTNER_KEY` (16+ caractères, partenaire) : page `/admin`.
 6. *(Optionnel)* domaine perso : Worker → *Settings → Domains & Routes*, puis activer *SSL/TLS → Edge Certificates → Always Use HTTPS*.
 7. **Vérifier** : `https://<worker>/api/health` → `{"ok":true}` ; inscription test ; `/staff` sur 2 appareils (pastille « Temps réel »).
 
 ## Structure
 
 ```
-src/            Worker (API, D1, Durable Object, e-mail)
+src/            Worker (API, D1, Durable Object)
 web/            sources front (modules ES) ; web/shared/ = code partagé navigateur + Worker
 public/         fichiers servis (HTML, _headers, logo) ; public/dist + sw.js générés par `npm run build`
 migrations/     schéma D1 (0001 → 0004)
@@ -148,16 +148,12 @@ pied de l'inscription, bas de la liste staff (version « soignants », masquable
 Demandes de contact : table `partner_leads` isolée (aucune jointure possible avec patients), purge à 180 j.
 Check-up couverture : case facultative (non pré-cochée, distincte du consentement médical) dans le formulaire d’inscription ; cochée = demande de contact (nom/e-mail/téléphone uniquement). Modèle d'e-mail conforme : `docs/modele-email-checkup.md`.
 
-**E-mail automatique** : chaque personne qui a donné son accord reçoit aussitôt l'e-mail « Votre check-up couverture gratuit » (mentions FSMA, désinscription en un clic → suppression immédiate des coordonnées). Personne d'autre ne reçoit d'e-mail.
-Mise en place (≈ 10 min) :
-1. Compte gratuit sur brevo.com (UE, 300 e-mails/jour).
-2. *Senders, Domains* → ajouter **un domaine que tu possèdes** (ex. `checksante.be`) et copier les enregistrements DNS (DKIM/SPF) dans Cloudflare DNS. Une adresse `@gmail.com` ne peut pas servir d'expéditeur (rejetée par Gmail/Brevo) : les réponses arrivent quand même sur `yaoakoe.pro@gmail.com` (Reply-To).
-3. *SMTP & API → API keys* → créer une clé.
-4. Secrets du Worker : `BREVO_API_KEY` = la clé, `MAIL_FROM` = ex. `checkup@checksante.be`.
+**Aucun envoi automatique d'e-mail.** Les demandes de check-up sont recontactées manuellement par le partenaire (onglet *Mes contacts*, modèle : `docs/modele-email-checkup.md`) ; le rapport d'ICC Liège et les fiches des médecins traitants partent manuellement depuis `/admin` → **Envois** (voir ci-dessous).
 
 **Page `/admin`** — une seule page, la clé tapée détermine l'accès (cloisonnement RGPD) :
 - `ADMIN_KEY` (organisateur / responsable médical) → **Corbeille** : les dossiers supprimés par les soignants y restent `TRASH_DAYS` (30) jours, puis sont effacés automatiquement ; *Restaurer*, *Supprimer définitivement* (droit à l'effacement), *Tout restaurer*, *Vider*, *Tout mettre à la corbeille* (ex. effacer les tests). Les changements apparaissent en temps réel sur les tablettes.
 - `ADMIN_KEY` → **Remarques** des intervenants et **Rapport ICC** : nom, prénom, GSM et date de passage des personnes **reçues** au pôle santé (paramètres relevés, médecin assigné ou parcours terminé) **qui ont accepté** d'y figurer (case facultative à l'inscription ou accord noté sur la fiche soignant, avec preuve horodatée) ; les autres sont seulement comptées ; aucune donnée de santé ; export CSV.
+- `ADMIN_KEY` → **Envois** (aucun envoi automatique) : e-mail d'ICC Liège enregistré (réglage) → *Télécharger le rapport* + *Préparer l'e-mail* (la messagerie s'ouvre avec destinataire, objet et message ; on joint le CSV) ; liste des personnes ayant autorisé la transmission → e-mail du médecin traitant (modifiable), *Fiche PDF*, *Préparer l'e-mail*, *Marquer comme envoyée*.
 - Toutes les clés → **QR codes** : inscription sans attente (`/`), check-up assurance-vie (`/checkup` → `/partenaire?pour=public&interet=checkup`, marqué « Publicité »), remarques des intervenants (`/remarques`) : copier le lien, télécharger l'image PNG, affiche A4.
 - `PARTNER_KEY` (partenaire) → **Mes contacts** (mini-CRM), jamais la corbeille ni le rapport. Les deux clés peuvent être saisies l'une après l'autre (« Ajouter une clé »).
 - `/espace-partenaire` redirige vers `/admin`.

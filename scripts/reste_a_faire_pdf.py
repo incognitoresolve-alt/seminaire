@@ -173,7 +173,7 @@ story.append(Task('2', 'Ajouter les 4 codes secrets', '5 min', [
     f'Type : <b>Secret</b> (pas « Text ») → {b("Deploy")}. Recommencer pour chacun :',
     f'• {c("STAFF_PIN")} : code des soignants, <b>8 caractères minimum</b> (ex. 8 chiffres au hasard, pas une date de naissance).',
     f'• {c("SESSION_SECRET")} : <b>32 caractères minimum</b>, au hasard (générateur de mots de passe, 40 caractères).',
-    f'• {c("ADMIN_KEY")} : clé de la corbeille sur /admin, <b>16 caractères minimum</b> → pour l’organisateur ou le responsable médical.',
+    f'• {c("ADMIN_KEY")} : clé de /admin (corbeille, remarques, rapport ICC, envois des fiches = données de santé), <b>16 caractères minimum</b> → de préférence le responsable médical.',
     f'• {c("PARTNER_KEY")} : ta clé « Mes contacts » sur /admin, <b>16 caractères minimum</b> → pour toi seul.',
     '<font color="#b91c1c"><b>Ne les écris jamais dans ce PDF</b></font> ni dans un e-mail. Note-les dans un gestionnaire de mots de passe.',
     'Sans ces codes, l’accès soignants affiche « Service non configuré » : c’est voulu (sécurité).',
@@ -260,26 +260,19 @@ story.append(KeepTogether([P('FACULTATIF', 'kick'), P('Pour aller plus loin', 'h
     f'{a(CF, "Worker")} → {b("Settings")} → {b("Builds")} → désactiver les builds des branches autres que '
     f'{c("main")} (« Non-production branch builds »).',
 ])]))
-story.append(gap())
-
-story.append(Task('12', 'E-mails automatiques « check-up » (Brevo) + nom de domaine', '30 min', [
-    'Nécessite un nom de domaine à toi (ex. checksante.be) : sans domaine, Brevo ne peut pas envoyer.',
-    f'Étapes détaillées : {a(REPO + "/blob/main/docs/A-FAIRE.md", "docs/A-FAIRE.md, section E")}.',
-    f'Sans Brevo, rien n’est perdu : les demandes de check-up sont enregistrées dans {a(SITE + "/admin")} → '
-    f'{b("Mes contacts")} ; tu leur écris toi-même (modèle : {c("docs/modele-email-checkup.md")}).',
-]))
 
 # ---------------------------------------------------------------- Après
 story += [gap(4)]
-story.append(KeepTogether([P('APRÈS L’ÉVÉNEMENT', 'kick'), P('Clôturer proprement', 'h2'), Task('13', 'Transmettre, sécuriser, effacer', '20 min', [
-    f'<b>Médecins traitants</b> (personnes qui ont autorisé la transmission) : fiche soignant → {b("Fiche pour le médecin traitant (PDF)")} '
-    f'→ {b("Imprimer / Enregistrer en PDF")} → envoi au médecin indiqué, de préférence par messagerie sécurisée (eHealthBox). '
-    'La fiche contient la preuve de l’accord (texte exact, date et heure, empreinte vérifiée).',
+story.append(KeepTogether([P('APRÈS L’ÉVÉNEMENT', 'kick'), P('Clôturer proprement', 'h2'), Task('12', 'Envoyer (à la main), sécuriser, effacer', '20 min', [
+    '<b>Aucun envoi automatique</b> : tout part de ta messagerie, depuis l’onglet ' + b('Envois') + f' de {a(SITE + "/admin")} (ADMIN_KEY).',
+    f'<b>Médecins traitants</b> : {b("Envois")} → pour chaque personne : e-mail du médecin → {b("1. Fiche PDF")} (Imprimer / Enregistrer en PDF) '
+    f'→ {b("2. Préparer l’e-mail")} (joindre le PDF) → {b("3. Marquer comme envoyée")}. De préférence via la messagerie sécurisée (eHealthBox).',
+    f'<b>Rapport ICC Liège</b> : {b("Envois")} → enregistrer l’e-mail d’ICC Liège (une fois) → {b("1. Télécharger le rapport (CSV)")} '
+    f'→ {b("2. Préparer l’e-mail à ICC Liège")} (joindre le CSV). Nom, prénom, GSM des personnes reçues qui ont accepté (avant l’effacement à 30 jours).',
     f'<b>Contacts check-up</b> : {a(SITE + "/admin")} → {b("Mes contacts")} → statut, notes, {b("Télécharger (Excel / CSV)")}. '
     'Une seule relance maximum ; « STOP » = effacement immédiat.',
     f'<b>Sécurité</b> : changer ou supprimer {c("STAFF_PIN")} dans Cloudflare → plus aucun accès soignants.',
     f'<b>Remarques des intervenants</b> : {b("Télécharger (Excel / CSV)")} pour le bilan de l’organisation.',
-    f'<b>Rapport ICC Liège</b> : {a(SITE + "/admin")} (ADMIN_KEY) → onglet {b("Rapport ICC")} → {b("Télécharger (Excel / CSV)")} : nom, prénom, GSM des personnes reçues qui ont accepté d’y figurer (à exporter avant l’effacement automatique).',
     '<b>Effacement automatique</b> : dossiers après 30 jours, contacts et remarques après 180 jours.'
 ])]))
 

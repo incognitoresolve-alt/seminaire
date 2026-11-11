@@ -1,11 +1,10 @@
 import { LEAD_INTERESTS, PARTNER } from '../web/shared/partner.js';
-import { CONTACT_TIMES, FEEDBACK_KINDS, FEEDBACK_ROLES, FEEDBACK_STATUS, LEAD_STATUS, validateFeedback, validateFeedbackPatch, validateIdentity, validateLead, validateLeadPatch, validateLeadQualify, validatePatch } from '../web/shared/validate.js';
+import { CONTACT_TIMES, FEEDBACK_KINDS, FEEDBACK_ROLES, FEEDBACK_STATUS, LEAD_STATUS, validateFeedback, validateFeedbackPatch, validateIdentity, validateLead, validateLeadPatch, validateLeadQualify, validatePatch, validateEmailSetting } from '../web/shared/validate.js';
 import { checkPin, checkSecret, clearCookie, clearRoleCookie, hasRole, makeCookie, requireRole, requireStaff, roleConfigured, sessionCookie } from './auth.js';
 import { HttpError, assertSameOrigin, clientIp, json, rateLimit, readJson } from './http.js';
 import { hub } from './hub.js';
 import { ensureSchema } from './schema.js';
-import { sendCheckupMail } from './mail.js';
-import { createFeedback, deleteFeedback, listFeedback, updateFeedback, alreadyMailed, createLead, deleteLead, deleteLeadByToken, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, markMailed, qualifyLead, updateLead, churchReport, consentProof, createPatient, deletePatient, getDetail, listSince, purge, updatePatient } from './patients.js';
+import { createFeedback, deleteFeedback, listFeedback, updateFeedback, createLead, deleteLead, deleteLeadByToken, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, qualifyLead, updateLead, churchReport, consentProof, getSetting, listTransmissions, setSetting, updateTransmission, createPatient, deletePatient, getDetail, listSince, purge, updatePatient } from './patients.js';
 
 export { Hub } from './hub.js';
 
@@ -138,14 +137,13 @@ async function partnerRoutes(req, env, url, path) {
       ...r,
       created_at: dt(r.created_at),
       consent_at: dt(r.consent_at),
-      mailed_at: dt(r.mailed_at),
       status: LEAD_STATUS[r.status] ?? r.status,
       contact_time: CONTACT_TIMES[r.contact_time] ?? '',
       interests: (r.interests || '').split(',').filter(Boolean).map((i) => LBL[i] ?? i).join(', '),
       audience: r.audience === 'pro' ? 'Professionnel de santé' : 'Particulier',
     }));
     const cols = [['created_at', 'Date'], ['name', 'Nom'], ['email', 'E-mail'], ['phone', 'Téléphone'], ['interests', 'Intérêts'], ['contact_time', 'Moment préféré'],
-      ['status', 'Statut'], ['partner_notes', 'Notes'], ['message', 'Message'], ['audience', 'Public'], ['consent_at', 'Accord donné le'], ['mailed_at', 'E-mail envoyé le']];
+      ['status', 'Statut'], ['partner_notes', 'Notes'], ['message', 'Message'], ['audience', 'Public'], ['consent_at', 'Accord donné le']];
     return csvResponse(toCsv(cols, rows), `contacts-checksante-${new Date().toISOString().slice(0, 10)}.csv`);
   }
   const m = path.match(/^\/leads\/([0-9a-f-]{36})$/);
@@ -195,6 +193,41 @@ async function adminRoutes(req, env, ctx, path) {
   await requireRole('admin', req, env);
   const resync = () => ctx.waitUntil(hub(env).broadcast({ t: 'resync' }).catch(() => {}));
   if (path === '/trash' && method === 'GET') return json(await listTrash(env));
+  // Envois MANUELS (aucun e-mail envoyé par l'application) : réglages, fiches pour les médecins traitants.
+  if (path === '/settings' && method === 'GET') return json({ church_email: await getSetting(env, 'church_email') });
+  if (path === '/settings' && method === 'PUT') {
+    const v = validateEmailSetting((await readJson(req, 1024))?.church_email);
+    if (!v.ok) throw new HttpError(422, 'validation', { errors: { church_email: v.error } });
+    await setSetting(env, 'church_email', v.value);
+    return json({ church_email: v.value });
+  }
+  if (path === '/transmissions' && method === 'GET') return json({ items: await listTransmissions(env) });
+  const tx = path.match(/^\/transmissions\/([0-9a-f-]{36})$/);
+  if (tx && method === 'PATCH') {
+    const body = await readJson(req, 1024);
+    const patch = {};
+    if (body && 'gp_email' in body) {
+      const v = validateEmailSetting(body.gp_email);
+      if (!v.ok) throw new HttpError(422, 'validation', { errors: { gp_email: v.error } });
+      patch.gp_email = v.value;
+    }
+    if (body && 'sent' in body) {
+      if (typeof body.sent !== 'boolean') throw new HttpError(422, 'validation', { errors: { sent: 'Valeur invalide' } });
+      patch.sent = body.sent;
+    }
+    if (!Object.keys(patch).length) throw new HttpError(422, 'validation', { errors: { _: 'Aucun champ' } });
+    const row = await updateTransmission(env, tx[1], patch);
+    resync();
+    return json({ item: row });
+  }
+  const af = path.match(/^\/patients\/([0-9a-f-]{36})\/fiche$/);
+  if (af && method === 'GET') {
+    const row = await getDetail(env, af[1]);
+    if (!row) throw new HttpError(404, 'not_found');
+    if (row.doctor_consent !== 1) throw new HttpError(403, 'consent_required');
+    const { consent_log: _log, token: _token, ...patient } = row;
+    return json({ patient, proof: await consentProof(row), generated_at: Date.now() });
+  }
   // Rapport ICC Liège : nom, prénom, GSM des personnes reçues qui l'ont accepté (aucune donnée de santé).
   if (path === '/report' && method === 'GET') return json(await churchReport(env));
   if (path === '/report.csv' && method === 'GET') {
@@ -292,14 +325,7 @@ async function route(req, env, ctx, url) {
     if (body?.website) throw new HttpError(400, 'invalid');
     const { ok, errors, value } = validateLead(body);
     if (!ok) throw new HttpError(422, 'validation', { errors });
-    const lead = await createLead(env, value);
-    if (lead) {
-      ctx.waitUntil(
-        (lead.email && (await alreadyMailed(env, lead.email)) ? Promise.resolve('dedup') : sendCheckupMail(env, lead, url.origin))
-          .then((r) => r === 'sent' && markMailed(env, lead.id))
-          .catch((e) => console.error(JSON.stringify({ evt: 'mail_failed', err: String(e?.message).slice(0, 120) }))),
-      );
-    }
+    const lead = await createLead(env, value); // aucun e-mail automatique : prise de contact manuelle depuis « Mes contacts »
     // Jeton secret renvoyé à la personne : lui permet de préciser sa demande (et de se désinscrire).
     return json({ ok: true, t: lead?.unsub_token }, lead ? 201 : 200);
   }
