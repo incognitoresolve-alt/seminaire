@@ -55,3 +55,15 @@ test('rapport ICC : accord facultatif, séparé, enregistré seulement si coché
   assert.deepEqual(validatePatch({ church_consent: 1 }).value, { church_consent: 1 });
   assert.ok(validatePatch({ church_consent: true }).errors.church_consent);
 });
+
+test('envois manuels : adresses e-mail validées (ICC Liège, médecin traitant)', async () => {
+  const { validateEmailSetting } = await import('../web/shared/validate.js');
+  assert.deepEqual(validateEmailSetting(' Secretariat@ICC-Liege.be '), { ok: true, value: 'secretariat@icc-liege.be' });
+  assert.deepEqual(validateEmailSetting(''), { ok: true, value: null });
+  assert.deepEqual(validateEmailSetting(null), { ok: true, value: null });
+  assert.equal(validateEmailSetting('pas-un-email').ok, false);
+  assert.equal(validateEmailSetting('a@b.be?cc=x@y.be').ok, false); // pas d'injection d'en-tête mailto
+  assert.equal(validateEmailSetting(42).ok, false);
+  assert.deepEqual(validatePatch({ gp_email: 'Cabinet@Exemple.be' }).value, { gp_email: 'cabinet@exemple.be' });
+  assert.ok(validatePatch({ gp_email: 'cabinet' }).errors.gp_email);
+});

@@ -149,7 +149,7 @@ SECTIONS = [
     ('s4', '4', 'Cloudflare : ajouter les codes secrets', '5 min'),
     ('s5', '5', 'Tester le site (et effacer les tests)', '20 min'),
     ('s6', '6', 'Compléter les textes', '10 min'),
-    ('s7', '7', 'Nom de domaine + e-mails automatiques', '30 min'),
+    ('s7', '7', 'Nom de domaine (facultatif)', '10 min'),
     ('s8', '8', 'Imprimer les affiches', '10 min'),
     ('s9', '9', 'Le jour J', '—'),
     ('s10', '10', 'Après l’événement', '15 min'),
@@ -236,7 +236,6 @@ lex = [
     ('Secret', 'Un code caché que seul le Worker connaît (ex. le PIN des soignants). Invisible une fois enregistré.'),
     ('Build / Deploy', 'Cloudflare prépare le site (build) puis le met en ligne (deploy). Automatique.'),
     ('DNS', 'L’annuaire d’Internet qui relie un nom (checksante.be) à un site. Utile seulement à l’étape 7.'),
-    ('Brevo', 'Le service européen qui envoie l’e-mail « check-up couverture ». Facultatif.'),
 ]
 t = Table([[P(f'<b>{a}</b>'), P(b)] for a, b in lex], colWidths=[42 * mm, None])
 t.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP'), ('LINEBELOW', (0, 0), (-1, -1), 0.4, LINE),
@@ -423,8 +422,8 @@ t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), LGREY), ('BACKGROUND', (1
 story += [Spacer(1, 6), t, Spacer(1, 4), P('Seuils adultes ci-dessus. L’application adapte automatiquement le pouls et la tension pour les enfants (1–5 ans et 6–11 ans) grâce à la date de naissance, et affiche des <b>conseils automatiques</b> selon les valeurs et l’âge. À faire valider aussi par les médecins.', 'small'), Spacer(1, 6), Field('Remarques des médecins sur les seuils', 'f_seuils')]
 story.append(PageBreak())
 
-# ---- 7. Domaine + Brevo
-story += section('s7', '7', 'Nom de domaine + e-mails automatiques', '30 min', optional=True)
+# ---- 7. Domaine (aucun envoi automatique d'e-mail)
+story += section('s7', '7', 'Nom de domaine (facultatif)', '10 min', optional=True)
 story.append(P('Sans cette étape, tout fonctionne : l’adresse reste en « workers.dev » et tu écris toi-même aux '
                'personnes intéressées par le check-up (modèle dans <b>docs/modele-email-checkup.md</b>).'))
 story.append(warn('Choisis le domaine <b>avant d’imprimer les affiches</b> : les QR codes contiennent l’adresse du site.'))
@@ -436,25 +435,9 @@ story += [P('A. Nom de domaine', 'h2'),
     Step(3, f'Menu du domaine → {btn("SSL/TLS")} → {btn("Edge Certificates")} : active {btn("Always Use HTTPS")} et '
             f'règle {btn("Minimum TLS Version")} sur 1.2.'),
 ]
-story += [P('B. E-mails automatiques avec Brevo', 'h2'),
-    Step(4, f'Crée un compte gratuit : {link("https://www.brevo.com")}. <b>Fais-le tôt</b> : Brevo peut demander '
-            'de valider le compte avant d’autoriser les envois.'),
-    Step(5, f'Dans Brevo : {btn("Senders, Domains & Dedicated IPs")} → {btn("Domains")} → {btn("Add a domain")} → '
-            'tape ton domaine. Brevo affiche 3 ou 4 lignes « DNS » à recopier.'),
-    Step(6, f'Dans Cloudflare → ton domaine → {btn("DNS")} → {btn("Records")} → {btn("Add record")} : recopie chaque '
-            'ligne (Type, Name, Content). Pour chacune, le nuage orange doit être <b>gris</b> (« DNS only »).'),
-    Step(7, f'Retour dans Brevo → {btn("Verify")} / {btn("Authenticate")} → tout doit passer au vert '
-            '(parfois 10 à 30 minutes d’attente).'),
-    Step(8, f'Brevo → {btn("Senders")} → {btn("Add a sender")} : nom {code("Boris Y. AKOE · CheckSanté")}, '
-            f'e-mail {code("checkup@ton-domaine")}.'),
-    Step(9, f'Brevo → menu de ton profil → {btn("SMTP & API")} → {btn("API Keys")} → {btn("Generate a new API key")} → copie la clé.'),
-    Step(10, f'Cloudflare → Worker → {btn("Variables and Secrets")} → ajoute 2 <b>Secrets</b> : '
-             f'{code("BREVO_API_KEY")} = la clé · {code("MAIL_FROM")} = {code("checkup@ton-domaine")} → {btn("Deploy")}.'),
-    Step(11, 'Test : inscris-toi en cochant la case « check-up » → l’e-mail arrive (regarde aussi les <b>spams</b>). '
-             'Clique sur « Ne plus recevoir de message » pour vérifier la désinscription. Puis efface ce test (étape 5, n° 11).'),
-]
-story.append(tip('Les réponses des personnes arriveront sur <b>yaoakoe.pro@gmail.com</b> : l’e-mail est réglé '
-                 'pour répondre vers ton Gmail.'))
+story.append(tip('<b>Aucun envoi automatique d’e-mail</b> : tu écris toi-même aux personnes intéressées par le check-up '
+                 '(onglet « Mes contacts »), et le rapport ICC ainsi que les fiches des médecins traitants partent depuis '
+                 '<b>ADRESSE/admin</b> → onglet « Envois ».'))
 story.append(PageBreak())
 
 # ---- 8. Affiches
@@ -527,8 +510,6 @@ faq = [
     ('La pastille est rouge « Hors ligne »', 'Plus de réseau. Les saisies sont gardées et partiront au retour du réseau. '
      'Passe sur le partage 4G.'),
     ('Je ne trouve pas une personne dans la liste', 'Vérifie l’orthographe (les accents ne comptent pas) ; choisis le filtre « Tous » ; sinon elle n’est pas inscrite : bouton « Ajouter manuellement ».'),
-    ('L’e-mail check-up n’arrive pas', 'Regarde les spams ; vérifie que le domaine est vert dans Brevo et que '
-     'BREVO_API_KEY et MAIL_FROM sont bien des Secrets. L’inscription, elle, est toujours enregistrée.'),
     ('Le site ne marche plus après une modification', 'Worker → ' + btn('Deployments') + ' → version précédente → '
      + btn('Rollback') + ' : retour immédiat à la version qui marchait.'),
     ('Autre chose', 'Fais une capture d’écran et envoie-la dans la conversation avec Claude.'),

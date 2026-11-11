@@ -36,6 +36,7 @@
         <button id="btn-trash" role="tab" data-tab="trash" aria-selected="false" class="chip aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">Corbeille</button>
         <button id="btn-feedback" role="tab" data-tab="feedback" aria-selected="false" class="chip inline-flex items-center gap-1.5 aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">Remarques <span id="f-badge" hidden class="rounded-full bg-accent-dark px-1.5 text-xs font-bold text-white"></span></button>
         <button id="btn-report" role="tab" data-tab="report" aria-selected="false" class="chip aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">Rapport ICC</button>
+        <button id="btn-envois" role="tab" data-tab="envois" aria-selected="false" class="chip aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">Envois</button>
         <button id="btn-contacts" role="tab" data-tab="contacts" aria-selected="false" class="chip aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">Mes contacts</button>
         <button id="btn-qr" role="tab" data-tab="qr" aria-selected="false" class="chip aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">QR codes</button>
       </div>
@@ -109,6 +110,37 @@
           <p id="r-empty" class="py-8 text-center text-slate-500"></p>
         </div>
         <p class="pt-3 pb-8 text-center text-xs text-slate-500">Personnes reçues au pôle santé (paramètres relevés, médecin assigné ou parcours terminé). Seules celles qui ont accepté de figurer dans le rapport (case à l’inscription ou accord noté par un soignant) sont nommées ; les autres sont seulement comptées. Aucune donnée de santé. Liste effacée avec les dossiers (30 jours) : exportez-la pour la garder.</p>
+      </section>
+
+      <!-- Envois MANUELS (ADMIN_KEY) : aucun e-mail n'est envoyé par l'application -->
+      <section id="tab-envois" hidden role="tabpanel" aria-labelledby="btn-envois">
+        <p class="mb-4 rounded-2xl bg-sky-50 p-3 text-sm text-slate-700 ring-1 ring-sky-200"><b>Aucun envoi automatique.</b> Ici, vous enregistrez les adresses ; « Préparer l’e-mail » ouvre votre messagerie avec le destinataire, l’objet et le message déjà remplis : vous joignez le fichier, vérifiez et envoyez vous-même.</p>
+        <div class="glass rounded-2xl p-4">
+          <h2 class="text-lg font-extrabold">1. Rapport pour ICC Liège</h2>
+          <form id="e-church-form" class="mt-2 flex flex-wrap items-end gap-2" novalidate>
+            <div class="min-w-0 flex-1 basis-64"><label class="label" for="e-church">E-mail d’ICC Liège (destinataire du rapport)</label>
+              <input id="e-church" type="email" inputmode="email" autocomplete="off" maxlength="254" class="field py-2.5 text-base" placeholder="secretariat@…" aria-describedby="e-church-err"></div>
+            <button type="submit" class="btn-ghost min-h-11 px-3 py-2 text-sm">Enregistrer</button>
+          </form>
+          <p id="e-church-err" class="err" role="alert"></p>
+          <p class="text-sm text-slate-700">Rapport : <b id="e-report-n">0</b> personne(s) (onglet « Rapport ICC »).</p>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <a href="/api/admin/report.csv" download class="btn-ghost min-h-10 px-3 py-2 text-sm">1. Télécharger le rapport (CSV)</a>
+            <button id="e-church-mail" type="button" class="btn-primary min-h-10 px-3 py-2 text-sm">2. Préparer l’e-mail à ICC Liège</button>
+            <button id="e-church-copy" type="button" class="btn-ghost min-h-10 px-3 py-2 text-sm">Copier le message</button>
+          </div>
+          <p id="e-church-hint" class="mt-1 text-xs text-slate-600" aria-live="polite"></p>
+        </div>
+        <div class="mt-5 mb-2 flex flex-wrap items-center gap-2">
+          <h2 class="mr-auto text-lg font-extrabold">2. Fiches pour les médecins traitants</h2>
+        </div>
+        <p class="text-sm text-slate-600">Personnes qui ont autorisé la transmission. Pour chacune : <b>1.</b> ouvrir la fiche → « Imprimer / Enregistrer en PDF » ; <b>2.</b> préparer l’e-mail et joindre le PDF ; <b>3.</b> marquer comme envoyée.</p>
+        <p class="mt-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">Données de santé : de préférence via la messagerie sécurisée des médecins (eHealthBox) ; par e-mail classique, uniquement à l’adresse du cabinet, après vérification.</p>
+        <label class="sr-only" for="e-q">Rechercher une personne</label>
+        <input id="e-q" type="search" class="field mt-3 py-2.5" placeholder="Rechercher un patient, un médecin…" autocomplete="off">
+        <div id="e-filter" class="mt-2 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Filtrer les fiches"></div>
+        <ul id="e-list" class="mt-3 space-y-2"></ul>
+        <p id="e-empty" class="py-10 pb-12 text-center text-slate-500"></p>
       </section>
 
       <!-- QR codes de l'événement (toutes les clés) -->

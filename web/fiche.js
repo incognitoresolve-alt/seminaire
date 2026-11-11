@@ -65,7 +65,7 @@ function render({ patient: p, proof, generated_at }) {
     </header>
     <h1 class="mt-5 print:mt-3 text-2xl font-extrabold">Fiche de transmission au médecin traitant</h1>
     <p class="mt-1 text-sm text-slate-600">À l’attention de : <b class="text-slate-900">${p.gp_name ? esc(p.gp_name) : 'médecin traitant (nom non renseigné)'}</b></p>
-    ${p.gp_contact || p.gp_address ? `<p class="mt-0.5 text-sm whitespace-pre-line text-slate-600">${esc([p.gp_contact, p.gp_address].filter(Boolean).join('\n'))}</p>` : ''}
+    ${p.gp_contact || p.gp_email || p.gp_address ? `<p class="mt-0.5 text-sm whitespace-pre-line text-slate-600">${esc([[p.gp_contact, p.gp_email].filter(Boolean).join(' · '), p.gp_address].filter(Boolean).join('\n'))}</p>` : ''}
 
     ${H('Patient')}
     <table class="w-full"><tbody>
@@ -116,11 +116,12 @@ $('close').addEventListener('click', () => (history.length > 1 ? history.back() 
 if (!/^[0-9a-f-]{36}$/.test(id)) fail('Fiche introuvable.');
 else
   api(`/staff/patients/${id}/fiche`)
+    .catch((e) => (e.status === 401 ? api(`/admin/patients/${id}/fiche`) : Promise.reject(e))) // depuis /admin → Envois
     .then(render)
     .catch((e) =>
       fail(
         e.status === 401
-          ? 'Accès réservé aux soignants : connectez-vous dans l’espace soignants, puis rouvrez la fiche.'
+          ? 'Accès réservé : connectez-vous dans l’espace soignants ou dans l’administration (clé ADMIN_KEY), puis rouvrez la fiche.'
           : e.status === 403
             ? 'Le participant n’a pas autorisé la transmission à son médecin traitant : aucune fiche ne peut être produite.'
             : e.status === 404

@@ -115,6 +115,11 @@ export function validatePatch(b) {
       if (n === '') value.gp_name = null;
       else if (n && NAME_RE.test(n)) value.gp_name = n;
       else errors.gp_name = 'Nom du médecin traitant invalide';
+    } else if (k === 'gp_email') {
+      const e = raw === null ? '' : typeof raw === 'string' ? clean(raw).toLowerCase() : null;
+      if (e === '') value.gp_email = null;
+      else if (e && e.length <= 254 && EMAIL_RE.test(e)) value.gp_email = e;
+      else errors.gp_email = 'E-mail du médecin traitant invalide';
     } else if (k === 'gp_contact' || k === 'gp_address') {
       const max = k === 'gp_contact' ? 200 : 300;
       if (raw === null || (typeof raw === 'string' && !raw.trim())) value[k] = null;
@@ -240,4 +245,13 @@ export function validateFeedbackPatch(b) {
   if (b && 'admin_notes' in b) value.admin_notes = freeText(b.admin_notes, 2000, true);
   if (!Object.keys(value).length && !Object.keys(errors).length) errors._ = 'Rien à modifier';
   return { ok: Object.keys(errors).length === 0, errors, value };
+}
+
+/* ---------- Envois manuels (page /admin, onglet « Envois ») ---------- */
+/** E-mail facultatif : '' ou null = effacé ; sinon adresse valide (minuscules). */
+export function validateEmailSetting(raw) {
+  const e = raw === null || raw === undefined ? '' : typeof raw === 'string' ? clean(raw).toLowerCase() : null;
+  if (e === '') return { ok: true, value: null };
+  if (e && e.length <= 254 && EMAIL_RE.test(e)) return { ok: true, value: e };
+  return { ok: false, error: 'E-mail invalide' };
 }

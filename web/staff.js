@@ -278,7 +278,7 @@ async function loadDetail(id) {
     const { patient: d, proof } = await api(`/staff/patients/${id}`);
     if (sheetId !== id) return;
     $('sheet-email').textContent = [d.email, d.phone].filter(Boolean).join(' · ');
-    sheetDetail = { gp: { gp_name: d.gp_name ?? null, gp_contact: d.gp_contact ?? null, gp_address: d.gp_address ?? null }, proof };
+    sheetDetail = { gp: { gp_name: d.gp_name ?? null, gp_contact: d.gp_contact ?? null, gp_email: d.gp_email ?? null, gp_address: d.gp_address ?? null }, proof };
     const p = store.view(id);
     if (p) renderConsent(p);
   } catch {
@@ -306,8 +306,12 @@ function renderConsent(p, force = false) {
         <legend class="text-sm font-bold text-slate-800">Médecin traitant <span class="font-normal text-slate-500">(saisi par le soignant)</span></legend>
         <div><label class="label" for="sheet-gp-name">Nom et prénom</label>
           <input id="sheet-gp-name" data-gp="gp_name" class="field py-2.5 text-base" maxlength="80" autocomplete="off" autocapitalize="words" placeholder="Dr Prénom Nom" value="${esc(d?.gp.gp_name ?? '')}"></div>
-        <div><label class="label" for="sheet-gp-contact">Téléphone / e-mail</label>
-          <input id="sheet-gp-contact" data-gp="gp_contact" class="field py-2.5 text-base" maxlength="200" autocomplete="off" placeholder="04 … · cabinet@…" value="${esc(d?.gp.gp_contact ?? '')}"></div>
+        <div class="grid gap-2 sm:grid-cols-2">
+          <div><label class="label" for="sheet-gp-contact">Téléphone</label>
+            <input id="sheet-gp-contact" data-gp="gp_contact" type="tel" inputmode="tel" class="field py-2.5 text-base" maxlength="200" autocomplete="off" placeholder="04 …" value="${esc(d?.gp.gp_contact ?? '')}"></div>
+          <div><label class="label" for="sheet-gp-email">E-mail</label>
+            <input id="sheet-gp-email" data-gp="gp_email" type="email" inputmode="email" class="field py-2.5 text-base" maxlength="254" autocomplete="off" placeholder="cabinet@…" value="${esc(d?.gp.gp_email ?? '')}"></div>
+        </div>
         <div><label class="label" for="sheet-gp-address">Adresse du cabinet</label>
           <textarea id="sheet-gp-address" data-gp="gp_address" rows="2" maxlength="300" class="field py-2.5 text-base" autocomplete="off" placeholder="Rue, n°, code postal, commune">${esc(d?.gp.gp_address ?? '')}</textarea></div>
       </fieldset>

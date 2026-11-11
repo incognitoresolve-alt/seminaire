@@ -1,5 +1,6 @@
 import { api, esc } from './api.js';
 import { initFeedback } from './admin-feedback.js';
+import { initEnvois } from './admin-envois.js';
 import { initQr } from './admin-qr.js';
 import { initReport } from './admin-report.js';
 import { LEAD_INTERESTS } from './shared/partner.js';
@@ -34,7 +35,7 @@ function render() {
           <div class="mr-auto min-w-0">
             <p class="font-bold">${esc(l.name)} <span class="text-xs font-normal text-slate-500">· ${date(l.created_at)} · ${l.audience === 'pro' ? 'Professionnel de santé' : 'Particulier'}</span></p>
             <p class="text-sm">${l.phone ? `<a class="font-semibold text-sky-800 underline" href="tel:${esc(l.phone.replace(/[^+\d]/g, ''))}">${esc(l.phone)}</a> · ` : ''}${l.email ? `<a class="text-sky-800 underline" href="mailto:${esc(l.email)}?subject=${encodeURIComponent('Votre check-up couverture gratuit')}">${esc(l.email)}</a>` : ''}</p>
-            <p class="mt-1 flex flex-wrap gap-1">${tags}${l.contact_time ? `<span class="rounded-lg bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-900">${esc(CONTACT_TIMES[l.contact_time])}</span>` : ''}${l.mailed_at ? '<span class="rounded-lg bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-900">E-mail envoyé</span>' : ''}</p>
+            <p class="mt-1 flex flex-wrap gap-1">${tags}${l.contact_time ? `<span class="rounded-lg bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-900">${esc(CONTACT_TIMES[l.contact_time])}</span>` : ''}</p>
             ${l.message ? `<p class="mt-1 text-sm text-slate-600">« ${esc(l.message)} »</p>` : ''}
           </div>
           <label class="sr-only" for="st-${esc(l.id)}">Statut</label>
@@ -163,6 +164,7 @@ $('t-empty').addEventListener('click', () =>
 /* ---------- Remarques des intervenants (clé ADMIN_KEY) ---------- */
 const feedback = initFeedback({ toast, onAuthLost: () => start() });
 const report = initReport({ toast, onAuthLost: () => start() });
+const envois = initEnvois({ toast, onAuthLost: () => start() });
 initQr({ toast });
 
 /* ---------- Onglets, accès ---------- */
@@ -174,6 +176,8 @@ function showTab(t) {
   $('tab-feedback').hidden = t !== 'feedback';
   $('tab-report').hidden = t !== 'report';
   $('tab-qr').hidden = t !== 'qr';
+  $('tab-envois').hidden = t !== 'envois';
+  if (t === 'envois') envois.load();
   feedback.watch(t === 'feedback');
   if (t === 'report') report.load();
   if (t === 'trash') loadTrash();
@@ -199,6 +203,7 @@ async function start() {
   $('btn-contacts').hidden = !roles.partner;
   $('btn-feedback').hidden = !roles.admin;
   $('btn-report').hidden = !roles.admin;
+  $('btn-envois').hidden = !roles.admin;
   if (roles.admin) feedback.load({ quiet: true }); // pastille « nouvelles remarques »
   showTab(roles.admin ? 'trash' : 'contacts');
 }
