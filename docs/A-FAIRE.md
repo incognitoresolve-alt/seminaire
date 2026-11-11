@@ -5,10 +5,10 @@
 > Il ne reste que des réglages dans Cloudflare et sur place :
 >
 > 1. **Cloudflare → Worker `seminaire-triage` → Deployments** : dernier déploiement = *Success*. (Sinon : *Settings → Builds* → dépôt `seminaire`, branche `main`, build `npm run build`, deploy `npx wrangler deploy`.)
-> 2. **Settings → Variables and Secrets** (type *Secret*) : `STAFF_PIN` (8+ caractères), `SESSION_SECRET` (32+ caractères aléatoires), `PARTNER_KEY` (16+ caractères). Ne pas reprendre les valeurs d'exemple de `.dev.vars.example`.
+> 2. **Settings → Variables and Secrets** (type *Secret*) : `STAFF_PIN` (8+ caractères), `SESSION_SECRET` (32+ caractères aléatoires), `PARTNER_KEY` (16+ caractères, partenaire : « Mes contacts »), `ADMIN_KEY` (16+ caractères, organisateur / responsable médical : corbeille). Ne pas reprendre les valeurs d'exemple de `.dev.vars.example`.
 > 3. **Ouvrir `https://<adresse>/api/health`** → `{"ok":true}` (crée aussi les tableaux de la base automatiquement).
 > 4. **Test réel (5 min)** : inscrire 2 personnes sur la tablette d'accueil → *Liste des inscrits* (PIN) → ouvrir une fiche → saisir une tension → vérifier sur une 2e tablette.
-> 5. **Effacer les tests** : D1 → `seminaire` → *Console* → `DELETE FROM patients; DELETE FROM surveys; DELETE FROM partner_leads;`
+> 5. **Effacer les tests** : `https://<adresse>/admin` + clé `ADMIN_KEY` → *Tout mettre à la corbeille* → *Vider* → *Effacer toutes les réponses* (questionnaire). (Contacts de test : onglet *Mes contacts* avec `PARTNER_KEY` → *STOP*.)
 > 6. **Faire relire l'assistant éducatif par les médecins** (README, section « Assistant médical éducatif ») : seuils marqués « Seuil de prudence CheckSanté », textes des conseils.
 > 7. **Envoyer à Claude l'e-mail de contact RGPD d'ICC Liège** (seul texte manquant du site : politique de confidentialité).
 > 8. Sur place : PIN donné aux soignants uniquement, tablettes chargées, veille d'écran désactivée, partage 4G de secours.
@@ -78,7 +78,8 @@ Worker `seminaire-triage` → **Settings → Variables and Secrets → Add** →
 | `SESSION_SECRET` | 32+ caractères aléatoires | Mac/Linux : `openssl rand -base64 48` ; sinon générateur de mot de passe (64 caractères) |
 | `BREVO_API_KEY` | clé API Brevo | voir étape E (facultatif) |
 | `MAIL_FROM` | ex. `checkup@checksante.be` | voir étape E (facultatif) |
-| `PARTNER_KEY` | ta clé d'accès à l'espace partenaire, **16 caractères minimum** | générateur de mot de passe ; à garder pour toi seul (les soignants n'en ont pas besoin) |
+| `ADMIN_KEY` | clé de la **corbeille** sur `/admin` (organisateur / responsable médical — **pas** le partenaire : la corbeille contient des données de santé), **16 caractères minimum** | générateur de mot de passe |
+| `PARTNER_KEY` | ta clé d'accès à « Mes contacts » sur `/admin`, **16 caractères minimum** | générateur de mot de passe ; à garder pour toi seul (les soignants n'en ont pas besoin) |
 
 Les secrets s'appliquent immédiatement (nouvelle version déployée automatiquement).
 
@@ -177,7 +178,7 @@ DELETE FROM partner_leads;
    FROM patients WHERE doctor_consent = 1 AND doctor IS NOT NULL AND deleted_at IS NULL ORDER BY doctor, triage DESC;
    ```
    `doctor` = 1 (Médecin 1, mercredi) ou 2 (Médecin 2, samedi). Transmettre **par un moyen sécurisé** (eHealthBox, messagerie santé), **jamais par Gmail**.
-2. **Contacts check-up** (toi uniquement) : `https://<adresse>/espace-partenaire` + ta clé `PARTNER_KEY`.
+2. **Contacts check-up** (toi uniquement) : `https://<adresse>/admin` + ta clé `PARTNER_KEY` → onglet *Mes contacts*.
    Statut par contact (Nouveau → Contacté → Rendez-vous → Client), notes, bouton **Télécharger (Excel / CSV)**.
    Une relance maximum, « STOP » = bouton d'effacement (`docs/modele-email-checkup.md`).
    **Bilan anonyme** (rapport ICC, présentations) : espace soignants → **Bilan** → **Exporter le bilan (CSV)**.

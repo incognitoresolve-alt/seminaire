@@ -365,7 +365,9 @@ story += [P('B. Les enregistrer dans Cloudflare', 'h2'),
     Step(6, f'<b>Ta clé partenaire</b> (pour ton espace « Mes contacts ») : encore {btn("Add")} → {btn("Secret")} → '
             f'nom {code("PARTNER_KEY")} → valeur : un mot de passe d’<b>au moins 16 caractères</b> (générateur ci-dessus). '
             'Garde-le pour toi seul : les soignants n’en ont pas besoin.'),
-    Step(7, f'Clique sur {btn("Deploy")} (ou « Save and deploy »).'),
+    Step(7, f'<b>Clé administrateur</b> (corbeille sur la page /admin) : {btn("Add")} → {btn("Secret")} → nom {code("ADMIN_KEY")} → '
+            'un autre mot de passe d’<b>au moins 16 caractères</b>. À confier à l’organisateur ou au responsable médical : la corbeille contient des données de santé.'),
+    Step(8, f'Clique sur {btn("Deploy")} (ou « Save and deploy »).'),
 ]
 story.append(warn('Les noms doivent être écrits <b>exactement</b> comme ici, en majuscules, avec le tiret bas _.'))
 story.append(danger('Le PIN se donne <b>uniquement aux soignants</b>, de vive voix ou par message privé. '
@@ -392,9 +394,9 @@ tests = [
 ]
 story += [Step(i, s) for i, s in enumerate(tests, start=1)]
 story.append(P('Effacer les données de test (obligatoire avant d’ouvrir au public)', 'h2'))
-story += [Step(11, f'Cloudflare → D1 → <b>seminaire</b> → {btn("Console")} → colle ces 3 lignes → {btn("Execute")} :'),
-          codeblock(['DELETE FROM patients;', 'DELETE FROM surveys;', 'DELETE FROM partner_leads;']),
-          Step(12, 'Rafraîchis ADRESSE/staff : la liste affiche « Aucun participant inscrit pour le moment ».')]
+story += [Step(11, f'Ouvre <b>ADRESSE/admin</b> → tape la clé <b>ADMIN_KEY</b> → {btn("Tout mettre à la corbeille")} → {btn("Vider")} → {btn("Effacer toutes les réponses")} (questionnaire de test).'),
+          Step(12, f'Contacts de test : sur la même page, {btn("Ajouter une clé")} → <b>PARTNER_KEY</b> → onglet {btn("Mes contacts")} → « STOP » sur chaque contact de test.'),
+          Step(13, 'Rafraîchis ADRESSE/staff : la liste affiche « Aucun participant inscrit pour le moment ».')]
 story.append(tip('Si un test échoue, va directement à la page '
                  '<a href="#sd" color="#0369a1"><u>En cas de problème</u></a>.'))
 story.append(PageBreak())
@@ -503,7 +505,7 @@ story += [
                '  AND deleted_at IS NULL ORDER BY doctor, triage DESC;']),
     P('<b>doctor</b> = 1 (Médecin 1, mercredi) ou 2 (Médecin 2, samedi).', 'small'),
     Step(2, 'Transmets ces informations <b>par un canal sécurisé</b> (eHealthBox, messagerie santé). <b>Jamais par Gmail.</b>'),
-    Step(3, '<b>Tes contacts check-up</b> : ouvre <b>ADRESSE/espace-partenaire</b> → tape ta clé PARTNER_KEY. '
+    Step(3, '<b>Tes contacts check-up</b> : ouvre <b>ADRESSE/admin</b> → tape ta clé PARTNER_KEY → onglet « Mes contacts ». '
             'Pour chaque contact : statut (Nouveau → Contacté → Rendez-vous → Client), tes notes, téléphone et e-mail cliquables. '
             f'Bouton {btn("Télécharger (Excel / CSV)")} pour tout récupérer dans Excel.'),
     Step(7, f'<b>Bilan anonyme</b> (rapport pour ICC, présentations) : espace soignants → bouton {btn("Bilan")} → '

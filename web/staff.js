@@ -261,7 +261,7 @@ function openSheet(id) {
       <section id="sheet-consent" class="rounded-2xl bg-white p-4 text-sm ring-1 ring-slate-200" aria-label="Transmission à un médecin" aria-live="polite"></section>
       <div class="flex items-center justify-between gap-3 pt-2">
         <p id="sheet-save" class="text-sm font-semibold text-slate-500" aria-live="polite"></p>
-        <button type="button" id="sheet-delete" class="btn-danger min-h-11 text-sm">Supprimer (effacement RGPD)</button>
+        <button type="button" id="sheet-delete" class="btn-danger min-h-11 text-sm">Mettre à la corbeille</button>
       </div>
     </div>`;
   refreshSheet(true);
@@ -448,7 +448,7 @@ $('sheet').addEventListener('close', () => {
 
 async function deleteCurrent() {
   const p = store.view(sheetId);
-  if (!confirm(`Effacer définitivement le dossier de ${p.first_name} ${p.last_name} ?`)) return;
+  if (!confirm(`Mettre ${p.first_name} ${p.last_name} à la corbeille ? Le dossier disparaît de la liste (restaurable depuis la page admin).`)) return;
   const btn = $('sheet-delete');
   btn.disabled = true;
   try {
@@ -456,7 +456,7 @@ async function deleteCurrent() {
     store.merge({ id: p.id, version: p.version + 1, deleted_at: Date.now() });
     sheetId = null;
     $('sheet').close();
-    toast('Dossier effacé', 'ok');
+    toast('Mis à la corbeille', 'ok');
   } catch {
     btn.disabled = false;
     toast('Suppression impossible, réessayez', 'error');

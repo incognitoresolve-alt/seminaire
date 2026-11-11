@@ -3,4 +3,4 @@ Allow: /$
 Disallow: /staff
 Disallow: /api/
 Disallow: /desinscription
-Disallow: /espace-partenaire
+Disallow: /admin

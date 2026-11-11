@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#5b1f8c">
+  <title>Administration – CheckSanté</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="modulepreload" href="/dist/admin.js">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body class="min-h-dvh">
+  <header class="border-b border-slate-200 bg-white">
+    <div class="mx-auto flex max-w-4xl flex-wrap items-center gap-2 px-4 py-3">
+      <h1 class="mr-auto flex items-center gap-2 text-lg font-extrabold"><img src="/logo.svg" alt="" class="size-8" width="32" height="32"><span>Check<span class="text-sky-700">Santé</span> <span class="font-semibold text-slate-500">· Administration</span></span></h1>
+      <button id="add-key" type="button" hidden class="btn-ghost min-h-10 px-3 py-2 text-sm">Ajouter une clé</button>
+      <button id="logout" type="button" class="btn-ghost min-h-10 px-3 py-2 text-sm">Se déconnecter</button>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-4xl px-4 py-6">
+    <section id="gate" hidden class="mx-auto mb-8 max-w-sm">
+      <h2 class="text-center text-2xl font-extrabold">Accès administration</h2>
+      <p class="mt-1 mb-5 text-center text-sm text-slate-600">Clé administrateur (corbeille) ou clé partenaire (mes contacts)</p>
+      <form id="gate-form" class="space-y-3">
+        <label class="sr-only" for="key">Clé d’accès</label>
+        <input id="key" class="field text-center font-mono" type="password" autocomplete="current-password" required maxlength="128" placeholder="Clé d’accès">
+        <p id="gate-err" class="err text-center" role="alert"></p>
+        <button class="btn-primary w-full" type="submit">Entrer</button>
+      </form>
+    </section>
+
+    <div id="app" hidden>
+      <div role="tablist" aria-label="Sections" class="mb-5 flex gap-2">
+        <button id="btn-trash" role="tab" data-tab="trash" aria-selected="false" class="chip aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">Corbeille</button>
+        <button id="btn-contacts" role="tab" data-tab="contacts" aria-selected="false" class="chip aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">Mes contacts</button>
+      </div>
+
+      <!-- Corbeille -->
+      <section id="tab-trash" hidden role="tabpanel" aria-labelledby="btn-trash">
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
+            <p class="text-sm text-slate-600">Inscrits actifs</p>
+            <p class="text-3xl font-black" id="t-active">0</p>
+            <button id="t-trash-all" type="button" class="btn-danger mt-3 min-h-10 w-full py-2 text-sm">Tout mettre à la corbeille</button>
+          </div>
+          <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
+            <p class="text-sm text-slate-600">Dans la corbeille</p>
+            <p class="text-3xl font-black" id="t-count">0</p>
+            <div class="mt-3 grid grid-cols-2 gap-2">
+              <button id="t-restore-all" type="button" class="btn-ghost min-h-10 py-2 text-sm">Tout restaurer</button>
+              <button id="t-empty" type="button" class="btn-danger min-h-10 py-2 text-sm">Vider</button>
+            </div>
+          </div>
+        </div>
+        <p class="mt-3 text-xs text-slate-600">Un dossier supprimé par un soignant arrive ici. Il est <b>effacé définitivement après <span id="t-days">30</span> jours</b>. Pour une demande d’effacement (RGPD), utilisez « Supprimer définitivement ».</p>
+        <label class="sr-only" for="t-q">Rechercher dans la corbeille</label>
+        <input id="t-q" type="search" class="field mt-4 py-2.5" placeholder="Rechercher un nom…" autocomplete="off">
+        <ul id="t-list" class="mt-3 space-y-2"></ul>
+        <p id="t-empty-msg" class="py-10 text-center text-slate-500"></p>
+        <div class="mt-4 flex flex-wrap items-center gap-3 rounded-2xl bg-white p-4 ring-1 ring-slate-200">
+          <p class="mr-auto text-sm text-slate-700">Questionnaire anonyme : <b id="t-surveys">0</b> réponse(s)</p>
+          <button id="t-clear-surveys" type="button" class="btn-danger min-h-10 px-3 py-2 text-sm">Effacer toutes les réponses</button>
+        </div>
+      </section>
+
+      <!-- Mes contacts (CRM partenaire) -->
+      <section id="tab-contacts" hidden role="tabpanel" aria-labelledby="btn-contacts">
+        <div class="mb-3 flex flex-wrap items-center gap-2">
+          <h2 class="mr-auto text-lg font-extrabold">Mes contacts</h2>
+          <a href="/api/partner/leads.csv" class="btn-primary min-h-10 px-3 py-2 text-sm" download>Télécharger (Excel / CSV)</a>
+        </div>
+        <label class="sr-only" for="c-q">Rechercher un contact</label>
+        <input id="c-q" type="search" class="field py-2.5" placeholder="Rechercher un nom, un e-mail, un téléphone…" autocomplete="off">
+        <div id="c-status" class="mt-2 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Filtrer par statut"></div>
+        <ul id="c-list" class="mt-3 space-y-2"></ul>
+        <p id="c-empty" class="py-10 text-center text-slate-500"></p>
+        <p class="pb-8 text-center text-xs text-slate-500">Contacts ayant donné leur accord. « STOP » = effacement définitif. Sans suite, les contacts sont effacés automatiquement après 180 jours : exportez vos clients vers votre propre outil.</p>
+      </section>
+    </div>
+  </main>
+  <div id="toast" class="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-4" aria-live="assertive"></div>
+  <script type="module" src="/dist/admin.js"></script>
+</body>
+</html>

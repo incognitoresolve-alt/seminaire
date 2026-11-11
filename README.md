@@ -154,7 +154,12 @@ Mise en place (≈ 10 min) :
 3. *SMTP & API → API keys* → créer une clé.
 4. Secrets du Worker : `BREVO_API_KEY` = la clé, `MAIL_FROM` = ex. `checkup@checksante.be`.
 
-**Espace partenaire (mini-CRM)** — `/espace-partenaire`, clé secrète `PARTNER_KEY` (16+ caractères), cloisonné des soignants :
+**Page `/admin`** — une seule page, la clé tapée détermine l'accès (cloisonnement RGPD) :
+- `ADMIN_KEY` (organisateur / responsable médical) → **Corbeille** : les dossiers supprimés par les soignants y restent `TRASH_DAYS` (30) jours, puis sont effacés automatiquement ; *Restaurer*, *Supprimer définitivement* (droit à l'effacement), *Tout restaurer*, *Vider*, *Tout mettre à la corbeille* (ex. effacer les tests). Les changements apparaissent en temps réel sur les tablettes.
+- `PARTNER_KEY` (partenaire) → **Mes contacts** (mini-CRM), jamais la corbeille. Les deux clés peuvent être saisies l'une après l'autre (« Ajouter une clé »).
+- `/espace-partenaire` redirige vers `/admin`.
+
+**Mes contacts (mini-CRM)** — cloisonné des soignants et de la corbeille :
 statut de suivi (Nouveau / Contacté / Rendez-vous / Client), notes, téléphone et e-mail cliquables, export CSV Excel (anti-injection de formules), bouton STOP = effacement.
 Après l'accord, la personne peut préciser en un geste son moment préféré et son sujet (dans le périmètre de son consentement).
 

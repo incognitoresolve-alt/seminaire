@@ -1,7 +1,8 @@
 // Accès « sans compte » par code partagé => cookie de session signé HMAC.
-// Deux rôles strictement séparés :
+// Trois rôles strictement séparés :
 //  - staff   : soignants (STAFF_PIN, 8+ car.) — patients, mesures, questionnaire ;
-//  - partner : partenaire assurance (PARTNER_KEY, 16+ car.) — UNIQUEMENT ses demandes de contact.
+//  - partner : partenaire assurance (PARTNER_KEY, 16+ car.) — UNIQUEMENT ses demandes de contact ;
+//  - admin   : organisateur / responsable médical (ADMIN_KEY, 16+ car.) — corbeille des inscriptions.
 // Changer le code ou SESSION_SECRET révoque instantanément toutes les sessions du rôle.
 import { HttpError } from './http.js';
 
@@ -9,6 +10,7 @@ export const SESSION_TTL_MS = 14 * 3600 * 1000;
 const ROLES = {
   staff: { cookie: '__Host-sem', secret: (env) => env.STAFF_PIN, min: 8 },
   partner: { cookie: '__Host-partner', secret: (env) => env.PARTNER_KEY, min: 16 },
+  admin: { cookie: '__Host-admin', secret: (env) => env.ADMIN_KEY, min: 16 },
 };
 const enc = new TextEncoder();
 
@@ -67,3 +69,11 @@ export const checkPin = (pin, env) => checkSecret('staff', pin, env);
 export const sessionCookie = (env) => makeCookie('staff', env);
 export const clearCookie = () => clearRoleCookie('staff');
 export const requireStaff = (req, env) => requireRole('staff', req, env);
+
+/** Le rôle est-il configuré (secret présent et assez long) ? */
+export const roleConfigured = (role, env) => {
+  const s = ROLES[role].secret(env);
+  return !!s && s.length >= ROLES[role].min && !!env.SESSION_SECRET && env.SESSION_SECRET.length >= 32;
+};
+/** Session valide pour ce rôle ? (sans lever d'erreur) */
+export const hasRole = (role, req, env) => requireRole(role, req, env).then(() => true, () => false);

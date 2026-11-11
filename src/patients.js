@@ -50,7 +50,8 @@ export async function createPatient(env, v, source) {
 
 export async function listSince(env, since, limit = 1000) {
   const { results } = await env.DB.prepare(`SELECT ${COLS} FROM patients WHERE updated_at >= ? ORDER BY updated_at LIMIT ?`).bind(since, limit).all();
-  return results;
+  // Dossiers à la corbeille : seul l'identifiant part vers les tablettes (minimisation).
+  return results.map((r) => (r.deleted_at ? { id: r.id, version: r.version, updated_at: r.updated_at, deleted_at: r.deleted_at } : r));
 }
 
 export const getDetail = (env, id) =>
@@ -81,15 +82,11 @@ export async function updatePatient(env, id, patch) {
   return { ...row, triage: level };
 }
 
-/** Droit à l'effacement : données personnelles écrasées immédiatement, tombstone pour la synchro. */
+/** Suppression par un soignant = mise à la corbeille (restaurable depuis /admin, effacement définitif après TRASH_DAYS). */
 export async function deletePatient(env, id) {
   const now = Date.now();
   const row = await env.DB.prepare(
-    `UPDATE patients SET last_name='', first_name='', birth_date='', email='', phone=NULL, notes=NULL,
-       gp_consent=0, no_gp=0, gp_name=NULL, gp_address=NULL, gp_contact=NULL, doctor_consent=0,
-       pulse=NULL, rr=NULL, spo2=NULL, alerts=NULL, temp=NULL, weight=NULL, height=NULL, waist=NULL, glucose=NULL, sys=NULL, dia=NULL, doctor=NULL, triage=0,
-       deleted_at = ?1, updated_at = ?1, version = version + 1
-     WHERE id = ?2 AND deleted_at IS NULL RETURNING id, version, updated_at, deleted_at`,
+    'UPDATE patients SET deleted_at = ?1, updated_at = ?1, version = version + 1 WHERE id = ?2 AND deleted_at IS NULL RETURNING id, version, updated_at, deleted_at',
   )
     .bind(now, id)
     .first();
@@ -97,12 +94,46 @@ export async function deletePatient(env, id) {
   return row;
 }
 
-/** Cron : purge des tombstones (> 1 j) et des dossiers au-delà de la durée de conservation. */
+/* ---------- Corbeille (rôle admin) ---------- */
+export async function listTrash(env) {
+  const [trash, active, surveys] = await env.DB.batch([
+    env.DB.prepare('SELECT id, last_name, first_name, birth_date, triage, created_at, deleted_at FROM patients WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC LIMIT 5000'),
+    env.DB.prepare('SELECT COUNT(*) n FROM patients WHERE deleted_at IS NULL'),
+    env.DB.prepare('SELECT COUNT(*) n FROM surveys'),
+  ]);
+  return { items: trash.results, active: active.results[0].n, surveys: surveys.results[0].n, trash_days: trashDays(env) };
+}
+const trashDays = (env) => Math.max(1, Number(env.TRASH_DAYS) || 30);
+export async function restorePatient(env, id) {
+  const now = Date.now();
+  const row = await env.DB.prepare(`UPDATE patients SET deleted_at = NULL, updated_at = ?1, version = version + 1 WHERE id = ?2 AND deleted_at IS NOT NULL RETURNING ${COLS}`)
+    .bind(now, id)
+    .first();
+  if (!row) throw new HttpError(404, 'not_found');
+  return row;
+}
+/** Effacement définitif (droit à l'effacement RGPD) : uniquement depuis la corbeille. */
+export async function eraseFromTrash(env, id) {
+  const r = await env.DB.prepare('DELETE FROM patients WHERE id = ? AND deleted_at IS NOT NULL').bind(id).run();
+  if (!r.meta.changes) throw new HttpError(404, 'not_found');
+}
+export const clearSurveys = async (env) => (await env.DB.prepare('DELETE FROM surveys').run()).meta.changes;
+export const emptyTrash = async (env) => (await env.DB.prepare('DELETE FROM patients WHERE deleted_at IS NOT NULL').run()).meta.changes;
+export async function trashAll(env) {
+  const now = Date.now();
+  return (await env.DB.prepare('UPDATE patients SET deleted_at = ?1, updated_at = ?1, version = version + 1 WHERE deleted_at IS NULL').bind(now).run()).meta.changes;
+}
+export async function restoreAll(env) {
+  const now = Date.now();
+  return (await env.DB.prepare('UPDATE patients SET deleted_at = NULL, updated_at = ?1, version = version + 1 WHERE deleted_at IS NOT NULL').bind(now).run()).meta.changes;
+}
+
+/** Cron : corbeille vidée après TRASH_DAYS jours, dossiers effacés au-delà de la durée de conservation. */
 export async function purge(env) {
   const days = Math.max(1, Number(env.RETENTION_DAYS) || 30);
   const now = Date.now();
   await env.DB.batch([
-    env.DB.prepare('DELETE FROM patients WHERE deleted_at IS NOT NULL AND deleted_at < ?').bind(now - 86400e3),
+    env.DB.prepare('DELETE FROM patients WHERE deleted_at IS NOT NULL AND deleted_at < ?').bind(now - trashDays(env) * 86400e3),
     env.DB.prepare('DELETE FROM patients WHERE created_at < ?').bind(now - days * 86400e3),
     env.DB.prepare('DELETE FROM surveys WHERE created_at < ?').bind(now - days * 86400e3),
     env.DB.prepare('DELETE FROM partner_leads WHERE created_at < ?').bind(now - Math.max(1, Number(env.LEADS_RETENTION_DAYS) || 180) * 86400e3),
