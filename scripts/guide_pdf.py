@@ -217,8 +217,7 @@ story.append(P('<b>Tes informations</b> (à remplir au fur et à mesure)', 'h2')
 story += [Field('Database ID (étape 2)', 'f_dbid', hint='ex. 3f1c2b9a-1d2e-4f5a-9b8c-7d6e5f4a3b2c'),
           Field('Adresse du site (étape 3)', 'f_url', hint='https://seminaire-triage.….workers.dev'),
           Field('Nom de domaine (étape 7, facultatif)', 'f_domain', hint='ex. checksante.be'),
-          Field('Adresse postale d’ICC Liège (étape 6)', 'f_icc_adresse'),
-          Field('E-mail de contact RGPD d’ICC Liège (étape 6)', 'f_icc_email')]
+          Field('Adresse postale d’ICC Liège (étape 6)', 'f_icc_adresse')]
 story.append(warn('Ne note <b>jamais</b> le code PIN ni les codes secrets dans ce PDF : il pourrait être partagé par erreur.'))
 story.append(PageBreak())
 
@@ -405,11 +404,10 @@ story += section('s6', '6', 'Compléter les textes', '10 min')
 story.append(P('<b>Option facile (recommandée)</b> : envoie ces informations à Claude dans la conversation, '
                'il fait les modifications et les met en ligne.'))
 story += [
-    Step(1, 'Demande à ICC Liège leur <b>adresse postale</b> et un <b>e-mail de contact</b> pour la protection des '
-            'données. Note-les en page 2 de ce PDF.'),
+    Step(1, 'Contact RGPD d’ICC Liège : <b>icc-liege@impactcentrechretien.eu</b> (déjà en ligne sur la page Confidentialité). '
+            'Fais relire cette page par ICC Liège.'),
     Step(2, 'Fais <b>valider les seuils de couleur</b> par les médecins (tableau ci-dessous). Note les changements éventuels.'),
-    Step(3, 'Facultatif : le <b>nom des deux médecins</b> à afficher (ex. « Dr Dupont · Mer. 11/11 »).'),
-    Step(4, 'Envoie le tout à Claude (ou modifie toi-même les fichiers sur GitHub avec le crayon ✎, comme à l’étape 2-B).'),
+    Step(3, 'Envoie le tout à Claude (ou modifie toi-même les fichiers sur GitHub avec le crayon ✎, comme à l’étape 2-B).'),
 ]
 seuils = [('Paramètre', 'Orange', 'Rouge'), ('Pouls (bpm)', '< 50 ou > 100', '< 40 ou > 130'),
           ('Température (°C)', '< 36 ou ≥ 38', '< 35 ou ≥ 39,5'), ('Tension systolique', '< 100 ou ≥ 140', '< 90 ou ≥ 180'),

@@ -218,9 +218,9 @@ story.append(Task('6', 'Imprimer les affiches QR', '10 min', [
 
 # ---------------------------------------------------------------- Avant l'ouverture
 story += [gap(4)]
-story.append(KeepTogether([P('AVANT L’OUVERTURE', 'kick'), P('Contenus et organisation', 'h2'), Task('7', 'Envoyer à Claude l’e-mail de contact RGPD d’ICC Liège', '1 min', [
-    'C’est le <b>seul texte manquant</b> du site : il apparaît 2 fois dans la politique de confidentialité '
-    f'({a(SITE + "/confidentialite", "page Confidentialité")}). Claude le met en ligne aussitôt.',
+story.append(KeepTogether([P('AVANT L’OUVERTURE', 'kick'), P('Contenus et organisation', 'h2'), Task('7', 'Faire relire la politique de confidentialité par ICC Liège', '10 min', [
+    f'Le contact RGPD <b>icc-liege@impactcentrechretien.eu</b> est en ligne ({a(SITE + "/confidentialite", "page Confidentialité")}).',
+    'ICC Liège est responsable du traitement : faire relire cette page et tenir le registre des traitements (RGPD, art. 30).',
 ])]))
 story.append(gap())
 
