@@ -45,3 +45,13 @@ test('médecin traitant : nom et coordonnées saisis sur la fiche soignant, vali
   assert.ok(validatePatch({ gp_address: 12 }).errors.gp_address);
   assert.equal(validatePatch({ gp_contact: 'a\u0000b' }).value.gp_contact.includes('\u0000'), false);
 });
+
+test('rapport ICC : accord facultatif, séparé, enregistré seulement si coché', () => {
+  assert.match(CONSENT_TEXTS[CURRENT.eglise.self], /nom, prénom et numéro de GSM/);
+  assert.match(CONSENT_TEXTS[CURRENT.eglise.staff], /sans aucune mesure ni information médicale/);
+  assert.equal(validateIdentity({ ...base, doctor_consent: false }).value.church_consent, false); // non coché par défaut
+  assert.equal(validateIdentity({ ...base, doctor_consent: false, church_consent: true }).value.church_consent, true);
+  assert.equal(validateIdentity({ ...base, doctor_consent: false, church_consent: 'on' }).value.church_consent, false); // strict
+  assert.deepEqual(validatePatch({ church_consent: 1 }).value, { church_consent: 1 });
+  assert.ok(validatePatch({ church_consent: true }).errors.church_consent);
+});

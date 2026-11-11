@@ -34,6 +34,11 @@ document.getElementById('legal').innerHTML = `${partnerLegal()}<br>${[
 document.getElementById('consent-text').textContent = `J’accepte d’être recontacté(e) par ${PARTNER.brand} (${PARTNER.status}) au sujet de mes besoins en assurance-vie. Ce choix est indépendant de ma consultation de prévention.`;
 for (const r of document.querySelectorAll('[name=aud]')) r.addEventListener('change', (e) => ((audience = e.target.value), render()));
 render();
+// QR « check-up assurance » (/checkup) : la demande de check-up est pré-cochée.
+if (audience === 'public' && new URLSearchParams(location.search).get('interet') === 'checkup') {
+  const c = document.querySelector('[name=interests][value=checkup]');
+  if (c) c.checked = true;
+}
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();

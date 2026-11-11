@@ -18,6 +18,7 @@
 > | 9 | Médecins | Relire l'assistant éducatif (README) et les seuils marqués « Seuil de prudence CheckSanté » | 15 min |
 > | 10 | Sur place | PIN aux soignants uniquement · `ADMIN_KEY` à l'organisateur · tablettes chargées, veille désactivée · partage 4G de secours · diffuser la vidéo sur l'écran d'accueil | — |
 > | 11 | `https://seminaire-triage.incognitoresolve.workers.dev/remarques` | **Partager le lien des remarques** aux soignants, médecins, intervenants, bénévoles (WhatsApp, e-mail) + affiche `docs/affiches/affiche-remarques-intervenants-A4.pdf`. Lecture : `/admin` + `ADMIN_KEY` → onglet **Remarques** | 5 min |
+> | 12 | `/admin` → onglet **QR codes** | Tous les QR codes au même endroit : inscription sans attente, **check-up assurance-vie** (publicité), remarques des intervenants → **Copier le lien**, **Télécharger l'image (PNG)**, **Affiche A4** (`docs/affiches/affiche-checkup-assurance-A4.pdf`) | 5 min |
 >
 > Facultatif : noms des médecins (`web/shared/doctors.js`), domaine + e-mails Brevo (section E).
 
@@ -186,7 +187,8 @@ DELETE FROM partner_leads;
    SELECT last_name, first_name, birth_date, gp_name, doctor_consent_at FROM patients
    WHERE doctor_consent = 1 AND deleted_at IS NULL ORDER BY last_name;
    ```
-2. **Contacts check-up** (toi uniquement) : `https://seminaire-triage.incognitoresolve.workers.dev/admin` + ta clé `PARTNER_KEY` → onglet *Mes contacts*.
+2. **Rapport ICC Liège** : `/admin` + `ADMIN_KEY` → onglet **Rapport ICC** → **Télécharger (Excel / CSV)** (nom, prénom, GSM des personnes reçues qui ont accepté d'y figurer). À exporter avant l'effacement automatique (30 jours).
+3. **Contacts check-up** (toi uniquement) : `https://seminaire-triage.incognitoresolve.workers.dev/admin` + ta clé `PARTNER_KEY` → onglet *Mes contacts*.
    Statut par contact (Nouveau → Contacté → Rendez-vous → Client), notes, bouton **Télécharger (Excel / CSV)**.
    Une relance maximum, « STOP » = bouton d'effacement (`docs/modele-email-checkup.md`).
    **Bilan anonyme** (rapport ICC, présentations) : espace soignants → **Bilan** → **Exporter le bilan (CSV)**.

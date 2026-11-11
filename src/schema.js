@@ -38,6 +38,8 @@ const ALTER = [
   'ALTER TABLE patients ADD COLUMN gp_name TEXT',
   'ALTER TABLE patients ADD COLUMN gp_address TEXT',
   'ALTER TABLE patients ADD COLUMN gp_contact TEXT',
+  // Accord facultatif : figurer dans le rapport nominatif d'ICC Liège (nom, prénom, GSM).
+  'ALTER TABLE patients ADD COLUMN church_consent INTEGER NOT NULL DEFAULT 0 CHECK (church_consent IN (0,1))',
   'ALTER TABLE partner_leads ADD COLUMN unsub_token TEXT',
   'ALTER TABLE partner_leads ADD COLUMN mailed_at INTEGER',
   "ALTER TABLE partner_leads ADD COLUMN status TEXT NOT NULL DEFAULT 'nouveau' CHECK (status IN ('nouveau','contacte','rdv','client'))",

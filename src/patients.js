@@ -4,7 +4,7 @@ import { HttpError } from './http.js';
 
 // Colonnes exposées au staff (sans email ni request_id : minimisation).
 const COLS =
-  'id,token,short_code,last_name,first_name,birth_date,source,doctor_consent,stage,stage_at,alerts,pulse,rr,spo2,temp,weight,height,waist,glucose,sys,dia,notes,triage,doctor,version,created_at,updated_at,deleted_at';
+  'id,token,short_code,last_name,first_name,birth_date,source,doctor_consent,church_consent,stage,stage_at,alerts,pulse,rr,spo2,temp,weight,height,waist,glucose,sys,dia,notes,triage,doctor,version,created_at,updated_at,deleted_at';
 const DETAIL_COLS = `${COLS},email,phone,consent_at,gp_name,gp_contact,gp_address,doctor_consent_at,consent_log`;
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // sans 0/O/1/I/L
 
@@ -29,16 +29,17 @@ export async function createPatient(env, v, source) {
     const log = [
       await makeEntry(id, 'consultation', 1, source, CURRENT.consultation[source], now),
       await makeEntry(id, 'transmission', v.doctor_consent ? 1 : 0, source, CURRENT.transmission[source], now),
+      await makeEntry(id, 'eglise', v.church_consent ? 1 : 0, source, CURRENT.eglise[source], now),
     ];
     try {
       const row = await env.DB.prepare(
         `INSERT INTO patients (id,token,short_code,request_id,last_name,first_name,birth_date,email,phone,consent_at,
-           doctor_consent,source,created_at,updated_at,doctor_consent_at,consent_log)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING ${COLS}`,
+           doctor_consent,church_consent,source,created_at,updated_at,doctor_consent_at,consent_log)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING ${COLS}`,
       )
         .bind(
           id, randomToken(), shortCode(), v.request_id, v.last_name, v.first_name, v.birth_date, v.email, v.phone, now,
-          v.doctor_consent ? 1 : 0, source, now, now, now, JSON.stringify(log),
+          v.doctor_consent ? 1 : 0, v.church_consent ? 1 : 0, source, now, now, now, JSON.stringify(log),
         )
         .first();
       return { row, created: true };
@@ -100,14 +101,22 @@ export async function consentProof(row) {
 export async function updatePatient(env, id, patch) {
   const now = Date.now();
   if ('stage' in patch) patch = { ...patch, stage_at: now }; // horodatage serveur de l'étape
-  // Accord / retrait de transmission au médecin traitant : horodaté et ajouté à l'historique de preuve (jamais réécrit).
+  // Accord / retrait (transmission au médecin traitant, rapport ICC) : horodaté et ajouté à l'historique de preuve (jamais réécrit).
+  const entries = [];
+  if ('doctor_consent' in patch) {
+    entries.push(await makeEntry(id, 'transmission', patch.doctor_consent, 'sheet', CURRENT.transmission.staff, now));
+    if (!patch.doctor_consent) patch = { ...patch, gp_name: null, gp_contact: null, gp_address: null }; // retrait : coordonnées du médecin traitant effacées
+  }
+  if ('church_consent' in patch) entries.push(await makeEntry(id, 'eglise', patch.church_consent, 'sheet', CURRENT.eglise.staff, now));
   let proofSql = '';
   const proofBind = [];
   if ('doctor_consent' in patch) {
-    const entry = await makeEntry(id, 'transmission', patch.doctor_consent, 'sheet', CURRENT.transmission.staff, now);
-    if (!patch.doctor_consent) patch = { ...patch, gp_name: null, gp_contact: null, gp_address: null }; // retrait : coordonnées du médecin traitant effacées
-    proofSql = `, doctor_consent_at = ?, consent_log = json_insert(COALESCE(consent_log, '[]'), '$[#]', json(?))`;
-    proofBind.push(now, JSON.stringify(entry));
+    proofSql += ', doctor_consent_at = ?';
+    proofBind.push(now);
+  }
+  if (entries.length) {
+    proofSql += `, consent_log = json_insert(COALESCE(consent_log, '[]')${entries.map(() => ", '$[#]', json(?)").join('')})`;
+    proofBind.push(...entries.map((e) => JSON.stringify(e)));
   }
   if (['gp_name', 'gp_contact', 'gp_address'].some((k) => patch[k]) && !('doctor_consent' in patch)) {
     // Médecin traitant (nom, coordonnées) enregistré seulement si la transmission est autorisée (contrôle serveur).
@@ -295,4 +304,18 @@ export async function updateFeedback(env, id, patch) {
 }
 export async function deleteFeedback(env, id) {
   await env.DB.prepare('DELETE FROM feedback WHERE id = ?').bind(id).run();
+}
+
+/* ---------- Rapport ICC Liège (rôle admin) ---------- */
+// Personnes reçues = parcours terminé, paramètre relevé ou médecin de l'événement assigné.
+const RECEIVED = `deleted_at IS NULL AND (stage = 2 OR doctor IS NOT NULL OR pulse IS NOT NULL OR temp IS NOT NULL OR sys IS NOT NULL
+  OR glucose IS NOT NULL OR weight IS NOT NULL OR spo2 IS NOT NULL OR rr IS NOT NULL OR waist IS NOT NULL)`;
+/** Nominatif UNIQUEMENT pour les personnes qui ont accepté (church_consent = 1) ; les autres sont seulement comptées. */
+export async function churchReport(env) {
+  const [tot, rows] = await env.DB.batch([
+    env.DB.prepare(`SELECT (SELECT COUNT(*) FROM patients WHERE deleted_at IS NULL) registered, COUNT(*) received, SUM(church_consent = 1) consented FROM patients WHERE ${RECEIVED}`),
+    env.DB.prepare(`SELECT id, last_name, first_name, phone, created_at, stage FROM patients WHERE ${RECEIVED} AND church_consent = 1 ORDER BY last_name, first_name LIMIT 5000`),
+  ]);
+  const t = tot.results[0];
+  return { registered: t.registered || 0, received: t.received || 0, consented: t.consented || 0, rows: rows.results };
 }

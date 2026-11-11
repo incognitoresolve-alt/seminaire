@@ -18,6 +18,7 @@
     <button id="print" class="btn-primary" type="button">Imprimer l’affiche (A4)</button>
     <div class="flex flex-wrap gap-2" aria-label="Choisir l’affiche" role="group">
       <a data-cible="" class="chip inline-flex items-center aria-[current=page]:border-slate-900 aria-[current=page]:bg-slate-900 aria-[current=page]:text-white" href="/affiche">Inscription</a>
+      <a data-cible="checkup" class="chip inline-flex items-center aria-[current=page]:border-slate-900 aria-[current=page]:bg-slate-900 aria-[current=page]:text-white" href="/affiche?cible=checkup">Check-up assurance (publicité)</a>
       <a data-cible="remarques" class="chip inline-flex items-center aria-[current=page]:border-slate-900 aria-[current=page]:bg-slate-900 aria-[current=page]:text-white" href="/affiche?cible=remarques">Remarques des intervenants</a>
     </div>
     <p id="site-help" class="w-full text-sm text-slate-600" aria-live="polite"></p>
@@ -56,7 +57,7 @@
       </section>
 
       <footer class="shrink-0 border-t-[0.4cqw] border-sky-100 px-[7cqw] py-[2.4cqw] text-center">
-        <p class="text-[2.4cqw] font-extrabold text-sky-900">Consultation de prévention gratuite · 11 → 14 novembre · Herstal</p>
+        <p id="foot" class="text-[2.4cqw] font-extrabold text-sky-900">Consultation de prévention gratuite · 11 → 14 novembre · Herstal</p>
         <div data-partner-credit class="mt-[1cqw] text-[1.7cqw] [&_p]:text-[1.7cqw]"></div>
       </footer>
     </div>

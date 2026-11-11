@@ -259,7 +259,7 @@ function openSheet(id) {
         <label class="label" for="v-notes">Notes cliniques</label>
         <textarea id="v-notes" data-k="notes" rows="4" maxlength="${NOTES_MAX}" class="field text-base"></textarea>
       </section>
-      <section id="sheet-consent" class="rounded-2xl bg-white p-4 text-sm ring-1 ring-slate-200" aria-label="Transmission au médecin traitant"></section>
+      <section id="sheet-consent" class="rounded-2xl bg-white p-4 text-sm ring-1 ring-slate-200" aria-label="Accords du participant"></section>
       <div class="flex items-center justify-between gap-3 pt-2">
         <p id="sheet-save" class="text-sm font-semibold text-slate-500" aria-live="polite"></p>
         <button type="button" id="sheet-delete" class="btn-danger min-h-11 text-sm">Mettre à la corbeille</button>
@@ -292,7 +292,8 @@ function renderConsent(p, force = false) {
   const box = $('sheet-consent');
   const d = sheetDetail;
   const t = d?.proof?.transmission;
-  const key = `${p.doctor_consent}|${t ? `${t.at}|${t.v}` : ''}|${d ? JSON.stringify(d.gp) : ''}`;
+  const ch = d?.proof?.entries ? [...d.proof.entries].reverse().find((e) => e.k === 'eglise') : null;
+  const key = `${p.doctor_consent}|${p.church_consent}|${t ? `${t.at}|${t.v}` : ''}|${ch ? ch.at : ''}|${d ? JSON.stringify(d.gp) : ''}`;
   if (!force && box.dataset.state === key) return;
   if (box.contains(document.activeElement) && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return; // saisie en cours
   box.dataset.state = key;
@@ -317,6 +318,15 @@ function renderConsent(p, force = false) {
     : `<p class="font-bold text-slate-800">Transmission au médecin traitant : <span class="text-red-700">non autorisée</span></p>${when}
       <p class="mt-1 text-slate-600">La consultation et l’assignation à un médecin de l’événement restent possibles ; aucune fiche ne peut être transmise au médecin traitant.</p>
       <button type="button" data-consent="1" class="btn-ghost mt-3 min-h-10 py-2 text-sm">Le participant donne son accord</button>`;
+  // Accord facultatif : rapport nominatif ICC Liège (nom, prénom, GSM).
+  box.insertAdjacentHTML(
+    'beforeend',
+    `<div class="mt-4 border-t border-slate-200 pt-3">
+      <p class="font-bold text-slate-800">Rapport ICC Liège (nom, prénom, GSM) : ${p.church_consent ? '<span class="text-emerald-700">accepté</span>' : '<span class="text-slate-600">non accepté</span>'}</p>
+      ${ch ? `<p class="mt-1 text-xs text-slate-600">${ch.v ? 'Accord' : 'Refus ou retrait'} enregistré le ${esc(fmtDT(ch.at))} · ${esc(ch.channel)}</p>` : ''}
+      <button type="button" data-church="${p.church_consent ? 0 : 1}" class="${p.church_consent ? 'btn-danger' : 'btn-ghost'} mt-2 min-h-10 py-2 text-sm">${p.church_consent ? 'Retrait de l’accord' : 'Le participant accepte'}</button>
+    </div>`,
+  );
 }
 
 function refreshSheet(force = false) {
@@ -462,6 +472,18 @@ $('sheet').addEventListener('click', (e) => {
     }
   }
   if (e.target.closest('#sheet-delete') && sheetId) deleteCurrent();
+  const ce = e.target.closest('[data-church]');
+  if (ce && sheetId) {
+    const v = Number(ce.dataset.church);
+    const msg = v
+      ? `Le participant accepte-t-il de figurer dans le rapport d’ICC Liège ?\n\nTexte enregistré comme preuve, avec la date et l’heure :\n« ${CONSENT_TEXTS[CURRENT.eglise.staff]} »`
+      : 'Confirmer le retrait : le participant ne figurera plus dans le rapport d’ICC Liège (retrait daté et ajouté à la preuve).';
+    if (confirm(msg)) {
+      const id = sheetId;
+      store.patch(id, { church_consent: v });
+      setTimeout(() => sheetId === id && loadDetail(id), 1500);
+    }
+  }
   const c = e.target.closest('[data-consent]');
   if (c && sheetId) {
     const v = Number(c.dataset.consent);

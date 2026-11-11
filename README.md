@@ -157,7 +157,9 @@ Mise en place (≈ 10 min) :
 
 **Page `/admin`** — une seule page, la clé tapée détermine l'accès (cloisonnement RGPD) :
 - `ADMIN_KEY` (organisateur / responsable médical) → **Corbeille** : les dossiers supprimés par les soignants y restent `TRASH_DAYS` (30) jours, puis sont effacés automatiquement ; *Restaurer*, *Supprimer définitivement* (droit à l'effacement), *Tout restaurer*, *Vider*, *Tout mettre à la corbeille* (ex. effacer les tests). Les changements apparaissent en temps réel sur les tablettes.
-- `PARTNER_KEY` (partenaire) → **Mes contacts** (mini-CRM), jamais la corbeille. Les deux clés peuvent être saisies l'une après l'autre (« Ajouter une clé »).
+- `ADMIN_KEY` → **Remarques** des intervenants et **Rapport ICC** : nom, prénom, GSM et date de passage des personnes **reçues** au pôle santé (paramètres relevés, médecin assigné ou parcours terminé) **qui ont accepté** d'y figurer (case facultative à l'inscription ou accord noté sur la fiche soignant, avec preuve horodatée) ; les autres sont seulement comptées ; aucune donnée de santé ; export CSV.
+- Toutes les clés → **QR codes** : inscription sans attente (`/`), check-up assurance-vie (`/checkup` → `/partenaire?pour=public&interet=checkup`, marqué « Publicité »), remarques des intervenants (`/remarques`) : copier le lien, télécharger l'image PNG, affiche A4.
+- `PARTNER_KEY` (partenaire) → **Mes contacts** (mini-CRM), jamais la corbeille ni le rapport. Les deux clés peuvent être saisies l'une après l'autre (« Ajouter une clé »).
 - `/espace-partenaire` redirige vers `/admin`.
 
 **Mes contacts (mini-CRM)** — cloisonné des soignants et de la corbeille :
