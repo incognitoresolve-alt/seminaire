@@ -133,7 +133,7 @@ Format imposé : 1. Note importante · 2. Niveau d'urgence (112 / urgence médic
 - Minimisation : e-mail et téléphone chargés uniquement à l'ouverture d'une fiche ; sans accord de transmission, aucune fiche pour le médecin traitant ne peut être produite et son nom n'est pas enregistré (contrôle serveur) ; les remarques des intervenants ne sont lisibles qu'avec `ADMIN_KEY`.
 - Droit à l'effacement (bouton fiche) : données écrasées immédiatement ; cron quotidien purge tout après `RETENTION_DAYS` (30 j).
 - Logs Workers sans PII ; `/api/health` pour l'uptime monitoring.
-- RGPD (Belgique) : données de santé (art. 9) ⇒ consentement explicite recueilli, D1 en juridiction UE. Compléter `[adresse]`/`[email-contact]` dans `confidentialite.html` et tenir le registre des traitements.
+- RGPD (Belgique) : données de santé (art. 9) ⇒ consentement explicite recueilli, D1 en juridiction UE. Contact RGPD du responsable (ICC Liège) : `icc-liege@impactcentrechretien.eu` (`confidentialite.html`) ; tenir le registre des traitements (art. 30).
 
 ## Partenaire assurances (publicité)
 

@@ -14,7 +14,7 @@
 > | 5 | 2 tablettes | Test réel : 2 inscriptions → *Liste des inscrits* (PIN) → fiche → **nom du soignant** → tension → visible sur l'autre tablette | 5 min |
 > | 6 | `https://seminaire-triage.incognitoresolve.workers.dev/admin` + `ADMIN_KEY` | Effacer les tests : *Tout mettre à la corbeille* → *Vider* ; onglet *Remarques* : supprimer les remarques de test ; contacts de test : *Mes contacts* (`PARTNER_KEY`) → *STOP* | 2 min |
 > | 7 | `docs/affiches/` | **Imprimer les PDF prêts** : `affiche-inscription-A4.pdf` (« Pas envie d'attendre ? »). QR codes vérifiés vers `https://seminaire-triage.incognitoresolve.workers.dev/`. Impression : A4, taille réelle (100 %), couleur. Scanner une feuille imprimée pour vérifier. (Aussi en ligne : `/affiche`) | 10 min |
-> | 8 | Envoyer à Claude | L'**e-mail de contact RGPD d'ICC Liège** (2 emplacements `[email-contact]` dans la politique de confidentialité) | 1 min |
+> | 8 | ICC Liège | ✅ Contact RGPD en ligne (`icc-liege@impactcentrechretien.eu`). Faire **relire la page Confidentialité** par ICC Liège (responsable du traitement) et tenir le registre des traitements | 10 min |
 > | 9 | Médecins | Relire l'assistant éducatif (README) et les seuils marqués « Seuil de prudence CheckSanté » | 15 min |
 > | 10 | Sur place | PIN aux soignants uniquement · `ADMIN_KEY` au responsable médical (fiches = données de santé) · tablettes chargées, veille désactivée · partage 4G de secours · diffuser la vidéo sur l'écran d'accueil | — |
 > | 11 | `https://seminaire-triage.incognitoresolve.workers.dev/remarques` | **Partager le lien des remarques** aux soignants, médecins, intervenants, bénévoles (WhatsApp, e-mail) + affiche `docs/affiches/affiche-remarques-intervenants-A4.pdf`. Lecture : `/admin` + `ADMIN_KEY` → onglet **Remarques** | 5 min |
@@ -105,7 +105,7 @@ Les secrets s'appliquent immédiatement (nouvelle version déployée automatique
 
 | Fichier | À faire |
 |---|---|
-| `public/confidentialite.html` | `[email-contact]` (2 fois) : envoie l'adresse à Claude |
+| `public/confidentialite.html` | ✅ contact RGPD `icc-liege@impactcentrechretien.eu` en place ; faire relire la page par ICC Liège |
 | `web/shared/triage.js` | **faire valider les seuils par les médecins** ; modifier les nombres si besoin (tableau dans le README) |
 | `web/shared/partner.js` | `address: ''` → ton adresse pro si tu veux l'afficher (facultatif) |
 
