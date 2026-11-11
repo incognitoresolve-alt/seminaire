@@ -59,9 +59,9 @@ export function identityFieldsHtml(prefix, { staff = false } = {}) {
 ${
       !staff && PARTNER.enabled
         ? `
-    <label data-checkup class="mt-3 flex cursor-pointer items-start gap-2 px-1">
-      <input type="checkbox" name="checkup" class="mt-0.5 size-4 shrink-0 accent-slate-600">
-      <span class="text-xs leading-snug text-slate-500"><span class="font-semibold">Publicité —</span> Oui, je souhaite aussi un check-up gratuit et sans engagement de ma couverture assurance-vie et j’accepte que mes nom, e-mail et téléphone (jamais mes données de santé) soient transmis à cette fin à ${esc(PARTNER.person)}, ${esc(PARTNER.status.charAt(0).toLowerCase() + PARTNER.status.slice(1))} pour ${esc(PARTNER.principal)} (FSMA n° ${esc(PARTNER.fsma)}), retrait à tout moment via ${esc(PARTNER.email)}.</span>
+    <label data-checkup class="attn-opt mt-3 flex cursor-pointer items-start gap-2 p-3">
+      <input type="checkbox" name="checkup" class="mt-0.5 size-4 shrink-0 accent-sky-700">
+      <span class="text-xs leading-snug text-slate-600"><span class="mr-1 inline-block rounded bg-sky-100 px-1.5 py-px text-[10px] font-bold tracking-wide text-sky-900 uppercase">Au choix</span><span class="font-semibold">Publicité —</span> Oui, je souhaite aussi un check-up gratuit et sans engagement de ma couverture assurance-vie et j’accepte que mes nom, e-mail et téléphone (jamais mes données de santé) soient transmis à cette fin à ${esc(PARTNER.person)}, ${esc(PARTNER.status.charAt(0).toLowerCase() + PARTNER.status.slice(1))} pour ${esc(PARTNER.principal)} (FSMA n° ${esc(PARTNER.fsma)}), retrait à tout moment via ${esc(PARTNER.email)}.</span>
     </label>`
         : ''
     }`;
