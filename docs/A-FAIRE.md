@@ -1,6 +1,8 @@
 # CheckSanté — ce qui reste à faire
 
 > ## ✅ Mise à jour du 11/11 : ce qu'il te reste à faire (le code est prêt)
+> 📄 **Version PDF interactive** (cases à cocher, liens cliquables) : `docs/Reste-a-faire-CheckSante.pdf` (régénérer : `python3 scripts/reste_a_faire_pdf.py docs/Reste-a-faire-CheckSante.pdf`).
+>
 > **Déjà fait** : site officiel `seminaire-triage.incognitoresolve.workers.dev`, affiches PDF (`docs/affiches/`), branche `main`, base D1 (ID saisi dans `wrangler.toml`), tableaux créés automatiquement, version téléphone + glassmorphism, accords qui scintillent, affiches QR A4, vidéo tutoriel (`docs/video/CheckSante-tutoriel.mp4`).
 >
 > | # | Où | Action | Durée |
