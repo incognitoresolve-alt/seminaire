@@ -1,11 +1,11 @@
 import { mountCredit } from './partner-ui.js';
 import { qrSvg } from './qr.js';
-import { isPublic, parseSite } from './shared/site.js';
+import { OFFICIAL_SITE, isPublic, parseSite } from './shared/site.js';
 
 mountCredit();
 
 // /affiche → auto-inscription ; /affiche?cible=questionnaire → questionnaire anonyme.
-// Le QR code pointe vers l'adresse publique du site (jamais localhost / réseau local).
+// Le QR code pointe vers le site officiel, ou l'adresse publique saisie (jamais localhost / réseau local).
 // Adresse saisie : conservée le temps de la session (bascule entre les deux affiches), jamais transmise.
 const survey = new URLSearchParams(location.search).get('cible') === 'questionnaire';
 const path = survey ? '/questionnaire' : '/';
@@ -37,7 +37,9 @@ function render() {
   if (ok) {
     const url = origin + path;
     $('qr').innerHTML = qrSvg(url, { label: `QR code vers ${url}` });
-    $('url').textContent = url.replace(/^https:\/\//, '').replace(/\/$/, '');
+    const shown = url.replace(/^https:\/\//, '').replace(/\/$/, '');
+    $('url').textContent = shown;
+    $('url').className = `font-mono font-extrabold break-all text-sky-900 ${shown.length <= 28 ? 'text-[3.4cqw]' : shown.length <= 48 ? 'text-[2.6cqw]' : 'text-[2.1cqw]'}`;
     $('site-help').textContent = 'Le QR code est prêt. Scannez une feuille imprimée pour vérifier.';
   } else {
     $('qr').innerHTML = PLACEHOLDER;
@@ -49,7 +51,7 @@ function render() {
 }
 
 const here = location.protocol === 'https:' && isPublic(location.hostname) ? location.host : '';
-$('site').value = store.get() || here;
+$('site').value = store.get() || here || new URL(OFFICIAL_SITE).host;
 $('site').addEventListener('input', () => { store.set(parseSite($('site').value) ? $('site').value.trim() : ''); render(); });
 $('print').addEventListener('click', () => { if (parseSite($('site').value)) print(); });
 render();

@@ -1,4 +1,8 @@
 // Adresse publique du site pour l'affiche QR : jamais localhost, réseau local, http, port ou identifiants.
+
+/** Site officiel (QR code par défaut des affiches). */
+export const OFFICIAL_SITE = 'https://seminaire-triage.incognitoresolve.workers.dev';
+
 const LOCAL = /^(localhost|0\.0\.0\.0|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)|\.(local|localhost|internal|lan|home)$/i;
 export const isPublic = (host) => host.includes('.') && !host.startsWith('[') && !LOCAL.test(host);
 
