@@ -5,7 +5,7 @@ import { mountCredit, mountPartner } from './partner-ui.js';
 import { passUrl, qrSvg } from './qr.js';
 import { parsePassCode, startScanner } from './scanner.js';
 import { DOCTORS } from './shared/doctors.js';
-import { bmi, triage } from './shared/triage.js';
+import { advice, bmi, triage } from './shared/triage.js';
 import { NOTES_MAX, VITALS, normalize, parseVital } from './shared/validate.js';
 import * as store from './store.js';
 
@@ -91,7 +91,8 @@ function rowHtml(p, level) {
 
 function renderList() {
   const [dot, label] = STATUS[store.state.status] || STATUS.connecting;
-  $('status').innerHTML = `<span class="size-2 rounded-full ${dot}" aria-hidden="true"></span>${label}`;
+  $('status').innerHTML = `<span class="size-2.5 rounded-full ${dot}" aria-hidden="true"></span><span class="sr-only sm:not-sr-only">${label}</span>`;
+  $('status').title = label;
 
   const q = normalize(filters.q);
   const all = store.all().map((p) => ({ p, level: triage(p).level }));
@@ -224,6 +225,7 @@ function openSheet(id) {
         ${[0, 1, 2].map((st) => `<button type="button" data-stage="${st}" class="btn-ghost min-h-12 px-2 text-sm aria-pressed:border-slate-900 aria-pressed:bg-slate-900 aria-pressed:text-white">${STAGE[st]}</button>`).join('')}
       </div>
       <div id="sheet-triage" class="rounded-2xl p-4" role="status" aria-live="polite"></div>
+      <div id="sheet-advice" aria-live="polite"></div>
       <section aria-labelledby="h-vitals">
         <h3 id="h-vitals" class="mb-2 text-sm font-bold tracking-wide text-slate-500 uppercase">Paramètres vitaux</h3>
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -302,6 +304,14 @@ function refreshSheet(force = false) {
   }
   for (const b of $('sheet-stage').children) b.setAttribute('aria-pressed', String((p.stage ?? 0) === Number(b.dataset.stage)));
   const pv = previewValues(p);
+  const tips = advice(pv);
+  const ICON = { red: '●', orange: '●', info: '›' };
+  const COLOR = { red: 'text-red-700', orange: 'text-amber-700', info: 'text-slate-500' };
+  $('sheet-advice').innerHTML = tips.length
+    ? `<div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200"><p class="mb-1 text-xs font-bold tracking-wide text-slate-500 uppercase">Conseils automatiques (indicatifs)</p><ul class="space-y-1 text-sm">${tips
+        .map((t) => `<li class="flex gap-2"><span class="${COLOR[t.tone]}" aria-hidden="true">${ICON[t.tone]}</span><span class="${t.tone === 'info' ? 'text-slate-700' : 'font-semibold text-slate-900'}">${esc(t.text)}</span></li>`)
+        .join('')}</ul></div>`
+    : '';
   const b = bmi(pv.weight, pv.height);
   $('sheet-bmi').textContent = b == null ? '' : `IMC : ${String(b).replace('.', ',')} kg/m² (normal 18,5–24,9)`;
   $('sheet-save').textContent = store.isPending(sheetId) ? (store.state.status === 'offline' ? 'Hors ligne : sera envoyé…' : 'Enregistrement…') : 'Enregistré ✓';

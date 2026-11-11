@@ -51,17 +51,17 @@ export function validateIdentity(b, now = new Date()) {
   };
   if (!NAME_RE.test(v.last_name)) errors.last_name = 'Nom invalide';
   if (!NAME_RE.test(v.first_name)) errors.first_name = 'Prénom invalide';
-  // Date de naissance : plus demandée (inscription minimale) ; validée seulement si fournie.
-  if (v.birth_date) {
+  if (!DATE_RE.test(v.birth_date)) {
+    errors.birth_date = 'Date invalide (JJ/MM/AAAA)';
+  } else {
     const d = new Date(`${v.birth_date}T00:00:00Z`);
-    const ok = DATE_RE.test(v.birth_date) && !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v.birth_date;
+    const ok = !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v.birth_date;
     if (!ok || d.getUTCFullYear() < 1900 || d > now) errors.birth_date = 'Date invalide (JJ/MM/AAAA)';
   }
   if (v.email.length > 254 || !EMAIL_RE.test(v.email)) errors.email = 'E-mail invalide';
   if (v.phone && !PHONE_RE.test(v.phone)) errors.phone = 'Téléphone invalide';
-  if (!v.consent) errors.consent = 'Accord obligatoire pour l’inscription';
-  if (v.doctor_consent === undefined) v.doctor_consent = v.consent; // accord unique : collecte + transmission à un médecin
-  if (v.doctor_consent !== true && v.doctor_consent !== false) errors.doctor_consent = 'Valeur invalide';
+  if (!v.consent) errors.consent = 'Accord obligatoire pour la consultation';
+  if (v.doctor_consent !== true && v.doctor_consent !== false) errors.doctor_consent = 'Choisissez une option';
   if (v.request_id && !UUID_RE.test(v.request_id)) errors.request_id = 'Identifiant invalide';
   return { ok: Object.keys(errors).length === 0, errors, value: v };
 }
