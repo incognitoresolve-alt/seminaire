@@ -22,7 +22,7 @@
   <main class="mx-auto max-w-4xl px-4 py-6">
     <section id="gate" hidden class="mx-auto mb-8 max-w-sm">
       <h2 class="text-center text-2xl font-extrabold">Accès administration</h2>
-      <p class="mt-1 mb-5 text-center text-sm text-slate-600">Clé administrateur (corbeille) ou clé partenaire (mes contacts)</p>
+      <p class="mt-1 mb-5 text-center text-sm text-slate-600">Clé administrateur (corbeille, remarques) ou clé partenaire (mes contacts)</p>
       <form id="gate-form" class="space-y-3">
         <label class="sr-only" for="key">Clé d’accès</label>
         <input id="key" class="field text-center font-mono" type="password" autocomplete="current-password" required maxlength="128" placeholder="Clé d’accès">
@@ -32,8 +32,9 @@
     </section>
 
     <div id="app" hidden>
-      <div role="tablist" aria-label="Sections" class="mb-5 flex gap-2">
+      <div role="tablist" aria-label="Sections" class="mb-5 flex flex-wrap gap-2">
         <button id="btn-trash" role="tab" data-tab="trash" aria-selected="false" class="chip aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">Corbeille</button>
+        <button id="btn-feedback" role="tab" data-tab="feedback" aria-selected="false" class="chip inline-flex items-center gap-1.5 aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">Remarques <span id="f-badge" hidden class="rounded-full bg-accent-dark px-1.5 text-xs font-bold text-white"></span></button>
         <button id="btn-contacts" role="tab" data-tab="contacts" aria-selected="false" class="chip aria-selected:border-slate-900 aria-selected:bg-slate-900 aria-selected:text-white">Mes contacts</button>
       </div>
 
@@ -63,6 +64,29 @@
           <p class="mr-auto text-sm text-slate-700">Questionnaire anonyme : <b id="t-surveys">0</b> réponse(s)</p>
           <button id="t-clear-surveys" type="button" class="btn-danger min-h-10 px-3 py-2 text-sm">Effacer toutes les réponses</button>
         </div>
+      </section>
+
+      <!-- Remarques des intervenants (ADMIN_KEY) -->
+      <section id="tab-feedback" hidden role="tabpanel" aria-labelledby="btn-feedback">
+        <div class="glass mb-4 rounded-2xl p-4">
+          <p class="text-sm font-semibold text-slate-700">Lien à partager aux soignants, médecins, intervenants et bénévoles :</p>
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            <code id="f-link" class="min-w-0 flex-1 basis-56 truncate rounded-xl bg-white px-3 py-2.5 font-mono text-sm ring-1 ring-slate-300"></code>
+            <button id="f-copy" type="button" class="btn-primary min-h-10 px-3 py-2 text-sm">Copier le lien</button>
+            <a href="/affiche?cible=remarques" target="_blank" rel="noopener" class="btn-ghost min-h-10 px-3 py-2 text-sm">Affiche QR</a>
+          </div>
+        </div>
+        <div class="mb-3 flex flex-wrap items-center gap-2">
+          <h2 class="mr-auto text-lg font-extrabold">Remarques des intervenants</h2>
+          <button id="f-refresh" type="button" class="btn-ghost min-h-10 px-3 py-2 text-sm">Actualiser</button>
+          <a href="/api/admin/feedback.csv" class="btn-ghost min-h-10 px-3 py-2 text-sm" download>Télécharger (Excel / CSV)</a>
+        </div>
+        <label class="sr-only" for="f-q">Rechercher dans les remarques</label>
+        <input id="f-q" type="search" class="field py-2.5" placeholder="Rechercher un mot, un nom…" autocomplete="off">
+        <div id="f-status" class="mt-2 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Filtrer par statut"></div>
+        <ul id="f-list" class="mt-3 space-y-2"></ul>
+        <p id="f-empty" class="py-10 text-center text-slate-500"></p>
+        <p class="pb-8 text-center text-xs text-slate-500">Mise à jour automatique toutes les minutes. Remarques effacées automatiquement après 180 jours : exportez-les pour les garder.</p>
       </section>
 
       <!-- Mes contacts (CRM partenaire) -->

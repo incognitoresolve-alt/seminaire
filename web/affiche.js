@@ -4,11 +4,22 @@ import { OFFICIAL_SITE, isPublic, parseSite } from './shared/site.js';
 
 mountCredit();
 
-// /affiche → auto-inscription ; /affiche?cible=questionnaire → questionnaire anonyme.
+// /affiche → auto-inscription ; ?cible=questionnaire → questionnaire anonyme ; ?cible=remarques → remarques des intervenants.
 // Le QR code pointe vers le site officiel, ou l'adresse publique saisie (jamais localhost / réseau local).
-// Adresse saisie : conservée le temps de la session (bascule entre les deux affiches), jamais transmise.
-const survey = new URLSearchParams(location.search).get('cible') === 'questionnaire';
-const path = survey ? '/questionnaire' : '/';
+// Adresse saisie : conservée le temps de la session (bascule entre les affiches), jamais transmise.
+const cible = new URLSearchParams(location.search).get('cible');
+const VARIANTS = {
+  questionnaire: {
+    path: '/questionnaire', title: 'Questionnaire santé', subtitle: 'Anonyme · 2 minutes',
+    steps: ['Scannez le QR code', 'Répondez aux questions', 'Les bonnes réponses s’affichent à la fin'],
+  },
+  remarques: {
+    path: '/remarques', title: 'Vos remarques', subtitle: 'Soignants · intervenants · bénévoles',
+    steps: ['Scannez le QR code', 'Écrivez votre remarque ou proposition', 'Elle arrive directement chez l’organisation'],
+  },
+};
+const variant = Object.prototype.hasOwnProperty.call(VARIANTS, cible) ? VARIANTS[cible] : null;
+const path = variant?.path ?? '/';
 const $ = (id) => document.getElementById(id);
 const KEY = 'affiche-site';
 const store = {
@@ -16,14 +27,12 @@ const store = {
   set(v) { try { v ? sessionStorage.setItem(KEY, v) : sessionStorage.removeItem(KEY); } catch { /* stockage indisponible */ } },
 };
 
-if (survey) {
-  $('title').textContent = 'Questionnaire santé';
-  $('subtitle').textContent = 'Anonyme · 2 minutes';
-  document.querySelector('[data-step="2"]').textContent = 'Répondez aux questions';
-  document.querySelector('[data-step="3"]').textContent = 'Les bonnes réponses s’affichent à la fin';
-  $('switch').textContent = 'Affiche d’inscription';
-  $('switch').href = '/affiche';
+if (variant) {
+  $('title').textContent = variant.title;
+  $('subtitle').textContent = variant.subtitle;
+  variant.steps.forEach((t, i) => (document.querySelector(`[data-step="${i + 1}"]`).textContent = t));
 }
+for (const l of document.querySelectorAll('[data-cible]')) if (l.dataset.cible === (variant ? cible : '')) l.setAttribute('aria-current', 'page');
 
 const PLACEHOLDER = '<div class="grid aspect-square place-items-center rounded-[2cqw] border-[0.5cqw] border-dashed border-slate-300 p-[4cqw] text-center text-[2.8cqw] font-bold text-slate-500">Saisissez l’adresse du site au-dessus de l’affiche</div>';
 

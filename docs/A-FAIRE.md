@@ -3,7 +3,7 @@
 > ## ✅ Mise à jour du 11/11 : ce qu'il te reste à faire (le code est prêt)
 > 📄 **Version PDF interactive** (cases à cocher, liens cliquables) : `docs/Reste-a-faire-CheckSante.pdf` (régénérer : `python3 scripts/reste_a_faire_pdf.py docs/Reste-a-faire-CheckSante.pdf`).
 >
-> **Déjà fait** : site officiel `seminaire-triage.incognitoresolve.workers.dev`, affiches PDF (`docs/affiches/`), branche `main`, base D1 (ID saisi dans `wrangler.toml`), tableaux créés automatiquement, version téléphone + glassmorphism, accords qui scintillent, affiches QR A4, vidéo tutoriel (`docs/video/CheckSante-tutoriel.mp4`).
+> **Déjà fait** : site officiel `seminaire-triage.incognitoresolve.workers.dev`, affiches PDF (`docs/affiches/`), page « Remarques » des intervenants, branche `main`, base D1 (ID saisi dans `wrangler.toml`), tableaux créés automatiquement, version téléphone + glassmorphism, accords qui scintillent, affiches QR A4, vidéo tutoriel (`docs/video/CheckSante-tutoriel.mp4`).
 >
 > | # | Où | Action | Durée |
 > |---|---|---|---|
@@ -17,6 +17,7 @@
 > | 8 | Envoyer à Claude | L'**e-mail de contact RGPD d'ICC Liège** (2 emplacements `[email-contact]` dans la politique de confidentialité) | 1 min |
 > | 9 | Médecins | Relire l'assistant éducatif (README) et les seuils marqués « Seuil de prudence CheckSanté » | 15 min |
 > | 10 | Sur place | PIN aux soignants uniquement · `ADMIN_KEY` à l'organisateur · tablettes chargées, veille désactivée · partage 4G de secours · diffuser la vidéo sur l'écran d'accueil | — |
+> | 11 | `https://seminaire-triage.incognitoresolve.workers.dev/remarques` | **Partager le lien des remarques** aux soignants, médecins, intervenants, bénévoles (WhatsApp, e-mail) + affiche `docs/affiches/affiche-remarques-intervenants-A4.pdf`. Lecture : `/admin` + `ADMIN_KEY` → onglet **Remarques** | 5 min |
 >
 > Facultatif : noms des médecins (`web/shared/doctors.js`), domaine + e-mails Brevo (section E).
 

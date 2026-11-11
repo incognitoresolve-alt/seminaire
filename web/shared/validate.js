@@ -227,3 +227,49 @@ export function validateLead(b) {
   if (v.request_id && !UUID_RE.test(v.request_id)) errors.request_id = 'Identifiant invalide';
   return { ok: Object.keys(errors).length === 0, errors, value: v };
 }
+
+/* ---------- Remarques des intervenants (soignants, médecins, orateurs, bénévoles) ---------- */
+export const FEEDBACK_ROLES = {
+  soignant: 'Soignant(e) / infirmier(ère)',
+  medecin: 'Médecin',
+  intervenant: 'Intervenant(e) / orateur',
+  benevole: 'Bénévole / accueil',
+  organisation: 'Organisation',
+  autre: 'Autre',
+};
+export const FEEDBACK_KINDS = { remarque: 'Remarque', proposition: 'Proposition', probleme: 'Problème rencontré', positif: 'Point positif' };
+export const FEEDBACK_STATUS = { nouveau: 'Nouveau', lu: 'Lu', traite: 'Traité' };
+export const FEEDBACK_MAX = 3000;
+const has = (o, k) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); // Safari < 15.4 : pas d'Object.hasOwn
+
+export function validateFeedback(b) {
+  const errors = {};
+  const v = {
+    name: cleanName(b?.name) || null,
+    role: typeof b?.role === 'string' ? b.role : '',
+    kind: typeof b?.kind === 'string' ? b.kind : '',
+    message: freeText(b?.message, FEEDBACK_MAX, true),
+    contact: clean(b?.contact).slice(0, 254) || null,
+    request_id: b?.request_id ? String(b.request_id) : null,
+  };
+  if (v.name && !NAME_RE.test(v.name)) errors.name = 'Nom invalide (lettres, espaces, tirets, apostrophes)';
+  if (!has(FEEDBACK_ROLES, v.role)) errors.role = 'Choisissez votre rôle';
+  if (!has(FEEDBACK_KINDS, v.kind)) errors.kind = 'Choisissez un type';
+  if (!v.message || v.message.length < 3) errors.message = 'Écrivez votre remarque';
+  if (v.contact && !(EMAIL_RE.test(v.contact.toLowerCase()) || PHONE_RE.test(v.contact))) errors.contact = 'E-mail ou téléphone invalide';
+  if (v.contact && EMAIL_RE.test(v.contact.toLowerCase())) v.contact = v.contact.toLowerCase();
+  if (!v.request_id || !UUID_RE.test(v.request_id)) errors.request_id = 'Identifiant invalide';
+  return { ok: Object.keys(errors).length === 0, errors, value: v };
+}
+
+export function validateFeedbackPatch(b) {
+  const errors = {};
+  const value = {};
+  if (b && 'status' in b) {
+    if (has(FEEDBACK_STATUS, b.status)) value.status = b.status;
+    else errors.status = 'Statut invalide';
+  }
+  if (b && 'admin_notes' in b) value.admin_notes = freeText(b.admin_notes, 2000, true);
+  if (!Object.keys(value).length && !Object.keys(errors).length) errors._ = 'Rien à modifier';
+  return { ok: Object.keys(errors).length === 0, errors, value };
+}

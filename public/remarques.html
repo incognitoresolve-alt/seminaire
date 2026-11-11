@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>CheckSanté – Remarques des intervenants · ICC Liège</title>
+  <meta name="description" content="Remarques et propositions des soignants, médecins, intervenants et bénévoles du séminaire spécial ICC Liège.">
+  <meta name="theme-color" content="#5b1f8c">
+  <meta property="og:title" content="Vos remarques et propositions · CheckSanté">
+  <meta property="og:description" content="Soignants, médecins, intervenants, bénévoles : votre message arrive directement chez l’organisation.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CheckSanté">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="modulepreload" href="/dist/remarques.js">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body class="min-h-dvh">
+  <main class="mx-auto max-w-xl px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-16">
+    <header class="mb-5 text-center">
+      <p class="mb-3 flex justify-center text-2xl font-black"><span class="inline-flex items-center gap-2"><img src="/logo.svg" alt="" class="size-9" width="36" height="36"><span>Check<span class="text-sky-700">Santé</span></span></span></p>
+      <p class="text-sm font-bold tracking-widest text-sky-800 uppercase">Séminaire spécial · ICC Liège</p>
+      <h1 class="mt-1 text-3xl font-extrabold">Vos remarques et propositions</h1>
+      <p class="mt-3 rounded-2xl bg-sky-50 p-4 text-left text-sm text-slate-700 ring-1 ring-sky-200">Pour les <strong>soignants, médecins, intervenants et bénévoles</strong> du séminaire. Votre message arrive directement chez l’organisation. <strong>N’indiquez aucune donnée de santé ni le nom d’un participant.</strong></p>
+    </header>
+
+    <form id="fb" novalidate class="glass space-y-5 rounded-3xl p-5">
+      <fieldset>
+        <legend class="label">Vous êtes</legend>
+        <div id="roles" class="flex flex-wrap gap-2"></div>
+        <p class="err" data-err="role"></p>
+      </fieldset>
+      <fieldset>
+        <legend class="label">Type de message</legend>
+        <div id="kinds" class="flex flex-wrap gap-2"></div>
+        <p class="err" data-err="kind"></p>
+      </fieldset>
+      <div>
+        <label class="label" for="f-message">Votre message</label>
+        <textarea class="field min-h-40 text-base" id="f-message" name="message" rows="6" maxlength="3000" required placeholder="Ce qui a bien fonctionné, ce qui a manqué, une idée pour améliorer…"></textarea>
+        <div class="flex items-start justify-between gap-3"><p class="err" data-err="message"></p><p id="count" class="mt-1 shrink-0 text-xs text-slate-500" aria-live="polite">0 / 3000</p></div>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label class="label" for="f-name">Prénom et nom <span class="font-normal text-slate-500">(si vous le souhaitez)</span></label>
+          <input class="field text-base" id="f-name" name="name" autocomplete="name" maxlength="80">
+          <p class="err" data-err="name"></p>
+        </div>
+        <div>
+          <label class="label" for="f-contact">E-mail ou téléphone <span class="font-normal text-slate-500">(pour une réponse)</span></label>
+          <input class="field text-base" id="f-contact" name="contact" autocomplete="email" inputmode="email" maxlength="254">
+          <p class="err" data-err="contact"></p>
+        </div>
+      </div>
+      <div class="absolute -left-[9999px]" aria-hidden="true"><label for="f-website">Ne pas remplir</label><input id="f-website" name="website" tabindex="-1" autocomplete="off"></div>
+      <p data-form-error class="err text-center" role="alert"></p>
+      <button type="submit" class="btn-primary w-full text-lg">Envoyer à l’organisation</button>
+      <p class="text-center text-xs text-slate-500">Lu uniquement par l’organisation du séminaire · effacé après 180 jours · <a class="underline" href="/confidentialite">Confidentialité</a></p>
+    </form>
+
+    <section id="thanks" hidden class="space-y-4" aria-live="polite">
+      <div class="rounded-3xl bg-emerald-50 p-6 text-center ring-1 ring-emerald-200">
+        <p class="text-2xl font-extrabold text-emerald-900">Merci !</p>
+        <p class="mt-2 text-emerald-900">Votre message a bien été transmis à l’organisation du séminaire.</p>
+      </div>
+      <button id="again" type="button" class="btn-ghost w-full">Envoyer une autre remarque</button>
+    </section>
+
+    <footer class="mt-10 text-center"><div data-partner-credit></div></footer>
+  </main>
+  <script type="module" src="/dist/remarques.js"></script>
+</body>
+</html>

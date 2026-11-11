@@ -12,3 +12,10 @@ CREATE TABLE IF NOT EXISTS partner_leads (id TEXT PRIMARY KEY, request_id TEXT U
 CREATE INDEX IF NOT EXISTS idx_leads_created ON partner_leads(created_at);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_unsub ON partner_leads(unsub_token);
 CREATE INDEX IF NOT EXISTS idx_leads_email ON partner_leads(email, mailed_at);
+
+-- Remarques et propositions des intervenants (soignants, médecins, orateurs, bénévoles) → page /admin, onglet « Remarques ».
+-- Facultatif : l'application crée cette table toute seule au premier accès.
+CREATE TABLE IF NOT EXISTS feedback (id TEXT PRIMARY KEY, request_id TEXT UNIQUE, name TEXT, role TEXT NOT NULL, kind TEXT NOT NULL,
+  message TEXT NOT NULL, contact TEXT, status TEXT NOT NULL DEFAULT 'nouveau' CHECK (status IN ('nouveau','lu','traite')), admin_notes TEXT,
+  created_at INTEGER NOT NULL, updated_at INTEGER);
+CREATE INDEX IF NOT EXISTS idx_feedback_created ON feedback(created_at);

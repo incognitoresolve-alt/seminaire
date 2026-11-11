@@ -4,3 +4,4 @@ Disallow: /staff
 Disallow: /api/
 Disallow: /desinscription
 Disallow: /admin
+Disallow: /remarques

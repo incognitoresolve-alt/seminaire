@@ -137,6 +137,7 @@ export async function purge(env) {
     env.DB.prepare('DELETE FROM patients WHERE created_at < ?').bind(now - days * 86400e3),
     env.DB.prepare('DELETE FROM surveys WHERE created_at < ?').bind(now - days * 86400e3),
     env.DB.prepare('DELETE FROM partner_leads WHERE created_at < ?').bind(now - Math.max(1, Number(env.LEADS_RETENTION_DAYS) || 180) * 86400e3),
+    env.DB.prepare('DELETE FROM feedback WHERE created_at < ?').bind(now - Math.max(1, Number(env.FEEDBACK_RETENTION_DAYS) || 180) * 86400e3),
   ]);
 }
 
@@ -259,3 +260,30 @@ export async function eventStats(env) {
 
 /** Désinscription = suppression immédiate des coordonnées. */
 export const deleteLeadByToken = (env, t) => env.DB.prepare('DELETE FROM partner_leads WHERE unsub_token = ?').bind(t).run();
+
+/* ---------- Remarques des intervenants (lecture : rôle admin uniquement) ---------- */
+const FB_COLS = 'id, name, role, kind, message, contact, status, admin_notes, created_at, updated_at';
+/** @returns {Promise<boolean>} true si créée (false = rejeu idempotent) */
+export async function createFeedback(env, v) {
+  const res = await env.DB.prepare(
+    `INSERT INTO feedback (id, request_id, name, role, kind, message, contact, created_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(request_id) DO NOTHING`,
+  )
+    .bind(crypto.randomUUID(), v.request_id, v.name, v.role, v.kind, v.message, v.contact, Date.now())
+    .run();
+  return res.meta.changes > 0;
+}
+export async function listFeedback(env) {
+  const { results } = await env.DB.prepare(`SELECT ${FB_COLS} FROM feedback ORDER BY created_at DESC LIMIT 2000`).all();
+  return results;
+}
+export async function updateFeedback(env, id, patch) {
+  const keys = Object.keys(patch); // liste blanche garantie par validateFeedbackPatch
+  const row = await env.DB.prepare(`UPDATE feedback SET ${keys.map((k) => `${k} = ?`).join(', ')}, updated_at = ? WHERE id = ? RETURNING ${FB_COLS}`)
+    .bind(...keys.map((k) => patch[k]), Date.now(), id)
+    .first();
+  if (!row) throw new HttpError(404, 'not_found');
+  return row;
+}
+export async function deleteFeedback(env, id) {
+  await env.DB.prepare('DELETE FROM feedback WHERE id = ?').bind(id).run();
+}
