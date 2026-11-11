@@ -12,11 +12,11 @@
 > | 3 | **Settings → Variables and Secrets** (type *Secret*) | `STAFF_PIN` (8+ car.) · `SESSION_SECRET` (32+ car. aléatoires) · `ADMIN_KEY` (16+ car., organisateur / responsable médical) · `PARTNER_KEY` (16+ car., toi seul). Sans eux : accès bloqué (sécurité) | 5 min |
 > | 4 | Navigateur | `https://seminaire-triage.incognitoresolve.workers.dev/api/health` → `{"ok":true}` | 1 min |
 > | 5 | 2 tablettes | Test réel : 2 inscriptions → *Liste des inscrits* (PIN) → fiche → **nom du soignant** → tension → visible sur l'autre tablette | 5 min |
-> | 6 | `https://seminaire-triage.incognitoresolve.workers.dev/admin` + `ADMIN_KEY` | Effacer les tests : *Tout mettre à la corbeille* → *Vider* → *Effacer toutes les réponses* | 2 min |
+> | 6 | `https://seminaire-triage.incognitoresolve.workers.dev/admin` + `ADMIN_KEY` | Effacer les tests : *Tout mettre à la corbeille* → *Vider* ; onglet *Remarques* : supprimer les remarques de test ; contacts de test : *Mes contacts* (`PARTNER_KEY`) → *STOP* | 2 min |
 > | 7 | `docs/affiches/` | **Imprimer les PDF prêts** : `affiche-inscription-A4.pdf` (« Pas envie d'attendre ? »). QR codes vérifiés vers `https://seminaire-triage.incognitoresolve.workers.dev/`. Impression : A4, taille réelle (100 %), couleur. Scanner une feuille imprimée pour vérifier. (Aussi en ligne : `/affiche`) | 10 min |
 > | 8 | Envoyer à Claude | L'**e-mail de contact RGPD d'ICC Liège** (2 emplacements `[email-contact]` dans la politique de confidentialité) | 1 min |
 > | 9 | Médecins | Relire l'assistant éducatif (README) et les seuils marqués « Seuil de prudence CheckSanté » | 15 min |
-> | 10 | Sur place | PIN aux soignants uniquement · `ADMIN_KEY` à l'organisateur · tablettes chargées, veille désactivée · partage 4G de secours · diffuser la vidéo sur l'écran d'accueil | — |
+> | 10 | Sur place | PIN aux soignants uniquement · `ADMIN_KEY` au responsable médical (fiches = données de santé) · tablettes chargées, veille désactivée · partage 4G de secours · diffuser la vidéo sur l'écran d'accueil | — |
 > | 11 | `https://seminaire-triage.incognitoresolve.workers.dev/remarques` | **Partager le lien des remarques** aux soignants, médecins, intervenants, bénévoles (WhatsApp, e-mail) + affiche `docs/affiches/affiche-remarques-intervenants-A4.pdf`. Lecture : `/admin` + `ADMIN_KEY` → onglet **Remarques** | 5 min |
 > | 12 | `/admin` → onglet **QR codes** | Tous les QR codes au même endroit : inscription sans attente, **check-up assurance-vie** (publicité), remarques des intervenants → **Copier le lien**, **Télécharger l'image (PNG)**, **Affiche A4** (`docs/affiches/affiche-checkup-assurance-A4.pdf`) | 5 min |
 >
