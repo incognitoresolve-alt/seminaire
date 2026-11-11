@@ -14,7 +14,7 @@ run_worker_first = ["/api/*"]
 [[d1_databases]]
 binding = "DB"
 database_name = "seminaire"
-database_id = "00000000-0000-0000-0000-000000000000" # remplacer : wrangler d1 create seminaire
+database_id = "522fae40-c762-4522-8f46-2106ece3f07f" # remplacer : wrangler d1 create seminaire
 migrations_dir = "migrations"
 
 [[durable_objects.bindings]]
