@@ -4,6 +4,11 @@
 @source inline("t0 t1 t2 t3 tb0 tb1 tb2 tb3");
 
 @theme {
+  /* Couleurs du Séminaire spécial ICC Liège : violet + orange */
+  --color-sky-50: #faf5ff; --color-sky-100: #f3e8ff; --color-sky-200: #e9d5ff; --color-sky-300: #d8b4fe;
+  --color-sky-400: #c084fc; --color-sky-500: #a855f7; --color-sky-600: #8b3fc7; --color-sky-700: #6d28a8;
+  --color-sky-800: #5b1f8c; --color-sky-900: #3f1466; --color-sky-950: #2a0c47;
+  --color-accent: #f26b1d; --color-accent-dark: #c2410c; --color-accent-soft: #fff1e6;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
