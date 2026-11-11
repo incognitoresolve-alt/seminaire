@@ -106,7 +106,7 @@ function render({ patient: p, proof, generated_at }) {
 }
 
 function fail(msg) {
-  doc.innerHTML = `<div class="py-12 text-center"><p class="text-lg font-bold text-slate-900">${msg}</p><p class="mt-4"><a class="btn-primary" href="/admin">Administration</a></p></div>`;
+  doc.innerHTML = `<div class="py-12 text-center"><h1 class="text-lg font-bold text-slate-900">${msg}</h1><p class="mt-4"><a class="btn-primary" href="/admin">Administration</a></p></div>`;
 }
 
 $('print').addEventListener('click', () => print());

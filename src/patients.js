@@ -230,15 +230,6 @@ export async function deleteLead(env, id) {
   await env.DB.prepare('DELETE FROM partner_leads WHERE id = ?').bind(id).run();
 }
 /** Qualification par la personne elle-même (jeton secret reçu à la création de sa demande). */
-export async function qualifyLead(env, t, v) {
-  const row = await env.DB.prepare('SELECT interests FROM partner_leads WHERE unsub_token = ?').bind(t).first();
-  if (!row) throw new HttpError(404, 'not_found');
-  const interests = new Set((row.interests || '').split(',').filter(Boolean));
-  if (v.interest) interests.add(v.interest);
-  await env.DB.prepare('UPDATE partner_leads SET contact_time = COALESCE(?, contact_time), interests = ?, updated_at = ? WHERE unsub_token = ?')
-    .bind(v.contact_time ?? null, [...interests].join(',') || null, Date.now(), t)
-    .run();
-}
 
 /* ---------- Bilan anonyme de l'événement (agrégats uniquement) ---------- */
 const K_MIN = 5; // groupes de moins de 5 personnes masqués : aucune ré-identification possible

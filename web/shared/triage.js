@@ -122,7 +122,6 @@ export function rulesFor(age, { months = null, pregnant = false } = {}) {
     rules.push({ key: 'bmi', label: 'IMC', unit: 'kg/m²', get: (p) => bmi(p.weight, p.height), red: () => false, orange: (v) => v < 18.5 || v >= 30 });
   return rules;
 }
-export const RULES = rulesFor(null); // compatibilité : seuils adultes
 
 export const num = (v) => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) ? null : Number(v));
 

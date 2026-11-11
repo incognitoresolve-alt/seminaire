@@ -1,10 +1,10 @@
 import { LEAD_INTERESTS, PARTNER } from '../web/shared/partner.js';
-import { CONTACT_TIMES, FEEDBACK_KINDS, FEEDBACK_ROLES, FEEDBACK_STATUS, LEAD_STATUS, validateFeedback, validateFeedbackPatch, validateIdentity, validateLead, validateLeadPatch, validateLeadQualify, validatePatch, validateEmail } from '../web/shared/validate.js';
+import { CONTACT_TIMES, FEEDBACK_KINDS, FEEDBACK_ROLES, FEEDBACK_STATUS, LEAD_STATUS, validateFeedback, validateFeedbackPatch, validateIdentity, validateLead, validateLeadPatch, validatePatch, validateEmail } from '../web/shared/validate.js';
 import { checkPin, checkSecret, clearCookie, clearRoleCookie, hasRole, makeCookie, requireRole, requireStaff, roleConfigured, sessionCookie } from './auth.js';
 import { HttpError, assertSameOrigin, clientIp, json, rateLimit, readJson } from './http.js';
 import { hub } from './hub.js';
 import { ensureSchema } from './schema.js';
-import { createFeedback, deleteFeedback, listFeedback, updateFeedback, createLead, deleteLead, deleteLeadByToken, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, qualifyLead, updateLead, consentProof, listTransmissions, updateTransmission, createPatient, deletePatient, getDetail, listSince, purge, updatePatient } from './patients.js';
+import { createFeedback, deleteFeedback, listFeedback, updateFeedback, createLead, deleteLead, deleteLeadByToken, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, updateLead, consentProof, listTransmissions, updateTransmission, createPatient, deletePatient, getDetail, listSince, purge, updatePatient } from './patients.js';
 
 export { Hub } from './hub.js';
 
@@ -302,15 +302,7 @@ async function route(req, env, ctx, url) {
     const { ok, errors, value } = validateLead(body);
     if (!ok) throw new HttpError(422, 'validation', { errors });
     const lead = await createLead(env, value); // aucun e-mail automatique : prise de contact manuelle depuis « Mes contacts »
-    // Jeton secret renvoyé à la personne : lui permet de préciser sa demande (et de se désinscrire).
-    return json({ ok: true, t: lead?.unsub_token }, lead ? 201 : 200);
-  }
-  if (path === '/api/partner/qualify' && req.method === 'POST' && PARTNER.enabled) {
-    await rateLimit(env.RL_REGISTER, `qualify:${clientIp(req)}`);
-    const { ok, errors, value, t } = validateLeadQualify(await readJson(req, 512));
-    if (!ok) throw new HttpError(422, 'validation', { errors });
-    await qualifyLead(env, t, value);
-    return json({ ok: true });
+    return json({ ok: true }, lead ? 201 : 200);
   }
   if (path.startsWith('/api/partner/') && PARTNER.enabled) return partnerRoutes(req, env, url, path.slice('/api/partner'.length));
   if (path.startsWith('/api/admin/')) return adminRoutes(req, env, ctx, path.slice('/api/admin'.length));
