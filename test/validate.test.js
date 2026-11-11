@@ -68,13 +68,12 @@ test('étape du parcours', () => {
   assert.ok(validatePatch({ stage_at: 1 }).errors.stage_at); // horodatage réservé au serveur
 });
 
-import { validateLeadPatch, validateLeadQualify } from '../web/shared/validate.js';
-test('qualification et suivi partenaire : listes fermées', () => {
-  const t = 'abcdefghijklmnopqrstuv';
-  assert.ok(validateLeadQualify({ t, contact_time: 'soir' }).ok);
-  assert.ok(validateLeadQualify({ t, interest: 'deces' }).ok);
-  assert.ok(validateLeadQualify({ t, interest: 'auto' }).errors.interest); // non-vie refusé
-  assert.ok(validateLeadQualify({ t: 'x', contact_time: 'soir' }).errors.t);
+import { validateLeadPatch } from '../web/shared/validate.js';
+test('demande partenaire et suivi : listes fermées', () => {
+  const lead = { audience: 'public', name: 'Awa Diallo', email: 'awa@exemple.be', consent: true };
+  assert.ok(validateLead({ ...lead, interests: ['checkup', 'deces'] }).ok);
+  assert.ok(validateLead({ ...lead, interests: ['auto'] }).errors.interests); // non-vie refusé (inscription FSMA : vie uniquement)
+  assert.ok(validateLead({ ...lead, consent: false }).errors.consent);
   assert.ok(validateLeadPatch({ status: 'rdv', partner_notes: 'rappeler mardi' }).ok);
   assert.ok(validateLeadPatch({ status: 'vip' }).errors.status);
   assert.ok(validateLeadPatch({ email: 'x@y.z' }).errors.email); // le partenaire ne modifie pas les coordonnées
