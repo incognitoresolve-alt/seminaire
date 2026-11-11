@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseVital, validateIdentity, validatePatch, validateSurvey } from '../web/shared/validate.js';
+import { parseVital, validateIdentity, validatePatch } from '../web/shared/validate.js';
 
 const ok = { last_name: 'Dupont-Élise', first_name: "Anne-Marie d'Arc", birth_date: '1980-02-29', email: 'A@b.fr', consent: true, doctor_consent: false };
 
@@ -42,13 +42,6 @@ test('transmission au médecin de la consultation (choix obligatoire)', () => {
   assert.ok(validatePatch({ gp_consent: 1 }).errors.gp_consent); // ancien champ refusé
 });
 
-test('questionnaire : taille en m ou cm, choix bornés', () => {
-  assert.equal(validateSurvey({ height: '1,72' }).value.height, 1.72);
-  assert.equal(validateSurvey({ height: '172' }).value.height, 1.72);
-  assert.ok(validateSurvey({ activity_freq: '9' }).errors.activity_freq);
-  assert.ok(validateSurvey({ screen_hours: '30' }).errors.screen_hours);
-  assert.ok(validateSurvey({}).ok);
-});
 
 import { validateLead } from '../web/shared/validate.js';
 test('lead partenaire : opt-in distinct, contact requis, intérêts whitelistés', () => {

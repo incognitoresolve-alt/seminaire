@@ -50,7 +50,7 @@ export function news2(p, alerts = parseAlerts(p?.alerts)) {
   return { score: parts.reduce((a, b) => a + b, 0), n: parts.length, max3: parts.includes(3) };
 }
 
-/** IMC à 1 décimale. height en cm (fiche soignant) ou en m (questionnaire). */
+/** IMC à 1 décimale. height en cm (fiche soignant) ou en m. */
 export function bmi(weight, height) {
   const w = Number(weight);
   let h = Number(height);

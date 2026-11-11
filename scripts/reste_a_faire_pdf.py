@@ -191,21 +191,21 @@ story.append(Task('4', 'Faire un vrai test avec 2 tablettes', '10 min', [
     f'Tablettes A et B : {a(SITE + "/staff")} → taper le <b>STAFF_PIN</b> → pastille verte <b>Temps réel</b>.',
     f'{b("Liste des inscrits")} → taper le nom → ouvrir la fiche → saisir une tension (ex. 150/85) → '
     f'choisir {b("Médecin 1")} → la fiche change sur l’autre tablette en quelques secondes.',
-    f'{a(SITE + "/questionnaire")} → répondre une fois → bouton {b("Questionnaire")} côté soignants : 1 réponse comptée.',
+    f'{a(SITE + "/remarques")} → envoyer une remarque « Test » → {a(SITE + "/admin")} (ADMIN_KEY) → onglet {b("Remarques")} : elle apparaît.',
     'Mauvais PIN 11 fois de suite → « Trop d’essais, patientez une minute » (protection normale).',
 ], prio=True))
 story.append(gap())
 
 story.append(Task('5', 'Effacer toutes les données de test', '2 min', [
     f'Ouvre {a(SITE + "/admin")} → colle l’<b>ADMIN_KEY</b> → onglet Corbeille :',
-    f'{b("Tout mettre à la corbeille")} → {b("Vider")} → {b("Effacer toutes les réponses")} (questionnaire).',
+    f'{b("Tout mettre à la corbeille")} → {b("Vider")}.',
     f'Onglet {b("Remarques")} : supprimer les remarques de test.',
     f'Si tu as coché le check-up pendant le test : {b("Ajouter une clé")} → <b>PARTNER_KEY</b> → onglet {b("Mes contacts")} → supprimer les contacts « Test ».',
 ], prio=True))
 story.append(gap())
 
 story.append(Task('6', 'Imprimer les affiches QR', '10 min', [
-    f'Fichiers prêts : {c("affiche-inscription-A4.pdf")} (« Pas envie d’attendre ? »), {c("affiche-questionnaire-A4.pdf")} '
+    f'Fichiers prêts : {c("affiche-inscription-A4.pdf")} (« Pas envie d’attendre ? ») '
     f'et {c("affiche-remarques-intervenants-A4.pdf")} (salle des intervenants). '
     f'Envoyés dans la conversation, et aussi sur {a(REPO + "/tree/main/docs/affiches", "GitHub → docs/affiches")}.',
     'Imprimante : format <b>A4</b>, <b>taille réelle (100 %)</b>, <b>couleur</b>. Plusieurs exemplaires : entrée, file d’attente, chaises, salle.',
@@ -277,7 +277,7 @@ story.append(KeepTogether([P('APRÈS L’ÉVÉNEMENT', 'kick'), P('Clôturer pro
     'Une seule relance maximum ; « STOP » = effacement immédiat.',
     f'<b>Sécurité</b> : changer ou supprimer {c("STAFF_PIN")} dans Cloudflare → plus aucun accès soignants.',
     f'<b>Remarques des intervenants</b> : {b("Télécharger (Excel / CSV)")} pour le bilan de l’organisation.',
-    '<b>Effacement automatique</b> : dossiers et questionnaires après 30 jours, contacts et remarques après 180 jours.'
+    '<b>Effacement automatique</b> : dossiers après 30 jours, contacts et remarques après 180 jours.'
 ])]))
 
 story.append(box([

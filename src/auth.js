@@ -1,6 +1,6 @@
 // Accès « sans compte » par code partagé => cookie de session signé HMAC.
 // Trois rôles strictement séparés :
-//  - staff   : soignants (STAFF_PIN, 8+ car.) — patients, mesures, questionnaire ;
+//  - staff   : soignants (STAFF_PIN, 8+ car.) — patients, mesures, bilan ;
 //  - partner : partenaire assurance (PARTNER_KEY, 16+ car.) — UNIQUEMENT ses demandes de contact ;
 //  - admin   : organisateur / responsable médical (ADMIN_KEY, 16+ car.) — corbeille des inscriptions.
 // Changer le code ou SESSION_SECRET révoque instantanément toutes les sessions du rôle.

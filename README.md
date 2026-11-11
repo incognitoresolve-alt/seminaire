@@ -1,6 +1,6 @@
 # CheckSanté — Semaine de la santé · ICC Liège
 
-Inscription, triage temps réel & questionnaire de prévention.
+Inscription, triage temps réel & remarques des intervenants.
 
 > Logo : croix médicale blanche sur fond bleu + check vert. **Ne jamais utiliser une croix rouge sur fond blanc** (emblème protégé, Conventions de Genève / loi belge du 4 juillet 1956).
 
@@ -12,9 +12,8 @@ Application temps réel pour les consultations de prévention (11–14 nov. 2026
 | URL | Public | Rôle |
 |---|---|---|
 | `/` | participants | Inscription (identité + accord consultation + transmission de ses données à un médecin qui pourra suivre son dossier) par l'accueil ; formulaire vidé aussitôt pour la personne suivante (aucun Pass, rien stocké sur la tablette) |
-| `/questionnaire` | participants | Questionnaire de prévention **anonyme** (8 sections du PDF), IMC calculé en direct, repères affichés après envoi |
-| `/staff` | soignants (PIN) | Liste temps réel triée par priorité, recherche instantanée par nom, fiche (vitaux, IMC, glycémie, périmètre abdo., notes), assignation Médecin 1 (mer. 11/11) / Médecin 2 (sam. 14/11), ajout manuel, stats questionnaire en direct |
-| `/affiche` · `/affiche?cible=questionnaire` | accueil | Affiche A4 imprimable : QR d'auto-inscription (« Pas envie d'attendre ? ») ou du questionnaire. Site officiel pré-rempli (modifiable) ; PDF prêts dans `docs/affiches/` ; localhost, réseau local et http refusés, impression bloquée sans adresse valide |
+| `/staff` | soignants (PIN) | Liste temps réel triée par priorité, recherche instantanée par nom, fiche (vitaux, IMC, glycémie, périmètre abdo., notes), assignation Médecin 1 (mer. 11/11) / Médecin 2 (sam. 14/11), ajout manuel, bilan anonyme en direct |
+| `/affiche` · `/affiche?cible=remarques` | accueil | Affiche A4 imprimable : QR d'auto-inscription (« Pas envie d'attendre ? ») ou des remarques des intervenants. Site officiel pré-rempli (modifiable) ; PDF prêts dans `docs/affiches/` ; localhost, réseau local et http refusés, impression bloquée sans adresse valide |
 | `/remarques` | soignants, médecins, intervenants, bénévoles | Remarques et propositions (rôle, type, message, nom/contact au choix) → `/admin`, onglet **Remarques** (clé `ADMIN_KEY`) : statut Nouveau / Lu / Traité, notes, export CSV. Affiche QR : `/affiche?cible=remarques` |
 | `/partenaire?pour=public\|pro` | tous | Page **Publicité** du partenaire assurances + formulaire de recontact (opt-in distinct) |
 
@@ -35,7 +34,7 @@ Inscription **strictement individuelle** : un formulaire vierge par personne, au
 ## Architecture
 
 ```
-navigateur ──HTTPS──► Worker (src/index.js) ──► D1 (patients, surveys)
+navigateur ──HTTPS──► Worker (src/index.js) ──► D1 (patients, partner_leads, feedback)
      ▲                     │ après chaque écriture (waitUntil)
      └──── WebSocket ◄──── Durable Object Hub (hibernation, broadcast)
 ```
@@ -130,7 +129,7 @@ Format imposé : 1. Note importante · 2. Niveau d'urgence (112 / urgence médic
 - CSP stricte (`script-src 'self'`, aucun inline), HSTS, X-Frame-Options DENY, Permissions-Policy (caméra, micro, géolocalisation désactivés).
 - Rate limiting natif par IP (inscription 120/min — un Wi-Fi partagé = une IP —, login 10/min, API 1200/min).
 - Honeypot + idempotence (`request_id`) : double-clic ou réseau instable ⇒ jamais de doublon.
-- Minimisation : e-mail et téléphone chargés uniquement à l'ouverture d'une fiche ; sans accord de transmission, aucune assignation à un médecin n'est possible (contrôle serveur) ; le questionnaire ne stocke ni identité ni IP.
+- Minimisation : e-mail et téléphone chargés uniquement à l'ouverture d'une fiche ; sans accord de transmission, aucune assignation à un médecin n'est possible (contrôle serveur) ; les remarques des intervenants ne sont lisibles qu'avec `ADMIN_KEY`.
 - Droit à l'effacement (bouton fiche) : données écrasées immédiatement ; cron quotidien purge tout après `RETENTION_DAYS` (30 j).
 - Logs Workers sans PII ; `/api/health` pour l'uptime monitoring.
 - RGPD (Belgique) : données de santé (art. 9) ⇒ consentement explicite recueilli, D1 en juridiction UE. Compléter `[adresse]`/`[email-contact]` dans `confidentialite.html` et tenir le registre des traitements.
@@ -142,10 +141,10 @@ Renseigné : Boris Y. AKOE, sous-agent pour Comopolis, FSMA n° 0803.683.897.
 **Inscription FSMA = assurance-vie uniquement (IDD ILP/OLP)** : ne pas annoncer de produits non-vie tant que l'inscription n'est pas étendue.
 
 Encarts identifiés « Publicité » (pratique commerciale loyale, CDE art. VI.97–VI.100) uniquement :
-pied de l'inscription, fin du questionnaire (après les repères), bas de la liste staff (version « soignants », masquable).
+pied de l'inscription, bas de la liste staff (version « soignants », masquable).
 **Jamais** dans une fiche patient, un résultat de triage ou les stats. Aucun ciblage selon les données de santé.
 
-Demandes de contact : table `partner_leads` isolée (aucune jointure possible avec patients/questionnaires), purge à 180 j.
+Demandes de contact : table `partner_leads` isolée (aucune jointure possible avec patients), purge à 180 j.
 Check-up couverture : case facultative (non pré-cochée, distincte du consentement médical) dans le formulaire d’inscription ; cochée = demande de contact (nom/e-mail/téléphone uniquement). Modèle d'e-mail conforme : `docs/modele-email-checkup.md`.
 
 **E-mail automatique** : chaque personne qui a donné son accord reçoit aussitôt l'e-mail « Votre check-up couverture gratuit » (mentions FSMA, désinscription en un clic → suppression immédiate des coordonnées). Personne d'autre ne reçoit d'e-mail.
@@ -174,7 +173,7 @@ npx wrangler d1 execute seminaire --remote --command "SELECT datetime(created_at
 ## Checklist jour J
 
 1. `npm run deploy`, vérifier `/api/health`.
-2. Imprimer `/affiche` et `/affiche?cible=questionnaire`.
+2. Imprimer `/affiche` (et `/affiche?cible=remarques` pour la salle des intervenants).
 3. Communiquer le PIN aux soignants uniquement ; ouvrir `/staff` sur chaque tablette (pastille « Temps réel » verte).
 4. Le formulaire papier de consentement reste utilisable : en saisie manuelle, cocher l'accord une fois le papier signé.
 

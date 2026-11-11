@@ -231,7 +231,7 @@ lex = [
     ('Commit', 'L’enregistrement d’une modification sur GitHub (comme « Enregistrer »).'),
     ('Cloudflare', 'L’hébergeur qui fait tourner le site, partout dans le monde, très rapidement.'),
     ('Worker', 'Le programme CheckSanté qui tourne chez Cloudflare (le « moteur » du site).'),
-    ('D1', 'La base de données Cloudflare : elle stocke les inscriptions, les mesures, le questionnaire.'),
+    ('D1', 'La base de données Cloudflare : elle stocke les inscriptions, les mesures, les remarques des intervenants.'),
     ('Console SQL', 'Une zone où l’on colle des instructions pour créer ou lire les tableaux de la base.'),
     ('Secret', 'Un code caché que seul le Worker connaît (ex. le PIN des soignants). Invisible une fois enregistré.'),
     ('Build / Deploy', 'Cloudflare prépare le site (build) puis le met en ligne (deploy). Automatique.'),
@@ -314,7 +314,7 @@ story.append(warn('Si la console affiche une erreur avec plusieurs instructions,
                   'Si tu relances par erreur 0003, 0004 ou 0005 : « duplicate column » = déjà fait, aucun souci.'))
 story.append(Step(16, 'Vérification : dans la Console, colle cette ligne puis ' + btn('Execute') + ' :'))
 story.append(codeblock(["SELECT name FROM sqlite_master WHERE type='table';"]))
-story.append(result('La liste contient <b>patients</b>, <b>surveys</b> et <b>partner_leads</b>.'))
+story.append(result('La liste contient <b>patients</b>, <b>partner_leads</b> et <b>feedback</b>.'))
 story.append(PageBreak())
 
 # ---- 3. Worker
@@ -388,13 +388,13 @@ tests = [
     'Dans la fiche, tape un pouls de <b>135</b> → la fiche devient <b>Rouge</b>, et le 2ᵉ appareil l’affiche aussi en rouge en 1 seconde.',
     f'Appuie sur {btn("Patient suivant →")} sur chaque appareil → ils ouvrent deux personnes différentes.',
     f'Appuie sur {btn("Terminé")} → la fiche se ferme et la personne quitte la liste « À traiter ».',
-    'Ouvre <b>ADRESSE/questionnaire</b>, réponds, envoie → côté soignants, bouton '
-    f'{btn("Questionnaire")} : 1 réponse comptée.',
+    'Ouvre <b>ADRESSE/remarques</b>, envoie une remarque « Test » → ADRESSE/admin (clé ADMIN_KEY) → onglet '
+    f'{btn("Remarques")} : elle apparaît.',
     'Tape volontairement 11 mauvais PIN → message « Trop d’essais, patientez une minute ».',
 ]
 story += [Step(i, s) for i, s in enumerate(tests, start=1)]
 story.append(P('Effacer les données de test (obligatoire avant d’ouvrir au public)', 'h2'))
-story += [Step(11, f'Ouvre <b>ADRESSE/admin</b> → tape la clé <b>ADMIN_KEY</b> → {btn("Tout mettre à la corbeille")} → {btn("Vider")} → {btn("Effacer toutes les réponses")} (questionnaire de test).'),
+story += [Step(11, f'Ouvre <b>ADRESSE/admin</b> → tape la clé <b>ADMIN_KEY</b> → {btn("Tout mettre à la corbeille")} → {btn("Vider")} → onglet {btn("Remarques")} → supprimer la remarque de test.'),
           Step(12, f'Contacts de test : sur la même page, {btn("Ajouter une clé")} → <b>PARTNER_KEY</b> → onglet {btn("Mes contacts")} → « STOP » sur chaque contact de test.'),
           Step(13, 'Rafraîchis ADRESSE/staff : la liste affiche « Aucun participant inscrit pour le moment ».')]
 story.append(tip('Si un test échoue, va directement à la page '
@@ -462,7 +462,7 @@ story += section('s8', '8', 'Imprimer les affiches', '10 min')
 story += [
     Step(1, 'Ouvre <b>ADRESSE/affiche</b> → bouton ' + btn('Imprimer') + ' → format A4 (ou A3 pour l’entrée). '
             'Imprime plusieurs exemplaires : entrée, file d’attente, chaises.'),
-    Step(2, 'Ouvre <b>ADRESSE/affiche?cible=questionnaire</b> → ' + btn('Imprimer') + ' → pour la salle de présentation.'),
+    Step(2, 'Ouvre <b>ADRESSE/affiche?cible=remarques</b> → ' + btn('Imprimer') + ' → pour la salle des intervenants.'),
     Step(3, 'Scanne une affiche <b>imprimée</b> avec un téléphone : la bonne page doit s’ouvrir.'),
 ]
 story.append(warn('Si tu ajoutes un nom de domaine plus tard, il faudra <b>réimprimer</b> les affiches.'))
@@ -512,8 +512,8 @@ story += [
             f'{btn("Exporter le bilan (CSV)")}. Ces chiffres sont anonymes : tu peux les réutiliser librement.'),
     Step(4, 'Une seule relance maximum. Une personne répond « STOP » → tu supprimes son contact et tu ne lui écris plus.'),
     Step(5, f'<b>Fermer l’accès soignants</b> : Worker → {btn("Variables and Secrets")} → supprime {code("STAFF_PIN")}.'),
-    Step(6, 'Rien d’autre à faire : les données s’effacent <b>automatiquement</b> (inscriptions et questionnaires '
-            'après 30 jours, contacts après 180 jours).'),
+    Step(6, 'Rien d’autre à faire : les données s’effacent <b>automatiquement</b> (inscriptions '
+            'après 30 jours, contacts et remarques après 180 jours).'),
 ]
 story.append(PageBreak())
 

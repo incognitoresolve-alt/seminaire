@@ -496,7 +496,7 @@ $('add-open').addEventListener('click', () => {
   openSheet(lastCreated);
 });
 
-/* ---------- Statistiques questionnaire (anonyme) ---------- */
+/* ---------- Bilan de l'événement (anonyme) ---------- */
 const pct = (n, t) => (t && typeof n === 'number' ? Math.round((100 * n) / t) : 0);
 const pctTxt = (n, t) => (t ? `${pct(n, t)} %` : '–');
 const bar = (label, n, t, cls = 'bg-sky-700') => `
@@ -517,59 +517,29 @@ function eventHtml(e) {
     </div>
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
       ${tile('Inscriptions', e.total)}${tile('Paramètres relevés', e.measured)}${tile('Parcours terminés', e.done)}${tile('Attente moy.', e.avg_wait_min != null ? `${e.avg_wait_min} min` : '–')}
-      ${tile('Via QR / accueil', `${e.self} / ${e.staff}`)}${tile('Accord médecin', `${e.consent_rate} %`)}${tile('Intérêt check-up', `${e.checkup_rate} %`)}${tile('Questionnaires', e.surveys)}
+      ${tile('Via QR / accueil', `${e.self} / ${e.staff}`)}${tile('Accord médecin', `${e.consent_rate} %`)}${tile('Intérêt check-up', `${e.checkup_rate} %`)}
     </div>
     ${e.per_day.length ? `<div class="space-y-2"><h4 class="font-bold">Inscriptions par jour</h4>${e.per_day.map((x) => bar(x.d.split('-').reverse().join('/'), x.n, dmax)).join('')}</div>` : ''}
     ${at ? `<div class="space-y-2"><h4 class="font-bold">Tranches d’âge</h4>${Object.entries(e.ages).map(([k, n]) => bar(`${k} ans`, n, at)).join('')}</div>` : ''}
     ${tt ? `<div class="space-y-2"><h4 class="font-bold">Triage</h4>${Object.entries(e.triage).map(([k, n]) => bar(TRI[k]?.[0] ?? k, n, tt, TRI[k]?.[1])).join('')}</div>` : ''}
     <p class="text-xs text-slate-500">Chiffres agrégés et anonymes (groupes de moins de 5 personnes masqués « &lt;5 ») : utilisables librement pour rapports et présentations.</p>
-  </section>
-  <hr class="border-slate-200">`;
+  </section>`;
 }
 
 async function renderStats() {
   const box = $('stats-body');
   try {
-    const [s, ev] = await Promise.all([api('/staff/survey-stats'), api('/staff/stats')]);
-    const t = s.n || 0;
-    const freq = Object.fromEntries(s.activity.map((r) => [r.k, r.n]));
-    const vax = Object.fromEntries(s.vax.map((r) => [r.k, r.n]));
-    const ft = s.activity.reduce((a, r) => a + r.n, 0);
-    const vt = s.vax.reduce((a, r) => a + r.n, 0);
-    const bt = (s.bmi_low || 0) + (s.bmi_ok || 0) + (s.bmi_over || 0) + (s.bmi_obese || 0);
-    box.innerHTML = eventHtml(ev) + '<h3 class="text-lg font-extrabold">Questionnaire de prévention</h3>' + (!t
-      ? '<p class="py-6 text-center text-slate-500">Aucune réponse pour le moment</p>'
-      : `<p class="text-4xl font-black">${t} <span class="text-base font-semibold text-slate-600">réponses anonymes</span></p>
-      <section class="space-y-2"><h3 class="font-bold">IMC ${s.bmi_avg != null ? `· moyenne ${s.bmi_avg}` : ''}</h3>
-        ${bar('&lt; 18,5', s.bmi_low, bt, 'bg-amber-500')}${bar('18,5 – 24,9', s.bmi_ok, bt, 'bg-emerald-600')}${bar('25 – 29,9', s.bmi_over, bt, 'bg-amber-500')}${bar('≥ 30', s.bmi_obese, bt, 'bg-red-600')}</section>
-      <section class="space-y-2"><h3 class="font-bold">Activité physique ${s.act_min_avg != null ? `· ${s.act_min_avg} min/sem. en moyenne` : ''}</h3>
-        ${bar('Aucune', freq[0], ft)}${bar('1 fois/sem.', freq[1], ft)}${bar('2 fois/sem.', freq[2], ft)}${bar('3 fois/sem.', freq[3], ft)}${bar('Plus de 3', freq[4], ft)}
-        <p class="text-sm text-slate-600">${s.act_who || 0} personne(s) atteignent ≥ 150 min/semaine (repère OMS).</p></section>
-      <section class="grid gap-3 sm:grid-cols-3">
-        <div class="rounded-xl bg-slate-100 p-3"><p class="text-sm text-slate-600">Glycémie déjà testée</p><p class="text-2xl font-black">${pctTxt(s.glu_yes, (s.glu_yes || 0) + (s.glu_no || 0))}</p></div>
-        <div class="rounded-xl bg-slate-100 p-3"><p class="text-sm text-slate-600">Connaît son cholestérol</p><p class="text-2xl font-black">${pctTxt(s.chol_yes, (s.chol_yes || 0) + (s.chol_no || 0))}</p></div>
-        <div class="rounded-xl bg-slate-100 p-3"><p class="text-sm text-slate-600">Écrans / jour (moy.)</p><p class="text-2xl font-black">${s.screen_avg ?? '–'} h</p></div>
-      </section>
-      <section class="space-y-2"><h3 class="font-bold">Vaccinations à jour ?</h3>
-        ${bar('Oui', vax[1], vt, 'bg-emerald-600')}${bar('Non', vax[0], vt, 'bg-red-600')}${bar('Ne sait pas', vax[2], vt, 'bg-slate-400')}</section>
-      <section><h3 class="mb-2 font-bold">Questions posées (${s.questions.length})</h3>
-        <ul class="space-y-2">${s.questions.map((q) => `<li class="rounded-xl bg-white p-3 text-sm whitespace-pre-line ring-1 ring-slate-200">${esc(q.questions)}</li>`).join('') || '<li class="text-sm text-slate-500">Aucune</li>'}</ul></section>`);
+    box.innerHTML = eventHtml(await api('/staff/stats'));
     for (const el of box.querySelectorAll('[data-w]')) el.style.width = `${el.dataset.w}%`; // CSSOM : compatible CSP
   } catch {
     box.innerHTML = '<p class="py-10 text-center text-red-700">Statistiques indisponibles, réessayez.</p>';
   }
 }
-let statsTimer = 0;
 $('open-stats').addEventListener('click', () => {
   $('stats-body').innerHTML = '<p class="py-10 text-center text-slate-500"><span class="spinner"></span></p>';
   openDialog($('stats'));
   renderStats();
 });
-store.state.onSurvey = () => {
-  if (!$('stats').open) return;
-  clearTimeout(statsTimer);
-  statsTimer = setTimeout(renderStats, 800);
-};
 
 /* ---------- Accès & démarrage ---------- */
 function showGate() {

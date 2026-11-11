@@ -4,15 +4,11 @@ import { OFFICIAL_SITE, isPublic, parseSite } from './shared/site.js';
 
 mountCredit();
 
-// /affiche → auto-inscription ; ?cible=questionnaire → questionnaire anonyme ; ?cible=remarques → remarques des intervenants.
+// /affiche → auto-inscription ; ?cible=remarques → remarques des intervenants.
 // Le QR code pointe vers le site officiel, ou l'adresse publique saisie (jamais localhost / réseau local).
 // Adresse saisie : conservée le temps de la session (bascule entre les affiches), jamais transmise.
 const cible = new URLSearchParams(location.search).get('cible');
 const VARIANTS = {
-  questionnaire: {
-    path: '/questionnaire', title: 'Questionnaire santé', subtitle: 'Anonyme · 2 minutes',
-    steps: ['Scannez le QR code', 'Répondez aux questions', 'Les bonnes réponses s’affichent à la fin'],
-  },
   remarques: {
     path: '/remarques', title: 'Vos remarques', subtitle: 'Soignants · intervenants · bénévoles',
     steps: ['Scannez le QR code', 'Écrivez votre remarque ou proposition', 'Elle arrive directement chez l’organisation'],

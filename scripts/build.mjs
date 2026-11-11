@@ -6,7 +6,7 @@ const root = new URL('../', import.meta.url);
 const out = new URL('public/dist/', root);
 rmSync(out, { recursive: true, force: true });
 
-const entries = ['register', 'questionnaire', 'staff', 'partenaire', 'affiche', 'credit', 'desinscription', 'admin', 'remarques'];
+const entries = ['register', 'staff', 'partenaire', 'affiche', 'credit', 'desinscription', 'admin', 'remarques'];
 const res = await build({
   entryPoints: entries.map((e) => `web/${e}.js`),
   outdir: 'public/dist',
@@ -20,7 +20,7 @@ const res = await build({
 });
 
 const version = `${Date.now().toString(36)}`;
-const assets = ['/', '/staff', '/questionnaire', '/app.css', '/logo.svg', '/favicon.svg', ...Object.keys(res.metafile.outputs).map((f) => `/${f.replace(/^public\//, '')}`)];
+const assets = ['/', '/staff', '/app.css', '/logo.svg', '/favicon.svg', ...Object.keys(res.metafile.outputs).map((f) => `/${f.replace(/^public\//, '')}`)];
 const sw = readFileSync(new URL('web/sw.template.js', root), 'utf8').replace('__VERSION__', version).replace('__ASSETS__', JSON.stringify(assets));
 writeFileSync(new URL('public/sw.js', root), sw);
 
