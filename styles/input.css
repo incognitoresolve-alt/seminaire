@@ -111,10 +111,11 @@
   & input { @apply size-5 accent-sky-700; }
 }
 
-/* Affiche A4 : impression pleine page, couleurs conservées */
-@utility a4 { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+/* Impression A4 : marges pour les documents (fiche médecin), pleine page pour les affiches (page nommée), couleurs conservées */
+@utility a4 { page: affiche; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 @media print {
-  @page { size: A4; margin: 0; }
+  @page { size: A4; margin: 12mm 12mm; }
+  @page affiche { size: A4; margin: 0; }
   html, body { background: #fff !important; }
   body::before { display: none; }
 }

@@ -31,6 +31,9 @@ const ALTER = [
   'ALTER TABLE patients ADD COLUMN rr INTEGER',
   'ALTER TABLE patients ADD COLUMN spo2 INTEGER',
   'ALTER TABLE patients ADD COLUMN alerts TEXT',
+  // Preuve des accords : date de la dernière décision de transmission + historique horodaté (JSON, empreintes SHA-256).
+  'ALTER TABLE patients ADD COLUMN doctor_consent_at INTEGER',
+  'ALTER TABLE patients ADD COLUMN consent_log TEXT',
   'ALTER TABLE partner_leads ADD COLUMN unsub_token TEXT',
   'ALTER TABLE partner_leads ADD COLUMN mailed_at INTEGER',
   "ALTER TABLE partner_leads ADD COLUMN status TEXT NOT NULL DEFAULT 'nouveau' CHECK (status IN ('nouveau','contacte','rdv','client'))",

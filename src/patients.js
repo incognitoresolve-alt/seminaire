@@ -1,10 +1,11 @@
+import { CHANNELS, CONSENT_TEXTS, CURRENT, KINDS, makeEntry, sha256Hex, verifyEntry } from '../web/shared/consent.js';
 import { triage } from '../web/shared/triage.js';
 import { HttpError } from './http.js';
 
 // Colonnes exposées au staff (sans email ni request_id : minimisation).
 const COLS =
   'id,token,short_code,last_name,first_name,birth_date,source,doctor_consent,stage,stage_at,alerts,pulse,rr,spo2,temp,weight,height,waist,glucose,sys,dia,notes,triage,doctor,version,created_at,updated_at,deleted_at';
-const DETAIL_COLS = `${COLS},email,phone,consent_at`;
+const DETAIL_COLS = `${COLS},email,phone,consent_at,gp_name,doctor_consent_at,consent_log`;
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // sans 0/O/1/I/L
 
 const randomToken = () => {
@@ -23,15 +24,21 @@ export async function createPatient(env, v, source) {
   }
   for (let attempt = 0; attempt < 4; attempt++) {
     const now = Date.now();
+    const id = crypto.randomUUID();
+    // Preuve : les deux décisions (consultation + transmission, y compris un refus), texte exact affiché et moyen utilisé.
+    const log = [
+      await makeEntry(id, 'consultation', 1, source, CURRENT.consultation[source], now),
+      await makeEntry(id, 'transmission', v.doctor_consent ? 1 : 0, source, CURRENT.transmission[source], now),
+    ];
     try {
       const row = await env.DB.prepare(
         `INSERT INTO patients (id,token,short_code,request_id,last_name,first_name,birth_date,email,phone,consent_at,
-           doctor_consent,source,created_at,updated_at)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING ${COLS}`,
+           doctor_consent,source,created_at,updated_at,gp_name,doctor_consent_at,consent_log)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING ${COLS}`,
       )
         .bind(
-          crypto.randomUUID(), randomToken(), shortCode(), v.request_id, v.last_name, v.first_name, v.birth_date, v.email, v.phone, now,
-          v.doctor_consent ? 1 : 0, source, now, now,
+          id, randomToken(), shortCode(), v.request_id, v.last_name, v.first_name, v.birth_date, v.email, v.phone, now,
+          v.doctor_consent ? 1 : 0, source, now, now, v.doctor_consent ? v.gp_name : null, now, JSON.stringify(log),
         )
         .first();
       return { row, created: true };
@@ -57,24 +64,64 @@ export async function listSince(env, since, limit = 1000) {
 export const getDetail = (env, id) =>
   env.DB.prepare(`SELECT ${DETAIL_COLS} FROM patients WHERE id = ? AND deleted_at IS NULL`).bind(id).first();
 
+/**
+ * Preuve des accords d'un dossier : entrées horodatées avec texte exact, moyen et vérification d'intégrité.
+ * Dossiers antérieurs à la preuve détaillée : accords reconstitués (date d'inscription, ancienne formulation), signalés comme tels.
+ */
+export async function consentProof(row) {
+  let log = [];
+  try {
+    log = JSON.parse(row.consent_log || '[]');
+  } catch {
+    log = [];
+  }
+  if (!Array.isArray(log)) log = [];
+  const ch = row.source === 'staff' ? 'staff' : 'self';
+  const legacy = log.some((e) => e.k === 'consultation')
+    ? []
+    : [
+        { k: 'consultation', v: 1, at: row.consent_at, ch, tv: `C1-${ch}`, legacy: true },
+        ...(log.some((e) => e.k === 'transmission') ? [] : [{ k: 'transmission', v: row.doctor_consent ? 1 : 0, at: row.consent_at, ch, tv: `T1-${ch}`, legacy: true }]),
+      ];
+  const entries = [];
+  for (const e of [...legacy, ...log]) {
+    entries.push({ ...e, text: CONSENT_TEXTS[e.tv] ?? '', kind: KINDS[e.k] ?? e.k, channel: CHANNELS[e.ch] ?? e.ch, ok: e.legacy ? null : await verifyEntry(row.id, e) });
+  }
+  const signed = entries.filter((e) => !e.legacy);
+  return {
+    entries,
+    transmission: [...entries].reverse().find((e) => e.k === 'transmission') ?? null,
+    intact: signed.every((e) => e.ok),
+    legacy: legacy.length > 0,
+    seal: signed.length ? await sha256Hex([row.id, row.last_name, row.first_name, row.birth_date, ...signed.map((e) => e.h)].join('\u241f')) : null,
+  };
+}
+
 export async function updatePatient(env, id, patch) {
   const now = Date.now();
   if ('stage' in patch) patch = { ...patch, stage_at: now }; // horodatage serveur de l'étape
-  if (patch.doctor_consent === 0) patch = { ...patch, doctor: null }; // retrait : plus d'assignation à un médecin
-  // Consentement exigé côté serveur pour toute assignation à un médecin.
-  const needConsent = patch.doctor != null && patch.doctor_consent !== 1;
+  // Accord / retrait de transmission au médecin traitant : horodaté et ajouté à l'historique de preuve (jamais réécrit).
+  let proofSql = '';
+  const proofBind = [];
+  if ('doctor_consent' in patch) {
+    const entry = await makeEntry(id, 'transmission', patch.doctor_consent, 'sheet', CURRENT.transmission.staff, now);
+    if (!patch.doctor_consent) patch = { ...patch, gp_name: null }; // retrait : le nom du médecin traitant n'est plus utile
+    proofSql = `, doctor_consent_at = ?, consent_log = json_insert(COALESCE(consent_log, '[]'), '$[#]', json(?))`;
+    proofBind.push(now, JSON.stringify(entry));
+  }
+  if (patch.gp_name && !('doctor_consent' in patch)) {
+    // Nom du médecin traitant enregistré seulement si la transmission est autorisée (contrôle serveur).
+    const ok = await env.DB.prepare('SELECT doctor_consent FROM patients WHERE id = ? AND deleted_at IS NULL').bind(id).first();
+    if (ok && ok.doctor_consent !== 1) throw new HttpError(409, 'consent_required');
+  }
   const keys = Object.keys(patch); // whitelist garantie par validatePatch
   const row = await env.DB.prepare(
-    `UPDATE patients SET ${keys.map((k) => `${k} = ?`).join(', ')}, version = version + 1, updated_at = ?
-     WHERE id = ? AND deleted_at IS NULL${needConsent ? ' AND doctor_consent = 1' : ''} RETURNING ${COLS}`,
+    `UPDATE patients SET ${keys.map((k) => `${k} = ?`).join(', ')}${proofSql}, version = version + 1, updated_at = ?
+     WHERE id = ? AND deleted_at IS NULL RETURNING ${COLS}`,
   )
-    .bind(...keys.map((k) => patch[k]), now, id)
+    .bind(...keys.map((k) => patch[k]), ...proofBind, now, id)
     .first();
-  if (!row) {
-    if (needConsent && (await env.DB.prepare('SELECT 1 FROM patients WHERE id = ? AND deleted_at IS NULL').bind(id).first()))
-      throw new HttpError(409, 'consent_required');
-    throw new HttpError(404, 'not_found');
-  }
+  if (!row) throw new HttpError(404, 'not_found');
   const level = triage(row).level;
   if (level === row.triage) return row;
   // Conditionnel sur la version : si une écriture plus récente est passée, c'est elle qui fait foi.

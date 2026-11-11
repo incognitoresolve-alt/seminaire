@@ -497,14 +497,11 @@ story.append(PageBreak())
 # ---- 10. Après
 story += section('s10', '10', 'Après l’événement', '15 min')
 story += [
-    Step(1, '<b>Dossiers par médecin</b> (uniquement les personnes qui ont autorisé la transmission) : '
-            f'D1 → {btn("Console")} → colle :'),
-    codeblock(['SELECT doctor, last_name, first_name, birth_date, pulse, temp, sys, dia,',
-               '       glucose, weight, height, waist, notes, triage',
-               'FROM patients WHERE doctor_consent = 1 AND doctor IS NOT NULL',
-               '  AND deleted_at IS NULL ORDER BY doctor, triage DESC;']),
-    P('<b>doctor</b> = 1 (Médecin 1, mercredi) ou 2 (Médecin 2, samedi).', 'small'),
-    Step(2, 'Transmets ces informations <b>par un canal sécurisé</b> (eHealthBox, messagerie santé). <b>Jamais par Gmail.</b>'),
+    Step(1, '<b>Fiches pour les médecins traitants</b> (uniquement les personnes qui ont autorisé la transmission) : '
+            f'espace soignants → fiche → {btn("Fiche pour le médecin traitant (PDF)")} → {btn("Imprimer / Enregistrer en PDF")}. '
+            'La fiche contient la preuve de l’accord (texte exact, date et heure, empreinte vérifiée).'),
+    Step(2, 'Envoie le PDF au médecin traitant indiqué <b>de préférence par messagerie sécurisée</b> (eHealthBox) ; '
+            'par e-mail classique, seulement à l’adresse du cabinet, en vérifiant le destinataire.'),
     Step(3, '<b>Tes contacts check-up</b> : ouvre <b>ADRESSE/admin</b> → tape ta clé PARTNER_KEY → onglet « Mes contacts ». '
             'Pour chaque contact : statut (Nouveau → Contacté → Rendez-vous → Client), tes notes, téléphone et e-mail cliquables. '
             f'Bouton {btn("Télécharger (Excel / CSV)")} pour tout récupérer dans Excel.'),

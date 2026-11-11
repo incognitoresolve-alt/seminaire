@@ -2,6 +2,7 @@
 import { toIsoDate, validateIdentity } from './shared/validate.js';
 import { esc, uuid } from './api.js';
 import { PARTNER } from './shared/partner.js';
+import { CONSENT_TEXTS, CURRENT } from './shared/consent.js';
 
 export function identityFieldsHtml(prefix, { staff = false } = {}) {
   const f = (name, label, attrs) => `
@@ -32,21 +33,19 @@ export function identityFieldsHtml(prefix, { staff = false } = {}) {
       <label class="attn flex cursor-pointer items-start gap-3 p-3">
         <input type="checkbox" name="consent" required class="mt-1 size-6 shrink-0 accent-sky-700" aria-describedby="${prefix}-consent-err">
         <span class="text-sm leading-snug text-slate-800">${
-          staff
-            ? 'Le participant accepte librement la consultation et le recueil de ses informations de santé (formulaire papier signé ou accord explicite).'
-            : 'J’accepte librement de bénéficier de cette consultation et que les informations de santé nécessaires soient recueillies par le professionnel qui me reçoit (<a class="font-semibold text-sky-800 underline" href="/confidentialite" target="_blank" rel="noopener">confidentialité</a>).'
+          // Texte versionné (preuve de l'accord) : affiché tel qu'il est enregistré.
+          esc(CONSENT_TEXTS[CURRENT.consultation[staff ? 'staff' : 'self']]).replace(
+            '(confidentialité)',
+            '(<a class="font-semibold text-sky-800 underline" href="/confidentialite" target="_blank" rel="noopener">confidentialité</a>)',
+          )
         }</span>
       </label>
       <p class="err" id="${prefix}-consent-err" aria-live="polite"></p>
     </fieldset>
 
     <fieldset class="glass-soft mt-2 rounded-xl p-4" aria-describedby="${prefix}-doctor_consent-err">
-      <legend class="px-1 text-sm font-bold text-slate-800">Transmission à un médecin</legend>
-      <p class="mb-3 text-sm text-slate-600">${
-        staff
-          ? 'Le participant autorise-t-il la transmission de ses données personnelles à un médecin qui pourra suivre son dossier si nécessaire ?'
-          : 'J’autorise la transmission de mes données personnelles à un médecin qui pourra suivre mon dossier si nécessaire.'
-      }</p>
+      <legend class="px-1 text-sm font-bold text-slate-800">Transmission à ${staff ? 'son' : 'mon'} médecin traitant</legend>
+      <p class="mb-3 text-sm text-slate-600">${esc(CONSENT_TEXTS[CURRENT.transmission[staff ? 'staff' : 'self']])}</p>
       <div class="attn-group grid grid-cols-2 gap-2">
         <label class="flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border-2 border-slate-300 px-3 has-checked:border-sky-700 has-checked:bg-sky-50">
           <input type="radio" name="doctor_consent" value="1" class="size-5 accent-sky-700"> <span class="text-sm font-semibold">J’autorise</span>
@@ -56,6 +55,11 @@ export function identityFieldsHtml(prefix, { staff = false } = {}) {
         </label>
       </div>
       <p class="err" id="${prefix}-doctor_consent-err" aria-live="polite"></p>
+      <div data-gp hidden class="mt-3">
+        <label class="label" for="${prefix}-gp_name">Nom ${staff ? 'du' : 'de mon'} médecin traitant <span class="font-normal text-slate-500">(si connu)</span></label>
+        <input class="field" id="${prefix}-gp_name" name="gp_name" maxlength="80" autocomplete="off" autocapitalize="words" placeholder="Dr …" enterkeyhint="done" aria-describedby="${prefix}-gp_name-err">
+        <p class="err" id="${prefix}-gp_name-err" aria-live="polite"></p>
+      </div>
     </fieldset>${
       !staff && PARTNER.enabled
         ? `
@@ -78,7 +82,7 @@ export function bindIdentityForm(form, send) {
   let requestId = uuid(); // conservé tant que la soumission n'a pas abouti : idempotence serveur
 
   const showErrors = (errors) => {
-    for (const name of ['last_name', 'first_name', 'birth_date', 'email', 'phone', 'consent']) {
+    for (const name of ['last_name', 'first_name', 'birth_date', 'email', 'phone', 'consent', 'gp_name']) {
       const input = form.elements[name];
       const msg = errors[name] || '';
       input.setAttribute('aria-invalid', msg ? 'true' : 'false');
@@ -89,7 +93,16 @@ export function bindIdentityForm(form, send) {
     for (const r of form.querySelectorAll('[name=doctor_consent]')) r.setAttribute('aria-invalid', errors.doctor_consent ? 'true' : 'false');
   };
 
+  // Nom du médecin traitant : demandé seulement si la transmission est autorisée (minimisation).
+  const gpBox = form.querySelector('[data-gp]');
+  const syncGp = () => {
+    const yes = form.querySelector('[name=doctor_consent][value="1"]').checked;
+    gpBox.hidden = !yes;
+    if (!yes) form.elements.gp_name.value = '';
+  };
+  form.addEventListener('reset', () => setTimeout(syncGp));
   form.addEventListener('change', (e) => {
+    if (e.target.name === 'doctor_consent') syncGp();
     if (e.target.name === 'doctor_consent') form.querySelector('[id$="-doctor_consent-err"]').textContent = '';
     if (e.target.name === 'consent' && e.target.checked) form.querySelector('[id$="-consent-err"]').textContent = '';
   });
@@ -136,6 +149,7 @@ export function bindIdentityForm(form, send) {
       phone: fd.get('phone') || undefined,
       consent: fd.get('consent') === 'on',
       doctor_consent: fd.get('doctor_consent') === '1' ? true : fd.get('doctor_consent') === '0' ? false : undefined,
+      gp_name: fd.get('doctor_consent') === '1' ? fd.get('gp_name') || undefined : undefined,
       checkup: fd.get('checkup') === 'on', // opt-in partenaire, retiré avant l'appel /register
       website: fd.get('website') || undefined,
       request_id: requestId,

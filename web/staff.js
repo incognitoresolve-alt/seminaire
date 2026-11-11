@@ -5,7 +5,8 @@ import { mountCredit, mountPartner } from './partner-ui.js';
 import { DOCTORS } from './shared/doctors.js';
 import { NOTE, RAPPEL, analyse } from './shared/assistant.js';
 import { ALERTS, CONTEXTS, bmi, parseAlerts, triage } from './shared/triage.js';
-import { NOTES_MAX, VITALS, normalize, parseVital } from './shared/validate.js';
+import { NOTES_MAX, VITALS, normalize, parseVital, validatePatch } from './shared/validate.js';
+import { CONSENT_TEXTS, CURRENT } from './shared/consent.js';
 import * as store from './store.js';
 
 const T_LABEL = { 0: 'À mesurer', 1: 'Vert', 2: 'Orange', 3: 'Rouge' };
@@ -258,26 +259,57 @@ function openSheet(id) {
         <label class="label" for="v-notes">Notes cliniques</label>
         <textarea id="v-notes" data-k="notes" rows="4" maxlength="${NOTES_MAX}" class="field text-base"></textarea>
       </section>
-      <section id="sheet-consent" class="rounded-2xl bg-white p-4 text-sm ring-1 ring-slate-200" aria-label="Transmission à un médecin" aria-live="polite"></section>
+      <section id="sheet-consent" class="rounded-2xl bg-white p-4 text-sm ring-1 ring-slate-200" aria-label="Transmission au médecin traitant"></section>
       <div class="flex items-center justify-between gap-3 pt-2">
         <p id="sheet-save" class="text-sm font-semibold text-slate-500" aria-live="polite"></p>
         <button type="button" id="sheet-delete" class="btn-danger min-h-11 text-sm">Mettre à la corbeille</button>
       </div>
     </div>`;
+  sheetDetail = null;
   refreshSheet(true);
   openDialog($('sheet'));
   loadDetail(id);
   if (!matchMedia('(pointer: coarse)').matches) $('v-pulse').focus();
 }
 
+let sheetDetail = null; // { gp_name, proof } : chargé à l'ouverture (jamais diffusé aux autres tablettes)
 async function loadDetail(id) {
   try {
-    const { patient: d } = await api(`/staff/patients/${id}`);
+    const { patient: d, proof } = await api(`/staff/patients/${id}`);
     if (sheetId !== id) return;
     $('sheet-email').textContent = [d.email, d.phone].filter(Boolean).join(' · ');
+    sheetDetail = { gp_name: d.gp_name ?? null, proof };
+    const p = store.view(id);
+    if (p) renderConsent(p);
   } catch {
     /* détail non critique */
   }
+}
+
+const fmtDT = (ms) => new Date(ms).toLocaleString('fr-BE', { timeZone: 'Europe/Brussels', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+/** Encadré « Transmission au médecin traitant » : statut, preuve horodatée, nom du médecin, fiche PDF. */
+function renderConsent(p, force = false) {
+  const box = $('sheet-consent');
+  const d = sheetDetail;
+  const t = d?.proof?.transmission;
+  const key = `${p.doctor_consent}|${t ? `${t.at}|${t.v}` : ''}|${d?.gp_name ?? ''}`;
+  if (!force && box.dataset.state === key) return;
+  if (box.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return; // saisie en cours
+  box.dataset.state = key;
+  const when = t
+    ? `<p class="mt-1 text-xs text-slate-600">${t.v ? 'Accord' : 'Refus ou retrait'} enregistré le ${esc(fmtDT(t.at))} · ${esc(t.channel)}${t.legacy ? ' (inscription antérieure à la preuve détaillée)' : ''}${d.proof.intact ? '' : ' · <b class="text-red-700">intégrité non vérifiée</b>'}</p>`
+    : '';
+  box.innerHTML = p.doctor_consent
+    ? `<p class="font-bold text-slate-800">Transmission au médecin traitant : <span class="text-emerald-700">autorisée</span></p>${when}
+      <label class="label mt-3" for="sheet-gp">Nom du médecin traitant</label>
+      <input id="sheet-gp" class="field py-2.5 text-base" maxlength="80" autocomplete="off" autocapitalize="words" placeholder="Dr …" value="${esc(d?.gp_name ?? '')}">
+      <div class="mt-3 flex flex-wrap gap-2">
+        <a class="btn-primary min-h-10 py-2 text-sm" href="/fiche?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Fiche pour le médecin traitant (PDF)</a>
+        <button type="button" data-consent="0" class="btn-danger min-h-10 py-2 text-sm">Retrait de l’autorisation</button>
+      </div>`
+    : `<p class="font-bold text-slate-800">Transmission au médecin traitant : <span class="text-red-700">non autorisée</span></p>${when}
+      <p class="mt-1 text-slate-600">La consultation et l’assignation à un médecin de l’événement restent possibles ; aucune fiche ne peut être transmise au médecin traitant.</p>
+      <button type="button" data-consent="1" class="btn-ghost mt-3 min-h-10 py-2 text-sm">Le participant donne son accord</button>`;
 }
 
 function refreshSheet(force = false) {
@@ -299,17 +331,9 @@ function refreshSheet(force = false) {
   box.innerHTML = `<div class="flex items-center gap-3"><span class="t${level} size-5 rounded-full" aria-hidden="true"></span><span class="text-xl font-extrabold">${T_LABEL[level]}</span></div>${
     reasons.length ? `<p class="mt-1 text-sm font-semibold">${reasons.map((r) => esc(r.replace(/(\d)\.(\d)/g, '$1,$2'))).join(' · ')}</p>` : ''
   }`;
-  for (const b of $('sheet-doctors').children) {
-    b.setAttribute('aria-pressed', String(p.doctor === Number(b.dataset.doctor)));
-    b.disabled = !p.doctor_consent; // pas d'assignation sans accord de transmission
-  }
-  const consentHtml = p.doctor_consent
-    ? '<p class="font-bold text-slate-800">Transmission à un médecin : <span class="text-emerald-700">autorisée</span></p><button type="button" data-consent="0" class="btn-danger mt-3 min-h-10 py-2 text-sm">Retrait de l’autorisation</button>'
-    : '<p class="font-bold text-slate-800">Transmission à un médecin : <span class="text-red-700">non autorisée</span></p><p class="mt-1 text-slate-600">Paramètres relevables, mais aucune assignation à un médecin possible.</p><button type="button" data-consent="1" class="btn-ghost mt-3 min-h-10 py-2 text-sm">Le participant donne son accord</button>';
-  if ($('sheet-consent').dataset.state !== String(p.doctor_consent)) {
-    $('sheet-consent').innerHTML = consentHtml;
-    $('sheet-consent').dataset.state = String(p.doctor_consent);
-  }
+  // Médecin 1 / 2 de l'événement : consultation sur place (accord de consultation), indépendante de la transmission au médecin traitant.
+  for (const b of $('sheet-doctors').children) b.setAttribute('aria-pressed', String(p.doctor === Number(b.dataset.doctor)));
+  renderConsent(p, force);
   for (const b of $('sheet-stage').children) b.setAttribute('aria-pressed', String((p.stage ?? 0) === Number(b.dataset.stage)));
   const pv = previewValues(p);
   const al = parseAlerts(p.alerts);
@@ -435,10 +459,25 @@ $('sheet').addEventListener('click', (e) => {
   if (c && sheetId) {
     const v = Number(c.dataset.consent);
     const msg = v
-      ? 'Le participant autorise-t-il la transmission de ses données personnelles à un médecin qui pourra suivre son dossier si nécessaire (formulaire signé ou accord explicite) ?'
-      : 'Confirmer le retrait de l’autorisation ? L’assignation au médecin sera annulée.';
-    if (confirm(msg)) store.patch(sheetId, v ? { doctor_consent: 1 } : { doctor_consent: 0, doctor: null });
+      ? `Le participant autorise-t-il la transmission de ses données personnelles à son médecin traitant ?\n\nTexte enregistré comme preuve, avec la date et l’heure :\n« ${CONSENT_TEXTS[CURRENT.transmission.staff]} »`
+      : 'Confirmer le retrait de l’autorisation de transmission au médecin traitant ? Le retrait est daté et ajouté à la preuve.';
+    if (confirm(msg)) {
+      const id = sheetId;
+      store.patch(id, { doctor_consent: v });
+      setTimeout(() => sheetId === id && loadDetail(id), 1500); // preuve mise à jour (date, historique)
+    }
   }
+});
+// Nom du médecin traitant (fiche soignant) : validé puis enregistré comme les autres champs.
+$('sheet').addEventListener('change', (e) => {
+  if (e.target.id !== 'sheet-gp' || !sheetId) return;
+  const gp_name = e.target.value.trim() || null;
+  const { ok, errors } = validatePatch({ gp_name });
+  e.target.setAttribute('aria-invalid', String(!ok));
+  if (!ok) return toast(errors.gp_name, 'error');
+  if (sheetDetail) sheetDetail.gp_name = gp_name;
+  store.patch(sheetId, { gp_name });
+  toast('Médecin traitant enregistré ✓', 'ok');
 });
 $('sheet').addEventListener('close', () => {
   sheetId = null;
@@ -464,7 +503,7 @@ async function deleteCurrent() {
 }
 
 store.state.onRejected = (id, e) => {
-  toast(e.status === 404 ? 'Dossier supprimé entre-temps' : e.status === 409 ? 'Accord de transmission au médecin requis' : 'Valeur refusée par le serveur', 'error');
+  toast(e.status === 404 ? 'Dossier supprimé entre-temps' : e.status === 409 ? 'Accord de transmission au médecin traitant requis' : 'Valeur refusée par le serveur', 'error');
 };
 
 /* ---------- Ajout manuel ---------- */
