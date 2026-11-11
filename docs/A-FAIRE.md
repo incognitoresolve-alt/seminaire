@@ -165,7 +165,7 @@ DELETE FROM partner_leads;
 
 **Briefing soignants (5 min)**
 - Code PIN : ne jamais le donner aux participants.
-- Flux : **Liste des inscrits** → recherche par nom → saisir les mesures → assigner **Médecin 1 / Médecin 2** → **Patient suivant** → **Terminé**.
+- Flux : **Liste des inscrits** → recherche par nom → saisir les mesures → si « J'autorise » : **nom, prénom et coordonnées du médecin traitant** (fiche soignant) → assigner **Médecin 1 / Médecin 2** → **Patient suivant** → **Terminé**.
 - Couleurs = aide indicative, le jugement clinique prime.
 - Tablette laissée sans surveillance : 🔒 **Verrouiller**.
 

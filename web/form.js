@@ -55,11 +55,6 @@ export function identityFieldsHtml(prefix, { staff = false } = {}) {
         </label>
       </div>
       <p class="err" id="${prefix}-doctor_consent-err" aria-live="polite"></p>
-      <div data-gp hidden class="mt-3">
-        <label class="label" for="${prefix}-gp_name">Nom ${staff ? 'du' : 'de mon'} médecin traitant <span class="font-normal text-slate-500">(si connu)</span></label>
-        <input class="field" id="${prefix}-gp_name" name="gp_name" maxlength="80" autocomplete="off" autocapitalize="words" placeholder="Dr …" enterkeyhint="done" aria-describedby="${prefix}-gp_name-err">
-        <p class="err" id="${prefix}-gp_name-err" aria-live="polite"></p>
-      </div>
     </fieldset>${
       !staff && PARTNER.enabled
         ? `
@@ -82,7 +77,7 @@ export function bindIdentityForm(form, send) {
   let requestId = uuid(); // conservé tant que la soumission n'a pas abouti : idempotence serveur
 
   const showErrors = (errors) => {
-    for (const name of ['last_name', 'first_name', 'birth_date', 'email', 'phone', 'consent', 'gp_name']) {
+    for (const name of ['last_name', 'first_name', 'birth_date', 'email', 'phone', 'consent']) {
       const input = form.elements[name];
       const msg = errors[name] || '';
       input.setAttribute('aria-invalid', msg ? 'true' : 'false');
@@ -93,16 +88,7 @@ export function bindIdentityForm(form, send) {
     for (const r of form.querySelectorAll('[name=doctor_consent]')) r.setAttribute('aria-invalid', errors.doctor_consent ? 'true' : 'false');
   };
 
-  // Nom du médecin traitant : demandé seulement si la transmission est autorisée (minimisation).
-  const gpBox = form.querySelector('[data-gp]');
-  const syncGp = () => {
-    const yes = form.querySelector('[name=doctor_consent][value="1"]').checked;
-    gpBox.hidden = !yes;
-    if (!yes) form.elements.gp_name.value = '';
-  };
-  form.addEventListener('reset', () => setTimeout(syncGp));
   form.addEventListener('change', (e) => {
-    if (e.target.name === 'doctor_consent') syncGp();
     if (e.target.name === 'doctor_consent') form.querySelector('[id$="-doctor_consent-err"]').textContent = '';
     if (e.target.name === 'consent' && e.target.checked) form.querySelector('[id$="-consent-err"]').textContent = '';
   });
@@ -149,7 +135,6 @@ export function bindIdentityForm(form, send) {
       phone: fd.get('phone') || undefined,
       consent: fd.get('consent') === 'on',
       doctor_consent: fd.get('doctor_consent') === '1' ? true : fd.get('doctor_consent') === '0' ? false : undefined,
-      gp_name: fd.get('doctor_consent') === '1' ? fd.get('gp_name') || undefined : undefined,
       checkup: fd.get('checkup') === 'on', // opt-in partenaire, retiré avant l'appel /register
       website: fd.get('website') || undefined,
       request_id: requestId,
