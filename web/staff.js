@@ -73,7 +73,7 @@ function rowHtml(p, level) {
         : `<span class="text-xs font-semibold tabular-nums ${waitMin(p) >= 30 ? 'text-red-700' : 'text-slate-500'}" title="Temps d’attente">⏱ ${fmtWait(waitMin(p))}</span>`;
   const doc = p.doctor ? `<span class="rounded-lg bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-900">${DOCTORS[p.doctor].short}</span>` : '';
   return `<li>
-    <button type="button" data-id="${esc(p.id)}" class="flex w-full items-stretch overflow-hidden rounded-2xl bg-white text-left shadow-sm ring-1 ring-slate-200 hover:ring-slate-400 ${stage === 2 ? 'opacity-60' : ''}">
+    <button type="button" data-id="${esc(p.id)}" class="glass-soft flex w-full items-stretch overflow-hidden rounded-2xl text-left hover:border-sky-300 ${stage === 2 ? 'opacity-60' : ''}">
       <span class="t${level} w-2 shrink-0" aria-hidden="true"></span>
       <span class="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
         <span class="min-w-0 flex-1">

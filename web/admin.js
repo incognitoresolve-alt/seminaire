@@ -26,7 +26,7 @@ function render() {
   $('c-list').innerHTML = rows
     .map((l) => {
       const tags = (l.interests || '').split(',').filter(Boolean).map((i) => `<span class="rounded-lg bg-sky-50 px-2 py-0.5 text-xs font-semibold text-sky-900">${esc(LABELS[i] || i)}</span>`).join(' ');
-      return `<li class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200" data-id="${esc(l.id)}">
+      return `<li class="glass-soft rounded-2xl p-4" data-id="${esc(l.id)}">
         <div class="flex flex-wrap items-start gap-2">
           <div class="mr-auto min-w-0">
             <p class="font-bold">${esc(l.name)} <span class="text-xs font-normal text-slate-500">· ${date(l.created_at)} · ${l.audience === 'pro' ? 'Professionnel de santé' : 'Particulier'}</span></p>
@@ -107,7 +107,7 @@ function renderTrash() {
   const rows = trash.items.filter((x) => !q || `${x.last_name} ${x.first_name}`.toLowerCase().includes(q));
   $('t-list').innerHTML = rows
     .map(
-      (x) => `<li class="flex flex-wrap items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200" data-id="${esc(x.id)}">
+      (x) => `<li class="glass-soft flex flex-wrap items-center gap-3 rounded-2xl p-4" data-id="${esc(x.id)}">
         <span class="size-3 shrink-0 rounded-full ${T_COL[x.triage] ?? T_COL[0]}" aria-hidden="true"></span>
         <div class="mr-auto min-w-0 flex-1 basis-56">
           <p class="font-bold">${esc(x.last_name)} ${esc(x.first_name)}${x.birth_date ? ` <span class="text-xs font-normal text-slate-500">· né(e) le ${esc(x.birth_date.split('-').reverse().join('/'))}</span>` : ''}</p>
