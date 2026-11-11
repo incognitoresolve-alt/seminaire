@@ -413,12 +413,12 @@ story += [
 seuils = [('Paramètre', 'Orange', 'Rouge'), ('Pouls (bpm)', '< 50 ou > 100', '< 40 ou > 130'),
           ('Température (°C)', '< 36 ou ≥ 38', '< 35 ou ≥ 39,5'), ('Tension systolique', '< 100 ou ≥ 140', '< 90 ou ≥ 180'),
           ('Tension diastolique', '< 50 ou ≥ 90', '≥ 110'), ('Glycémie (mg/dL)', '< 70 ou ≥ 200', '< 54 ou ≥ 300'),
-          ('IMC', '< 18,5 ou ≥ 30', '—')]
+          ('IMC (adultes)', '< 18,5 ou ≥ 30', '—')]
 t = Table([[P(f'<b>{a}</b>') if i == 0 else P(a), P(b), P(c)] for i, (a, b, c) in enumerate(seuils)], colWidths=[60 * mm, None, None])
 t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), LGREY), ('BACKGROUND', (1, 1), (1, -1), LAMBER),
                        ('BACKGROUND', (2, 1), (2, -1), LRED), ('GRID', (0, 0), (-1, -1), 0.5, LINE),
                        ('TOPPADDING', (0, 0), (-1, -1), 4), ('BOTTOMPADDING', (0, 0), (-1, -1), 4)]))
-story += [Spacer(1, 6), t, Spacer(1, 6), Field('Remarques des médecins sur les seuils', 'f_seuils')]
+story += [Spacer(1, 6), t, Spacer(1, 4), P('Seuils adultes ci-dessus. L’application adapte automatiquement le pouls et la tension pour les enfants (1–5 ans et 6–11 ans) grâce à la date de naissance, et affiche des <b>conseils automatiques</b> selon les valeurs et l’âge. À faire valider aussi par les médecins.', 'small'), Spacer(1, 6), Field('Remarques des médecins sur les seuils', 'f_seuils')]
 story.append(PageBreak())
 
 # ---- 7. Domaine + Brevo

@@ -23,7 +23,7 @@ Inscription **strictement individuelle** : un formulaire vierge par personne, un
 
 | Point de friction | Solution |
 |---|---|
-| Formulaire trop long | **Inscription minimale** : nom, prénom, e-mail, téléphone (facultatif), 1 accord obligatoire (collecte + transmission à un médecin) et 1 case check-up facultative — rien d'autre |
+| Date de naissance (sélecteur iOS à faire défiler) | Champ JJ/MM/AAAA au clavier numérique, « / » automatiques ; l'âge adapte les seuils et les conseils automatiques |
 | Soignants qui appellent le même patient | Étapes **En attente → En consultation → Terminé** synchronisées en temps réel ; bouton **Patient suivant** = le plus prioritaire en attente (rouge > orange > à mesurer > vert, puis ancienneté), marqué « En consultation » pour tous |
 | File qui ne se vide jamais | Vue « À traiter » par défaut ; « Terminé » ferme la fiche et retire le patient ; recherche toujours globale |
 | Pilotage | Temps d'attente par patient (rouge ≥ 30 min), nombre en attente et attente moyenne en tête |
@@ -107,6 +107,9 @@ Domaine perso : décommenter `routes` dans `wrangler.toml`, activer *Always Use 
 | IMC (poids/taille²) | < 18,5 ou ≥ 30 | — |
 
 Le pire paramètre l'emporte ; aucune mesure = « À mesurer ». **Seuils indicatifs à faire valider par l'équipe médicale.**
+
+**Adaptation à l'âge** (date de naissance) : seuils pédiatriques pour le pouls et la tension (1–5 ans, 6–11 ans) ; IMC adulte non appliqué avant 18 ans.
+**Conseils automatiques** (fiche soignant, indicatifs) selon les valeurs ET l'âge : tension, pouls, fièvre, hypo/hyperglycémie, IMC, périmètre abdominal ; prévention selon l'âge (glycémie dès 45 ans, cholestérol dès 40 ans, dépistage colorectal 50–74 ans, vaccins dès 65 ans).
 
 ## Sécurité & conformité
 
