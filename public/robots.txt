@@ -6,3 +6,4 @@ Disallow: /desinscription
 Disallow: /admin
 Disallow: /remarques
 Disallow: /fiche
+Disallow: /remarques-voir

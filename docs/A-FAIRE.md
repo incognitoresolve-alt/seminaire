@@ -17,7 +17,7 @@
 > | 8 | ICC Liège | ✅ Contact RGPD en ligne (`icc-liege@impactcentrechretien.eu`). Faire **relire la page Confidentialité** par ICC Liège (responsable du traitement) et tenir le registre des traitements | 10 min |
 > | 9 | Médecins | Relire l'assistant éducatif (README) et les seuils marqués « Seuil de prudence CheckSanté » | 15 min |
 > | 10 | Sur place | PIN aux soignants uniquement · `ADMIN_KEY` au responsable médical (fiches = données de santé) · tablettes chargées, veille désactivée · partage 4G de secours · diffuser la vidéo sur l'écran d'accueil | — |
-> | 11 | `https://seminaire-triage.incognitoresolve.workers.dev/remarques` | **Partager le lien des remarques** aux soignants, médecins, intervenants, bénévoles (WhatsApp, e-mail) + affiche `docs/affiches/affiche-remarques-intervenants-A4.pdf`. Lecture : `/admin` + `ADMIN_KEY` → onglet **Remarques** | 5 min |
+> | 11 | `https://seminaire-triage.incognitoresolve.workers.dev/remarques` | **Partager le lien des remarques** aux soignants, médecins, intervenants, bénévoles (WhatsApp, e-mail) + affiche `docs/affiches/affiche-remarques-intervenants-A4.pdf`. Lecture : `/admin` + `ADMIN_KEY` → onglet **Remarques**. Pour l'équipe : **Créer le lien** de consultation (lecture seule, sans nom ni coordonnées) → *Copier le lien* → le partager | 5 min |
 > | 12 | `/admin` → onglet **QR codes** | Tous les QR codes au même endroit : inscription sans attente, **check-up assurance-vie** (publicité), remarques des intervenants → **Copier le lien**, **Télécharger l'image (PNG)**, **Affiche A4** (`docs/affiches/affiche-checkup-assurance-A4.pdf`) | 5 min |
 >
 > Facultatif : nom de domaine (section E). **Aucun envoi automatique d'e-mail** : tout part manuellement depuis `/admin` → **Envois**.

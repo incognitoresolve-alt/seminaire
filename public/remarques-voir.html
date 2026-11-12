@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>Remarques des intervenants – CheckSanté</title>
+  <meta name="theme-color" content="#5b1f8c">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="modulepreload" href="/dist/remarques-voir.js">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body class="min-h-dvh">
+  <main class="mx-auto max-w-3xl px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-16">
+    <header class="mb-5">
+      <p class="flex items-center gap-2 text-xl font-black"><img src="/logo.svg" alt="" class="size-8" width="32" height="32"><span>Check<span class="text-sky-700">Santé</span></span></p>
+      <p class="mt-2 text-sm font-bold tracking-widest text-sky-800 uppercase">Séminaire spécial · ICC Liège</p>
+      <h1 class="mt-1 text-2xl font-extrabold sm:text-3xl">Remarques des intervenants</h1>
+      <p class="mt-1 text-sm text-slate-600">Lecture seule · sans nom ni coordonnées des auteurs · mise à jour automatique chaque minute.</p>
+    </header>
+
+    <section id="state" class="glass rounded-3xl p-6 text-center" aria-live="polite"><p class="text-slate-600"><span class="spinner" aria-hidden="true"></span> Chargement…</p></section>
+
+    <section id="app" hidden>
+      <div class="flex flex-wrap items-center gap-2">
+        <p class="mr-auto text-sm text-slate-700"><b id="count">0</b> remarque(s)</p>
+        <button id="refresh" type="button" class="btn-ghost min-h-10 px-3 py-2 text-sm">Actualiser</button>
+      </div>
+      <label class="sr-only" for="q">Rechercher dans les remarques</label>
+      <input id="q" type="search" class="field mt-3 py-2.5" placeholder="Rechercher un mot…" autocomplete="off">
+      <div id="f-days" class="mt-2 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Filtrer par jour"></div>
+      <div id="f-kinds" class="mt-1 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Filtrer par type"></div>
+      <ul id="list" class="mt-3 space-y-2"></ul>
+      <p id="empty" class="py-10 text-center text-slate-500"></p>
+    </section>
+  </main>
+  <script type="module" src="/dist/remarques-voir.js"></script>
+</body>
+</html>

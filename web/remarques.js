@@ -1,6 +1,6 @@
 import { api, esc, uuid } from './api.js';
 import { mountCredit } from './partner-ui.js';
-import { FEEDBACK_KINDS, FEEDBACK_MAX, FEEDBACK_ROLES, validateFeedback } from './shared/validate.js';
+import { FEEDBACK_DAYS, FEEDBACK_KINDS, FEEDBACK_MAX, FEEDBACK_ROLES, validateFeedback } from './shared/validate.js';
 
 // /remarques : lien partagé aux soignants, médecins, intervenants et bénévoles → page /admin, onglet « Remarques ».
 mountCredit();
@@ -17,12 +17,20 @@ const store = {
   set(k, v) { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch { /* stockage indisponible */ } },
 };
 
-const chips = (name, items) =>
+const chips = (name, items, type = 'radio') =>
   Object.entries(items)
-    .map(([k, label]) => `<label class="chip inline-flex cursor-pointer items-center has-checked:border-sky-700 has-checked:bg-sky-700 has-checked:text-white has-focus-visible:ring-2 has-focus-visible:ring-sky-500 has-focus-visible:ring-offset-2"><input type="radio" name="${name}" value="${k}" class="sr-only">${esc(label)}</label>`)
+    .map(([k, label]) => `<label class="chip inline-flex cursor-pointer items-center has-checked:border-sky-700 has-checked:bg-sky-700 has-checked:text-white has-focus-visible:ring-2 has-focus-visible:ring-sky-500 has-focus-visible:ring-offset-2"><input type="${type}" name="${name}" value="${k}" class="sr-only">${esc(label)}</label>`)
     .join('');
 $('roles').innerHTML = chips('role', FEEDBACK_ROLES);
 $('kinds').innerHTML = chips('kind', FEEDBACK_KINDS);
+$('days').innerHTML = chips('days', FEEDBACK_DAYS, 'checkbox');
+
+// Jour du séminaire en cours (heure belge) coché par défaut ; la personne peut en choisir d'autres.
+const TODAY = { '2026-11-11': 'mer', '2026-11-12': 'jeu', '2026-11-13': 'ven', '2026-11-14': 'sam' }[new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Brussels' })];
+const presetDay = () => {
+  for (const c of form.querySelectorAll('[name=days]')) c.checked = c.value === TODAY;
+};
+presetDay();
 
 const msg = $('f-message');
 const count = () => ($('count').textContent = `${msg.value.length} / ${FEEDBACK_MAX}`);
@@ -40,14 +48,16 @@ form.addEventListener('input', (e) => {
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (btn.disabled) return;
-  const payload = Object.fromEntries([...new FormData(form)].filter(([, v]) => v !== ''));
+  const fd = new FormData(form);
+  const payload = Object.fromEntries([...fd].filter(([k, v]) => v !== '' && k !== 'days'));
+  payload.days = fd.getAll('days');
   payload.request_id = requestId;
   const { ok, errors } = validateFeedback(payload);
   for (const el of form.querySelectorAll('[data-err]')) el.textContent = errors[el.dataset.err] || '';
   const err = form.querySelector('[data-form-error]');
   err.textContent = '';
   if (!ok) {
-    const first = ['role', 'kind', 'message', 'name', 'contact'].find((k) => errors[k]);
+    const first = ['role', 'kind', 'days', 'message', 'name', 'contact'].find((k) => errors[k]);
     (form.querySelector(`[name=${first}]`) || btn).focus();
     return;
   }
@@ -75,6 +85,7 @@ $('again').addEventListener('click', () => {
   form.elements.name.value = '';
   form.elements.contact.value = '';
   for (const r of form.querySelectorAll('[name=kind]')) r.checked = false;
+  presetDay();
   count();
   $('thanks').hidden = true;
   form.hidden = false;

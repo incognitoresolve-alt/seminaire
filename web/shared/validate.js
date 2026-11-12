@@ -202,6 +202,8 @@ export const FEEDBACK_ROLES = {
 export const FEEDBACK_KINDS = { remarque: 'Remarque', proposition: 'Proposition', probleme: 'Problème rencontré', positif: 'Point positif' };
 export const FEEDBACK_STATUS = { nouveau: 'Nouveau', lu: 'Lu', traite: 'Traité' };
 export const FEEDBACK_MAX = 3000;
+/** Jours du séminaire (mercredi 11 → samedi 14 novembre 2026), ordre canonique. */
+export const FEEDBACK_DAYS = { mer: 'Mercredi 11', jeu: 'Jeudi 12', ven: 'Vendredi 13', sam: 'Samedi 14' };
 const has = (o, k) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); // Safari < 15.4 : pas d'Object.hasOwn
 
 export function validateFeedback(b) {
@@ -212,8 +214,12 @@ export function validateFeedback(b) {
     kind: typeof b?.kind === 'string' ? b.kind : '',
     message: freeText(b?.message, FEEDBACK_MAX, true),
     contact: clean(b?.contact).slice(0, 254) || null,
+    days: null,
     request_id: b?.request_id ? String(b.request_id) : null,
   };
+  const days = Array.isArray(b?.days) ? b.days : typeof b?.days === 'string' && b.days ? b.days.split(',') : [];
+  if (!days.length || days.length > 4 || !days.every((d) => has(FEEDBACK_DAYS, d))) errors.days = 'Choisissez le ou les jours concernés';
+  else v.days = Object.keys(FEEDBACK_DAYS).filter((d) => days.includes(d)).join(',');
   if (v.name && !NAME_RE.test(v.name)) errors.name = 'Nom invalide (lettres, espaces, tirets, apostrophes)';
   if (!has(FEEDBACK_ROLES, v.role)) errors.role = 'Choisissez votre rôle';
   if (!has(FEEDBACK_KINDS, v.kind)) errors.kind = 'Choisissez un type';
