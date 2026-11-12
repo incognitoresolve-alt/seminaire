@@ -1,14 +1,22 @@
 import { LEAD_INTERESTS, PARTNER } from '../web/shared/partner.js';
-import { CONTACT_TIMES, FEEDBACK_KINDS, FEEDBACK_ROLES, FEEDBACK_STATUS, LEAD_STATUS, validateFeedback, validateFeedbackPatch, validateIdentity, validateLead, validateLeadPatch, validatePatch, validateEmail } from '../web/shared/validate.js';
+import { CONTACT_TIMES, FEEDBACK_DAYS, FEEDBACK_KINDS, FEEDBACK_ROLES, FEEDBACK_STATUS, LEAD_STATUS, validateFeedback, validateFeedbackPatch, validateIdentity, validateLead, validateLeadPatch, validatePatch, validateEmail } from '../web/shared/validate.js';
 import { checkPin, checkSecret, clearCookie, clearRoleCookie, hasRole, makeCookie, requireRole, requireStaff, roleConfigured, sessionCookie } from './auth.js';
 import { HttpError, assertSameOrigin, clientIp, json, rateLimit, readJson } from './http.js';
 import { hub } from './hub.js';
 import { ensureSchema } from './schema.js';
-import { createFeedback, deleteFeedback, listFeedback, updateFeedback, createLead, deleteLead, deleteLeadByToken, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, updateLead, consentProof, listTransmissions, updateTransmission, createPatient, deletePatient, getDetail, listSince, purge, updatePatient } from './patients.js';
+import { createFeedback, deleteFeedback, listFeedback, listPublicFeedback, updateFeedback, getSetting, newShareToken, setSetting, createLead, deleteLead, deleteLeadByToken, emptyTrash, eraseFromTrash, listTrash, restoreAll, restorePatient, trashAll, eventStats, listLeads, updateLead, consentProof, listTransmissions, updateTransmission, createPatient, deletePatient, getDetail, listSince, purge, updatePatient } from './patients.js';
 
 export { Hub } from './hub.js';
 
 const ID_RE = /^[0-9a-f-]{36}$/;
+const SHARE_KEY = 'feedback_view_key';
+/** Comparaison en temps constant (évite de deviner le jeton caractère par caractère). */
+const sameSecret = (a, b) => {
+  if (typeof a !== 'string' || a.length !== b.length) return false;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return d === 0;
+};
 
 function broadcast(env, ctx, msg) {
   ctx.waitUntil(hub(env).broadcast(msg).catch((e) => console.error(JSON.stringify({ evt: 'broadcast_failed', err: String(e?.message) }))));
@@ -214,6 +222,17 @@ async function adminRoutes(req, env, ctx, path) {
   }
   // Remarques des intervenants
   if (path === '/feedback' && method === 'GET') return json({ items: await listFeedback(env) });
+  // Lien de consultation des remarques (lecture seule) : créer / renouveler / désactiver.
+  if (path === '/feedback/share' && method === 'GET') return json({ token: await getSetting(env, SHARE_KEY) });
+  if (path === '/feedback/share' && method === 'POST') {
+    const token = newShareToken();
+    await setSetting(env, SHARE_KEY, token);
+    return json({ token });
+  }
+  if (path === '/feedback/share' && method === 'DELETE') {
+    await setSetting(env, SHARE_KEY, null);
+    return json({ token: null });
+  }
   if (path === '/feedback.csv' && method === 'GET') {
     const rows = (await listFeedback(env)).map((r) => ({
       ...r,
@@ -221,8 +240,9 @@ async function adminRoutes(req, env, ctx, path) {
       role: FEEDBACK_ROLES[r.role] ?? r.role,
       kind: FEEDBACK_KINDS[r.kind] ?? r.kind,
       status: FEEDBACK_STATUS[r.status] ?? r.status,
+      days: (r.days || '').split(',').filter(Boolean).map((d) => FEEDBACK_DAYS[d] ?? d).join(', '),
     }));
-    const cols = [['created_at', 'Date'], ['kind', 'Type'], ['role', 'Rôle'], ['name', 'Nom'], ['contact', 'Contact'], ['message', 'Message'],
+    const cols = [['created_at', 'Date'], ['days', 'Jour(s)'], ['kind', 'Type'], ['role', 'Rôle'], ['name', 'Nom'], ['contact', 'Contact'], ['message', 'Message'],
       ['status', 'Statut'], ['admin_notes', 'Notes de l’organisation']];
     return csvResponse(toCsv(cols, rows), `remarques-intervenants-checksante-${new Date().toISOString().slice(0, 10)}.csv`);
   }
@@ -284,6 +304,13 @@ async function route(req, env, ctx, url) {
   if (path === '/api/register' && req.method === 'POST') {
     await rateLimit(env.RL_REGISTER, `reg:${clientIp(req)}`);
     return register(req, env, ctx, 'self');
+  }
+  if (path === '/api/feedback/public' && req.method === 'GET') {
+    // Consultation en lecture seule via le lien partagé (jeton dans l'en-tête, jamais dans l'URL envoyée au serveur).
+    await rateLimit(env.RL_API, `fbview:${clientIp(req)}`);
+    const stored = await getSetting(env, SHARE_KEY);
+    if (!stored || !sameSecret(req.headers.get('X-View-Key') || '', stored)) throw new HttpError(403, 'forbidden'); // fail-closed
+    return json({ items: await listPublicFeedback(env) });
   }
   if (path === '/api/feedback' && req.method === 'POST') {
     // Lien public partagé aux intervenants : anti-spam (honeypot + limite par IP), validation stricte, rejeu idempotent.

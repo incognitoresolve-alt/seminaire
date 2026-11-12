@@ -35,3 +35,8 @@ ALTER TABLE patients ADD COLUMN practitioner TEXT;
 -- Remarque du soignant sur le dossier (lue par l'administration au moment de l'envoi au médecin).
 -- Facultatif : appliqué automatiquement par l'application.
 ALTER TABLE patients ADD COLUMN staff_remark TEXT;
+
+-- Remarques des intervenants : jour(s) concerné(s) ; réglages (jeton du lien de consultation en lecture seule).
+-- Facultatif : appliqué automatiquement par l'application.
+ALTER TABLE feedback ADD COLUMN days TEXT;
+CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT, updated_at INTEGER NOT NULL);

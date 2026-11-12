@@ -21,7 +21,7 @@
       <p class="mb-3 flex justify-center text-2xl font-black"><span class="inline-flex items-center gap-2"><img src="/logo.svg" alt="" class="size-9" width="36" height="36"><span>Check<span class="text-sky-700">Santé</span></span></span></p>
       <p class="text-sm font-bold tracking-widest text-sky-800 uppercase">Séminaire spécial · ICC Liège</p>
       <h1 class="mt-1 text-3xl font-extrabold">Vos remarques et propositions</h1>
-      <p class="mt-3 rounded-2xl bg-sky-50 p-4 text-left text-sm text-slate-700 ring-1 ring-sky-200">Pour les <strong>soignants, médecins, intervenants et bénévoles</strong> du séminaire. Votre message arrive directement chez l’organisation. <strong>N’indiquez aucune donnée de santé ni le nom d’un participant.</strong></p>
+      <p class="mt-3 rounded-2xl bg-sky-50 p-4 text-left text-sm text-slate-700 ring-1 ring-sky-200">Pour les <strong>soignants, médecins, intervenants et bénévoles</strong> du séminaire. Votre message arrive chez l’organisation et peut être consulté par l’équipe du séminaire via un lien de partage, <strong>sans votre nom ni vos coordonnées</strong>. <strong>N’indiquez aucune donnée de santé ni le nom d’un participant.</strong></p>
     </header>
 
     <form id="fb" novalidate class="glass space-y-5 rounded-3xl p-5">
@@ -34,6 +34,11 @@
         <legend class="label">Type de message</legend>
         <div id="kinds" class="flex flex-wrap gap-2"></div>
         <p class="err" data-err="kind"></p>
+      </fieldset>
+      <fieldset>
+        <legend class="label">Jour(s) concerné(s) <span class="font-normal text-slate-500">(un ou plusieurs)</span></legend>
+        <div id="days" class="flex flex-wrap gap-2"></div>
+        <p class="err" data-err="days"></p>
       </fieldset>
       <div>
         <label class="label" for="f-message">Votre message</label>
@@ -55,7 +60,7 @@
       <div class="absolute -left-[9999px]" aria-hidden="true"><label for="f-website">Ne pas remplir</label><input id="f-website" name="website" tabindex="-1" autocomplete="off"></div>
       <p data-form-error class="err text-center" role="alert"></p>
       <button type="submit" class="btn-primary w-full text-lg">Envoyer à l’organisation</button>
-      <p class="text-center text-xs text-slate-500">Lu uniquement par l’organisation du séminaire · effacé après 180 jours · <a class="underline" href="/confidentialite">Confidentialité</a></p>
+      <p class="text-center text-xs text-slate-500">Lu par l’organisation ; partagé avec l’équipe sans nom ni coordonnées · effacé après 180 jours · <a class="underline" href="/confidentialite">Confidentialité</a></p>
     </form>
 
     <section id="thanks" hidden class="space-y-4" aria-live="polite">

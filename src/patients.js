@@ -269,13 +269,13 @@ export async function eventStats(env) {
 export const deleteLeadByToken = (env, t) => env.DB.prepare('DELETE FROM partner_leads WHERE unsub_token = ?').bind(t).run();
 
 /* ---------- Remarques des intervenants (lecture : rôle admin uniquement) ---------- */
-const FB_COLS = 'id, name, role, kind, message, contact, status, admin_notes, created_at, updated_at';
+const FB_COLS = 'id, name, role, kind, days, message, contact, status, admin_notes, created_at, updated_at';
 /** @returns {Promise<boolean>} true si créée (false = rejeu idempotent) */
 export async function createFeedback(env, v) {
   const res = await env.DB.prepare(
-    `INSERT INTO feedback (id, request_id, name, role, kind, message, contact, created_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(request_id) DO NOTHING`,
+    `INSERT INTO feedback (id, request_id, name, role, kind, days, message, contact, created_at) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(request_id) DO NOTHING`,
   )
-    .bind(crypto.randomUUID(), v.request_id, v.name, v.role, v.kind, v.message, v.contact, Date.now())
+    .bind(crypto.randomUUID(), v.request_id, v.name, v.role, v.kind, v.days, v.message, v.contact, Date.now())
     .run();
   return res.meta.changes > 0;
 }
@@ -321,4 +321,23 @@ export async function updateTransmission(env, id, { gp_email, sent }) {
     .first();
   if (!row) throw new HttpError(409, 'consent_required');
   return row;
+}
+
+/* ---------- Lien de consultation des remarques (lecture seule, partageable) ---------- */
+export const getSetting = async (env, key) => (await env.DB.prepare('SELECT value FROM settings WHERE key = ?').bind(key).first())?.value ?? null;
+export const setSetting = (env, key, value) =>
+  value === null
+    ? env.DB.prepare('DELETE FROM settings WHERE key = ?').bind(key).run()
+    : env.DB.prepare('INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at')
+        .bind(key, value, Date.now())
+        .run();
+/** Jeton du lien de consultation : 32 octets aléatoires (impossible à deviner). */
+export const newShareToken = () => {
+  const b = crypto.getRandomValues(new Uint8Array(32));
+  return btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
+/** Vue partagée : jamais le nom, les coordonnées ni les notes internes de l'organisation (minimisation). */
+export async function listPublicFeedback(env) {
+  const { results } = await env.DB.prepare('SELECT role, kind, days, message, status, created_at FROM feedback ORDER BY created_at DESC LIMIT 2000').all();
+  return results;
 }

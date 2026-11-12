@@ -22,6 +22,8 @@ const CREATE = [
     message TEXT NOT NULL, contact TEXT, status TEXT NOT NULL DEFAULT 'nouveau' CHECK (status IN ('nouveau','lu','traite')), admin_notes TEXT,
     created_at INTEGER NOT NULL, updated_at INTEGER)`,
   'CREATE INDEX IF NOT EXISTS idx_feedback_created ON feedback(created_at)',
+  // Réglages de l'administration (ex. jeton du lien de consultation des remarques).
+  'CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT, updated_at INTEGER NOT NULL)',
 ];
 // Colonnes ajoutées après coup : pour les bases créées par d'anciennes versions (erreur « duplicate column » ignorée).
 const ALTER = [
@@ -45,6 +47,8 @@ const ALTER = [
   'ALTER TABLE patients ADD COLUMN practitioner TEXT',
   // Remarque du soignant sur le dossier (lue par l'administration au moment de l'envoi).
   'ALTER TABLE patients ADD COLUMN staff_remark TEXT',
+  // Remarques : jour(s) du séminaire concerné(s) (mer, jeu, ven, sam).
+  'ALTER TABLE feedback ADD COLUMN days TEXT',
   'ALTER TABLE patients ADD COLUMN no_gp INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE partner_leads ADD COLUMN unsub_token TEXT',
   'ALTER TABLE partner_leads ADD COLUMN mailed_at INTEGER',

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { validateFeedback, validateFeedbackPatch } from '../web/shared/validate.js';
 
 const RID = '7f3c2b9a-1d2e-4f5a-9b8c-7d6e5f4a3b2c';
-const ok = { role: 'soignant', kind: 'proposition', message: 'Prévoir une 3e chaise\nà l’accueil', request_id: RID };
+const ok = { role: 'soignant', kind: 'proposition', days: ['jeu'], message: 'Prévoir une 3e chaise\nà l’accueil', request_id: RID };
 
 test('remarques : message minimal valide, nom et contact facultatifs', () => {
   const r = validateFeedback(ok);
@@ -44,4 +44,11 @@ test('remarques : mise à jour admin limitée à statut + notes', () => {
   assert.equal(validateFeedbackPatch({ status: 'supprime' }).ok, false);
   assert.equal(validateFeedbackPatch({ message: 'modifié' }).ok, false);
   assert.deepEqual(validateFeedbackPatch({ admin_notes: '  ' }).value, { admin_notes: null });
+});
+
+test('remarques : jour(s) concerné(s) obligatoires, liste fermée, ordre du séminaire', () => {
+  assert.equal(validateFeedback({ ...ok, days: ['sam', 'mer', 'sam'] }).value.days, 'mer,sam'); // dédoublonné, ordre mer → sam
+  assert.equal(validateFeedback({ ...ok, days: 'jeu,ven' }).value.days, 'jeu,ven');
+  assert.equal(validateFeedback({ ...ok, days: ['mer', 'jeu', 'ven', 'sam'] }).ok, true);
+  for (const bad of [[], undefined, ['dim'], ['toString'], ['mer', 'lun'], 'x', 42]) assert.ok(validateFeedback({ ...ok, days: bad }).errors.days, JSON.stringify(bad));
 });

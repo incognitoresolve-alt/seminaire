@@ -246,11 +246,13 @@ story.append(gap())
 story.append(Task('10', 'Partager le lien des remarques aux intervenants', '5 min', [
     f'Lien : {a(SITE + "/remarques")} → à envoyer aux <b>soignants, médecins, intervenants et bénévoles</b> '
     '(groupe WhatsApp, e-mail) + affiche QR dans la salle des intervenants.',
-    'Ils choisissent leur rôle et le type (remarque, proposition, problème, point positif), écrivent leur message ; '
-    'nom et contact seulement s’ils le souhaitent.',
+    'Ils choisissent leur rôle, le type (remarque, proposition, problème, point positif) et le ou les <b>jours concernés</b> '
+    '(mercredi → samedi), écrivent leur message ; nom et contact seulement s’ils le souhaitent.',
     f'Tu les lis dans {a(SITE + "/admin")} → clé <b>ADMIN_KEY</b> → onglet {b("Remarques")} (pastille = nouvelles remarques) : '
     f'statut Nouveau / Lu / Traité, notes, {b("Copier le lien")}, {b("Télécharger (Excel / CSV)")}.',
     'Lien aussi présent en bas de l’écran des soignants (« Une remarque, une proposition ? »).',
+    f'<b>Lien de consultation pour l’équipe</b> (lecture seule, sans nom ni coordonnées) : onglet {b("Remarques")} → {b("Créer le lien")} '
+    f'→ {b("Copier le lien")}. {b("Nouveau lien")} rend l’ancien inutilisable ; {b("Désactiver")} le coupe.',
 ]))
 
 # ---------------------------------------------------------------- Facultatif
