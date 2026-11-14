@@ -17,8 +17,9 @@
     <h1 class="text-center text-xl font-bold text-slate-700">Pôle soins</h1>
     <p class="mt-2 mb-6 text-center text-slate-600">Code d’accès de l’événement</p>
     <form id="gate-form" class="space-y-3">
-      <label class="sr-only" for="pin">Code PIN</label>
-      <input id="pin" name="pin" class="field text-center font-mono text-3xl tracking-[.4em]" type="password" inputmode="numeric" autocomplete="current-password" required maxlength="32" autofocus>
+      <label class="sr-only" for="pin">Code d’accès</label>
+      <!-- Clavier complet (lettres + chiffres) : le code peut être alphanumérique -->
+      <input id="pin" name="pin" class="field text-center font-mono text-3xl tracking-[.4em]" type="password" inputmode="text" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" required maxlength="32" autofocus>
       <p id="gate-err" class="err text-center" role="alert"></p>
       <button class="btn-primary w-full text-lg" type="submit">Entrer</button>
     </form>
