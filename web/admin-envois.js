@@ -8,6 +8,12 @@ const TZ = { timeZone: 'Europe/Brussels' };
 const dDay = (ms) => new Date(ms).toLocaleDateString('fr-BE', { ...TZ, day: '2-digit', month: '2-digit', year: 'numeric' });
 const dTime = (ms) => new Date(ms).toLocaleString('fr-BE', { ...TZ, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 const iso = (s) => (s ? s.split('-').reverse().join('/') : '');
+// Couleur de la consultation (triage indicatif), comme dans l'espace soignants.
+const T_LABEL = { 0: 'À mesurer', 1: 'Vert', 2: 'Orange', 3: 'Rouge' };
+const pastille = (t) => {
+  const l = T_LABEL[t] ? Number(t) : 0;
+  return `<span class="tb${l} inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold" title="Couleur de la consultation"><span class="t${l} size-2.5 rounded-full" aria-hidden="true"></span>${T_LABEL[l]}</span>`;
+};
 const mailto = (to, subject, body) => `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
 function gpMail(x) {
@@ -49,9 +55,11 @@ export function initEnvois({ toast, onAuthLost }) {
     const rows = items.filter((x) => (filter === 'all' || status(x) === filter) && (!q || `${x.last_name} ${x.first_name} ${x.gp_name || ''}`.toLowerCase().includes(q)));
     $('e-list').innerHTML = rows
       .map(
-        (x) => `<li class="glass-soft rounded-2xl p-4" data-id="${esc(x.id)}">
+        (x) => `<li class="glass-soft relative overflow-hidden rounded-2xl p-4 pl-5" data-id="${esc(x.id)}">
+        <span class="t${T_LABEL[x.triage] ? Number(x.triage) : 0} absolute inset-y-0 left-0 w-1.5" aria-hidden="true"></span>
+        <div class="absolute top-3 right-3">${pastille(x.triage)}</div>
         <div class="flex flex-wrap items-start gap-2">
-          <p class="mr-auto font-bold">${esc(x.last_name)} ${esc(x.first_name)} <span class="text-xs font-normal text-slate-500">· né(e) le ${esc(iso(x.birth_date))} · reçu(e) le ${esc(dDay(x.created_at))}</span></p>
+          <p class="mr-auto w-full pr-28 font-bold">${esc(x.last_name)} ${esc(x.first_name)} <span class="text-xs font-normal text-slate-500">· né(e) le ${esc(iso(x.birth_date))} · reçu(e) le ${esc(dDay(x.created_at))}</span></p>
           ${x.no_gp ? '<span class="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700">Pas de médecin traitant</span>' : ''}
           ${x.gp_sent_at ? `<span class="rounded-lg bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-900">Envoyée le ${esc(dTime(x.gp_sent_at))}</span>` : '<span class="rounded-lg bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-900">À envoyer</span>'}
         </div>
