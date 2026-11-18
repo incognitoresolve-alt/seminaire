@@ -268,7 +268,7 @@ story += [gap(4)]
 story.append(KeepTogether([P('APRÈS L’ÉVÉNEMENT', 'kick'), P('Clôturer proprement', 'h2'), Task('12', 'Envoyer (à la main), sécuriser, effacer', '20 min', [
     '<b>Aucun envoi automatique</b> : tout part de ta messagerie, depuis l’onglet ' + b('Envois') + f' de {a(SITE + "/admin")} (ADMIN_KEY).',
     f'<b>Médecins traitants</b> : {b("Envois")} → pour chaque personne : e-mail du médecin → {b("1. Fiche PDF")} (Imprimer / Enregistrer en PDF) '
-    f'→ {b("2. Préparer l’e-mail")} (joindre le PDF) → {b("3. Marquer comme envoyée")}. De préférence via la messagerie sécurisée (eHealthBox).',
+    f'→ {b("2. Envoyer")} (joindre le PDF) → {b("3. Marquer comme envoyée")}. De préférence via la messagerie sécurisée (eHealthBox).',
     f'<b>Contacts check-up</b> : {a(SITE + "/admin")} → {b("Mes contacts")} → statut, notes, {b("Télécharger (Excel / CSV)")}. '
     'Une seule relance maximum ; « STOP » = effacement immédiat.',
     f'<b>Sécurité</b> : changer ou supprimer {c("STAFF_PIN")} dans Cloudflare → plus aucun accès soignants.',

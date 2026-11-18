@@ -2,34 +2,16 @@
 // L'application prépare l'e-mail (destinataire, objet, message) ; la personne joint le fichier et envoie elle-même.
 import { api, esc } from './api.js';
 import { validateEmail } from './shared/validate.js';
+import { dDay, gpMail, iso, mailto } from './shared/gpmail.js';
 
 const $ = (id) => document.getElementById(id);
-const TZ = { timeZone: 'Europe/Brussels' };
-const dDay = (ms) => new Date(ms).toLocaleDateString('fr-BE', { ...TZ, day: '2-digit', month: '2-digit', year: 'numeric' });
-const dTime = (ms) => new Date(ms).toLocaleString('fr-BE', { ...TZ, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-const iso = (s) => (s ? s.split('-').reverse().join('/') : '');
+const dTime = (ms) => new Date(ms).toLocaleString('fr-BE', { timeZone: 'Europe/Brussels', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 // Couleur de la consultation (triage indicatif), comme dans l'espace soignants.
 const T_LABEL = { 0: 'À mesurer', 1: 'Vert', 2: 'Orange', 3: 'Rouge' };
 const pastille = (t) => {
   const l = T_LABEL[t] ? Number(t) : 0;
   return `<span class="tb${l} inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold" title="Couleur de la consultation"><span class="t${l} size-2.5 rounded-full" aria-hidden="true"></span>${T_LABEL[l]}</span>`;
 };
-const mailto = (to, subject, body) => `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
-function gpMail(x) {
-  const who = `${x.first_name} ${x.last_name}, né(e) le ${iso(x.birth_date)}`;
-  return {
-    subject: `Fiche de transmission – ${x.last_name} ${x.first_name} (né(e) le ${iso(x.birth_date)})`,
-    body: `Bonjour ${x.gp_name || 'Docteur'},
-
-${x.no_gp ? `Nous vous transmettons la fiche de ${who}, reçu(e) au pôle santé du séminaire spécial d’Impact Centre Chrétien Liège le ${dDay(x.created_at)}. Cette personne n’avait pas de médecin traitant et a autorisé la transmission de ses données.` : `Votre patient(e) ${who}, a été reçu(e) au pôle santé du séminaire spécial d’Impact Centre Chrétien Liège le ${dDay(x.created_at)} et a autorisé la transmission de ses données à son médecin traitant.`}
-
-Vous trouverez en pièce jointe sa fiche (PDF) : mesures relevées, notes et preuve de son accord.
-
-Bien cordialement,
-Pôle santé – Séminaire spécial ICC Liège`,
-  };
-}
 
 export function initEnvois({ toast, onAuthLost }) {
   let items = [];
@@ -70,9 +52,9 @@ export function initEnvois({ toast, onAuthLost }) {
         <input id="ge-${esc(x.id)}" data-gp-email type="email" inputmode="email" autocomplete="off" maxlength="254" class="field py-2.5 text-base" placeholder="cabinet@…" value="${esc(x.gp_email || '')}">
         <div class="mt-3 flex flex-wrap gap-2">
           <a class="btn-ghost min-h-10 px-3 py-2 text-sm" href="/fiche?id=${encodeURIComponent(x.id)}" target="_blank" rel="noopener">1. Fiche PDF</a>
-          <button type="button" data-mail class="btn-primary min-h-10 px-3 py-2 text-sm" ${x.gp_email ? '' : 'disabled'}>2. Préparer l’e-mail</button>
+          <button type="button" data-mail class="btn-primary min-h-10 gap-1.5 px-3 py-2 text-sm" ${x.gp_email ? '' : 'disabled'} title="Ouvre votre messagerie avec l’e-mail prêt (trame d’appel incluse)"><svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>2. Envoyer</button>
           <button type="button" data-copy class="btn-ghost min-h-10 px-3 py-2 text-sm">Copier le message</button>
-          ${x.gp_sent_at ? '<button type="button" data-sent="0" class="btn-ghost min-h-10 px-3 py-2 text-sm">Annuler « envoyée »</button>' : '<button type="button" data-sent="1" class="btn-ghost min-h-10 px-3 py-2 text-sm">3. Marquer comme envoyée</button>'}
+          ${x.gp_sent_at ? '<button type="button" data-sent="0" class="btn-ghost min-h-10 px-3 py-2 text-sm">Annuler « envoyée »</button>' : '<button type="button" data-sent="1" class="btn-ghost min-h-10 px-3 py-2 text-sm data-[next]:ring-4 data-[next]:ring-amber-300 data-[next]:motion-safe:animate-pulse">3. Marquer comme envoyée</button>'}
         </div>
       </li>`,
       )
@@ -101,19 +83,56 @@ export function initEnvois({ toast, onAuthLost }) {
     }
   }
 
-  $('e-list').addEventListener('change', (e) => {
+  // E-mail du médecin : enregistré sans redessiner la liste (le clic sur « Envoyer » n'est jamais perdu), une requête à la fois.
+  const saving = new Map();
+  function saveEmail(li) {
+    const input = li.querySelector('[data-gp-email]');
+    const id = li.dataset.id;
+    const v = validateEmail(input.value);
+    input.setAttribute('aria-invalid', String(!v.ok));
+    if (!v.ok) return (toast('E-mail invalide', 'error'), Promise.resolve(null));
+    const pending = saving.get(id);
+    if (pending?.value === v.value) return pending.p;
+    const x = items.find((i) => i.id === id);
+    if (!pending && (x.gp_email || null) === v.value) return Promise.resolve(x);
+    const p = api(`/admin/transmissions/${id}`, { method: 'PATCH', body: { gp_email: v.value } })
+      .then(({ item }) => {
+        items = items.map((i) => (i.id === id ? item : i));
+        toast(v.value ? 'E-mail du médecin enregistré ✓' : 'E-mail effacé');
+        return item;
+      })
+      .catch((e) => {
+        fail(e, e.status === 422 ? 'E-mail invalide' : e.status === 409 ? 'Accord de transmission retiré entre-temps' : 'Enregistrement impossible');
+        if (e.status === 409) load();
+        return null;
+      })
+      .finally(() => saving.get(id)?.p === p && saving.delete(id));
+    saving.set(id, { value: v.value, p });
+    return p;
+  }
+
+  // « Envoyer » actif dès qu'une adresse valide est saisie.
+  $('e-list').addEventListener('input', (e) => {
     if (!e.target.matches('[data-gp-email]')) return;
-    const li = e.target.closest('[data-id]');
     const v = validateEmail(e.target.value);
-    e.target.setAttribute('aria-invalid', String(!v.ok));
-    if (!v.ok) return toast('E-mail invalide', 'error');
-    patch(li.dataset.id, { gp_email: v.value }, v.value ? 'E-mail du médecin enregistré ✓' : 'E-mail effacé');
+    e.target.closest('[data-id]').querySelector('[data-mail]').disabled = !(v.ok && v.value);
+    if (v.ok) e.target.setAttribute('aria-invalid', 'false');
   });
-  $('e-list').addEventListener('click', (e) => {
+  $('e-list').addEventListener('change', (e) => {
+    if (e.target.matches('[data-gp-email]')) saveEmail(e.target.closest('[data-id]'));
+  });
+  $('e-list').addEventListener('click', async (e) => {
     const li = e.target.closest('[data-id]');
     if (!li) return;
+    if (e.target.closest('[data-mail]')) {
+      const x = await saveEmail(li);
+      if (!x?.gp_email) return;
+      location.href = mailto(x.gp_email, gpMail(x));
+      toast('Messagerie ouverte : joignez la fiche PDF, puis envoyez');
+      li.querySelector('[data-sent="1"]')?.setAttribute('data-next', '');
+      return;
+    }
     const x = items.find((i) => i.id === li.dataset.id);
-    if (e.target.closest('[data-mail]') && x.gp_email) location.href = mailto(x.gp_email, gpMail(x).subject, gpMail(x).body);
     if (e.target.closest('[data-copy]')) copy(x.gp_email, gpMail(x));
     const s = e.target.closest('[data-sent]');
     if (s) patch(x.id, { sent: s.dataset.sent === '1' }, s.dataset.sent === '1' ? 'Fiche notée comme envoyée ✓' : 'Statut « envoyée » annulé');
