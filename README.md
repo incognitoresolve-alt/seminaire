@@ -154,7 +154,7 @@ Check-up couverture : case facultative (non pré-cochée, distincte du consentem
 **Page `/admin`** — une seule page, la clé tapée détermine l'accès (cloisonnement RGPD) :
 - `ADMIN_KEY` (organisateur / responsable médical) → **Corbeille** : les dossiers supprimés par les soignants y restent `TRASH_DAYS` (30) jours, puis sont effacés automatiquement ; *Restaurer*, *Supprimer définitivement* (droit à l'effacement), *Tout restaurer*, *Vider*, *Tout mettre à la corbeille* (ex. effacer les tests). Les changements apparaissent en temps réel sur les tablettes.
 - `ADMIN_KEY` → **Remarques** des intervenants.
-- `ADMIN_KEY` → **Envois** (aucun envoi automatique) : liste des personnes ayant autorisé la transmission → e-mail du médecin traitant (modifiable), *Fiche PDF*, *Préparer l'e-mail* (la messagerie s'ouvre avec destinataire, objet et message ; on joint le PDF), *Marquer comme envoyée*.
+- `ADMIN_KEY` → **Envois** (aucun envoi automatique) : liste des personnes ayant autorisé la transmission → e-mail du médecin traitant (modifiable), *Fiche PDF*, *Envoyer* (la messagerie s'ouvre avec destinataire, objet, message et proposition d'appel au patient ; on joint le PDF), *Marquer comme envoyée*.
 - Toutes les clés → **QR codes** : inscription sans attente (`/`), check-up assurance-vie (`/checkup` → `/partenaire?pour=public&interet=checkup`, marqué « Publicité »), remarques des intervenants (`/remarques`) : copier le lien, télécharger l'image PNG, affiche A4.
 - `PARTNER_KEY` (partenaire) → **Mes contacts** (mini-CRM), jamais la corbeille ni les envois. Les deux clés peuvent être saisies l'une après l'autre (« Ajouter une clé »).
 - `/espace-partenaire` redirige vers `/admin`.
