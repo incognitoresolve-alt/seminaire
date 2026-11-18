@@ -192,7 +192,7 @@ story.append(Task('4', 'Faire un vrai test avec 2 tablettes', '10 min', [
     f'{b("Liste des inscrits")} → taper le nom → ouvrir la fiche → <b>indiquer son nom (soignant)</b> → saisir une tension (ex. 150/85) '
     '→ la fiche change sur l’autre tablette en quelques secondes.',
     f'Sur la fiche d’une personne qui a dit « J’autorise » : saisir nom et coordonnées du médecin traitant (ou « pas de médecin traitant ») et, si besoin, une remarque. '
-    f'Puis {a(SITE + "/admin")} (ADMIN_KEY) → {b("Envois")} → {b("1. Fiche PDF")} : la preuve de l’accord s’affiche (« ✓ vérifiée »).',
+    f'Puis {a(SITE + "/admin")} (ADMIN_KEY) → {b("Envois")} → {b("Voir la fiche")} : la preuve de l’accord s’affiche (« ✓ vérifiée »).',
     f'{a(SITE + "/remarques")} → envoyer une remarque « Test » → {a(SITE + "/admin")} (ADMIN_KEY) → onglet {b("Remarques")} : elle apparaît.',
     'Mauvais PIN 11 fois de suite → « Trop d’essais, patientez une minute » (protection normale).',
 ], prio=True))
@@ -267,8 +267,8 @@ story.append(KeepTogether([P('FACULTATIF', 'kick'), P('Pour aller plus loin', 'h
 story += [gap(4)]
 story.append(KeepTogether([P('APRÈS L’ÉVÉNEMENT', 'kick'), P('Clôturer proprement', 'h2'), Task('12', 'Envoyer (à la main), sécuriser, effacer', '20 min', [
     '<b>Aucun envoi automatique</b> : tout part de ta messagerie, depuis l’onglet ' + b('Envois') + f' de {a(SITE + "/admin")} (ADMIN_KEY).',
-    f'<b>Médecins traitants</b> : {b("Envois")} → pour chaque personne : e-mail du médecin → {b("1. Fiche PDF")} (Imprimer / Enregistrer en PDF) '
-    f'→ {b("2. Envoyer")} (joindre le PDF) → {b("3. Marquer comme envoyée")}. De préférence via la messagerie sécurisée (eHealthBox).',
+    f'<b>Médecins traitants</b> : {b("Envois")} → pour chaque personne : e-mail du médecin → {b("1. Envoyer avec le PDF")} '
+    f'(téléphone : PDF déjà joint ; ordinateur : PDF téléchargé, à glisser dans le mail) → {b("2. Marquer comme envoyée")}. De préférence via la messagerie sécurisée (eHealthBox).',
     f'<b>Contacts check-up</b> : {a(SITE + "/admin")} → {b("Mes contacts")} → statut, notes, {b("Télécharger (Excel / CSV)")}. '
     'Une seule relance maximum ; « STOP » = effacement immédiat.',
     f'<b>Sécurité</b> : changer ou supprimer {c("STAFF_PIN")} dans Cloudflare → plus aucun accès soignants.',

@@ -51,10 +51,13 @@ export function initEnvois({ toast, onAuthLost }) {
         <label class="label mt-2" for="ge-${esc(x.id)}">E-mail du cabinet du médecin</label>
         <input id="ge-${esc(x.id)}" data-gp-email type="email" inputmode="email" autocomplete="off" maxlength="254" class="field py-2.5 text-base" placeholder="cabinet@…" value="${esc(x.gp_email || '')}">
         <div class="mt-3 flex flex-wrap gap-2">
-          <a class="btn-ghost min-h-10 px-3 py-2 text-sm" href="/fiche?id=${encodeURIComponent(x.id)}" target="_blank" rel="noopener">1. Fiche PDF</a>
-          <button type="button" data-mail class="btn-primary min-h-10 gap-1.5 px-3 py-2 text-sm" ${x.gp_email ? '' : 'disabled'} title="Ouvre votre messagerie avec l’e-mail prêt (trame d’appel incluse)"><svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>2. Envoyer</button>
-          <button type="button" data-copy class="btn-ghost min-h-10 px-3 py-2 text-sm">Copier le message</button>
-          ${x.gp_sent_at ? '<button type="button" data-sent="0" class="btn-ghost min-h-10 px-3 py-2 text-sm">Annuler « envoyée »</button>' : '<button type="button" data-sent="1" class="btn-ghost min-h-10 px-3 py-2 text-sm data-[next]:ring-4 data-[next]:ring-amber-300 data-[next]:motion-safe:animate-pulse">3. Marquer comme envoyée</button>'}
+          <button type="button" data-mail class="btn-primary min-h-10 gap-1.5 px-3 py-2 text-sm aria-busy:cursor-wait" ${x.gp_email ? '' : 'disabled'} title="Ouvre votre messagerie : fiche PDF jointe, message et trame d’appel prêts"><svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>1. Envoyer avec le PDF</button>
+          ${x.gp_sent_at ? '<button type="button" data-sent="0" class="btn-ghost min-h-10 px-3 py-2 text-sm">Annuler « envoyée »</button>' : '<button type="button" data-sent="1" class="btn-ghost min-h-10 px-3 py-2 text-sm data-[next]:ring-4 data-[next]:ring-amber-300 data-[next]:motion-safe:animate-pulse">2. Marquer comme envoyée</button>'}
+        </div>
+        <div class="mt-1 flex flex-wrap gap-x-4 text-sm font-semibold text-sky-800">
+          <a class="inline-flex min-h-10 items-center underline" href="/fiche?id=${encodeURIComponent(x.id)}" target="_blank" rel="noopener">Voir la fiche</a>
+          <button type="button" data-pdf class="min-h-10 underline aria-busy:cursor-wait">Télécharger le PDF</button>
+          <button type="button" data-copy class="min-h-10 underline">Copier le message</button>
         </div>
       </li>`,
       )
@@ -66,6 +69,7 @@ export function initEnvois({ toast, onAuthLost }) {
     try {
       items = (await api('/admin/transmissions')).items;
       render();
+      loadPdf().catch(() => {});
     } catch (e) {
       fail(e, 'Chargement des envois impossible');
     }
@@ -111,32 +115,107 @@ export function initEnvois({ toast, onAuthLost }) {
     return p;
   }
 
+  // Fiche PDF générée DANS LE NAVIGATEUR (module chargé à la demande) ; cache 60 s pour un 2e clic instantané.
+  let pdfMod;
+  const loadPdf = () => (pdfMod ??= import(new URL('/dist/fiche-pdf.js', location.origin).href).catch((e) => ((pdfMod = null), Promise.reject(e))));
+  const pdfCache = new Map();
+  // email : adresse affichée sur la fiche (celle saisie, même pas encore enregistrée).
+  function fichePdf(id, email) {
+    const key = `${id}|${email || ''}`;
+    const c = pdfCache.get(key);
+    if (c && Date.now() - c.at < 60_000) return c.p;
+    const p = Promise.all([loadPdf(), api(`/admin/patients/${id}/fiche`)]).then(async ([mod, data]) => {
+      const { bytes, fileName } = await mod.buildFichePdf({ ...data, patient: { ...data.patient, gp_email: email || null } });
+      return new File([bytes], fileName, { type: 'application/pdf' });
+    });
+    pdfCache.set(key, { at: Date.now(), p });
+    p.catch(() => pdfCache.delete(key));
+    return p;
+  }
+  const typedEmail = (li) => {
+    const v = validateEmail(li.querySelector('[data-gp-email]').value);
+    return v.ok ? v.value : null;
+  };
+  function download(file) {
+    const url = URL.createObjectURL(file);
+    const a = Object.assign(document.createElement('a'), { href: url, download: file.name });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
+  const pdfFail = (e) => fail(e, e.status === 403 ? 'Accord de transmission retiré : envoi impossible' : e.status === 404 ? 'Dossier introuvable' : 'Préparation du PDF impossible, réessayez');
+  async function busy(btn, fn) {
+    if (btn.getAttribute('aria-busy') === 'true') return; // anti double-clic
+    btn.setAttribute('aria-busy', 'true');
+    try {
+      await fn();
+    } finally {
+      setTimeout(() => btn.removeAttribute('aria-busy'), 1200); // délai : un double-clic n'ouvre jamais 2 envois
+    }
+  }
+
+  async function send(li) {
+    const x = await saveEmail(li);
+    if (!x?.gp_email) return;
+    const mail = gpMail(x);
+    let file;
+    try {
+      file = await fichePdf(x.id, x.gp_email);
+    } catch (e) {
+      return pdfFail(e);
+    }
+    const next = () => li.querySelector('[data-sent="1"]')?.setAttribute('data-next', '');
+    if (navigator.canShare?.({ files: [file] })) {
+      // Téléphone / tablette (et certains ordinateurs) : menu de partage → Gmail, Mail, Outlook… avec le PDF DÉJÀ JOINT.
+      navigator.clipboard?.writeText(x.gp_email).catch(() => {});
+      toast('Choisissez votre messagerie · adresse du médecin copiée : collez-la dans « À »');
+      try {
+        await navigator.share({ files: [file], title: mail.subject, text: mail.body });
+        next();
+      } catch (e) {
+        if (e.name === 'NotAllowedError') toast('PDF prêt : appuyez encore sur « Envoyer »');
+        else if (e.name !== 'AbortError') toast('Partage impossible : utilisez « Télécharger le PDF »', 'error');
+      }
+      return;
+    }
+    // Ordinateur sans partage de fichiers : PDF téléchargé + messagerie ouverte (message prêt), il reste à glisser le PDF.
+    download(file);
+    location.href = mailto(x.gp_email, mail);
+    toast(`PDF téléchargé (${file.name}) : glissez-le dans l’e-mail qui s’ouvre`);
+    next();
+  }
+
   // « Envoyer » actif dès qu'une adresse valide est saisie.
   $('e-list').addEventListener('input', (e) => {
     if (!e.target.matches('[data-gp-email]')) return;
     const v = validateEmail(e.target.value);
-    e.target.closest('[data-id]').querySelector('[data-mail]').disabled = !(v.ok && v.value);
+    const li = e.target.closest('[data-id]');
+    li.querySelector('[data-mail]').disabled = !(v.ok && v.value);
     if (v.ok) e.target.setAttribute('aria-invalid', 'false');
+    if (v.ok && v.value) fichePdf(li.dataset.id, v.value).catch(() => {}); // PDF préparé pendant la saisie : partage immédiat au clic
   });
   $('e-list').addEventListener('change', (e) => {
     if (e.target.matches('[data-gp-email]')) saveEmail(e.target.closest('[data-id]'));
   });
-  $('e-list').addEventListener('click', async (e) => {
+  $('e-list').addEventListener('click', (e) => {
     const li = e.target.closest('[data-id]');
     if (!li) return;
-    if (e.target.closest('[data-mail]')) {
-      const x = await saveEmail(li);
-      if (!x?.gp_email) return;
-      location.href = mailto(x.gp_email, gpMail(x));
-      toast('Messagerie ouverte : joignez la fiche PDF, puis envoyez');
-      li.querySelector('[data-sent="1"]')?.setAttribute('data-next', '');
-      return;
-    }
+    const mailBtn = e.target.closest('[data-mail]');
+    if (mailBtn) return busy(mailBtn, () => send(li));
+    const pdfBtn = e.target.closest('[data-pdf]');
+    if (pdfBtn) return busy(pdfBtn, () => fichePdf(li.dataset.id, typedEmail(li)).then(download, pdfFail));
     const x = items.find((i) => i.id === li.dataset.id);
     if (e.target.closest('[data-copy]')) copy(x.gp_email, gpMail(x));
     const s = e.target.closest('[data-sent]');
     if (s) patch(x.id, { sent: s.dataset.sent === '1' }, s.dataset.sent === '1' ? 'Fiche notée comme envoyée ✓' : 'Statut « envoyée » annulé');
   });
+  for (const ev of ['pointerover', 'focusin'])
+    $('e-list').addEventListener(ev, (e) => {
+      const b = e.target.closest?.('[data-mail]:not(:disabled)');
+      const li = b?.closest('[data-id]');
+      if (li) fichePdf(li.dataset.id, typedEmail(li)).catch(() => {});
+    });
   $('e-filter').addEventListener('click', (e) => {
     const b = e.target.closest('[data-f]');
     if (b) ((filter = b.dataset.f), render());

@@ -6,7 +6,7 @@ const root = new URL('../', import.meta.url);
 const out = new URL('public/dist/', root);
 rmSync(out, { recursive: true, force: true });
 
-const entries = ['register', 'staff', 'partenaire', 'affiche', 'credit', 'desinscription', 'admin', 'remarques', 'remarques-voir', 'fiche'];
+const entries = ['register', 'staff', 'partenaire', 'affiche', 'credit', 'desinscription', 'admin', 'remarques', 'remarques-voir', 'fiche', 'fiche-pdf'];
 const res = await build({
   entryPoints: entries.map((e) => `web/${e}.js`),
   outdir: 'public/dist',
@@ -20,7 +20,8 @@ const res = await build({
 });
 
 const version = `${Date.now().toString(36)}`;
-const assets = ['/', '/staff', '/app.css', '/logo.svg', '/favicon.svg', ...Object.keys(res.metafile.outputs).map((f) => `/${f.replace(/^public\//, '')}`)];
+const assets = ['/', '/staff', '/app.css', '/logo.svg', '/favicon.svg', ...Object.keys(res.metafile.outputs).filter((f) => !f.endsWith('/fiche-pdf.js')).map((f) => `/${f.replace(/^public\//, '')}`)];
+// fiche-pdf.js (≈ 430 Ko, administration uniquement) : chargé à la demande, jamais pré-téléchargé chez les participants.
 const sw = readFileSync(new URL('web/sw.template.js', root), 'utf8').replace('__VERSION__', version).replace('__ASSETS__', JSON.stringify(assets));
 writeFileSync(new URL('public/sw.js', root), sw);
 
