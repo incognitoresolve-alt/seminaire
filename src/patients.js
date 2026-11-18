@@ -296,7 +296,7 @@ export async function deleteFeedback(env, id) {
 }
 
 /* ---------- Envois manuels (rôle admin) : aucun e-mail n'est envoyé par l'application ---------- */
-const TX_COLS = 'id, last_name, first_name, birth_date, no_gp, gp_name, gp_contact, gp_email, gp_sent_at, staff_remark, doctor_consent_at, created_at';
+const TX_COLS = 'id, last_name, first_name, birth_date, triage, no_gp, gp_name, gp_contact, gp_email, gp_sent_at, staff_remark, doctor_consent_at, created_at';
 /** Personnes ayant autorisé la transmission à leur médecin traitant (fiche à envoyer manuellement). */
 export async function listTransmissions(env) {
   const { results } = await env.DB.prepare(`SELECT ${TX_COLS} FROM patients WHERE doctor_consent = 1 AND deleted_at IS NULL ORDER BY gp_sent_at IS NOT NULL, last_name, first_name LIMIT 5000`).all();
